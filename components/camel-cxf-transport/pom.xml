@@ -56,7 +56,7 @@
       '=META-INF.cxf.camel'
     </camel.osgi.export>
     <camel.osgi.failok>true</camel.osgi.failok>
-
+    <cxf-version>3.1.5-SNAPSHOT</cxf-version>
   </properties>
 
   <dependencies>
@@ -134,7 +134,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.cxf</groupId>
-      <artifactId>cxf-rt-transports-http-jetty</artifactId>
+      <artifactId>cxf-rt-transports-http-undertow</artifactId>
       <version>${cxf-version}</version>
       <scope>test</scope>
     </dependency>

@@ -70,14 +70,14 @@ public class CxfPayloadRouterContentLengthTest extends CamelTestSupport {
             + "<ns0:payload xmlns:ns0=\"http://schema.apache.org/test\"><ns0:request>foo</ns0:request></ns0:payload>"
             + "</s:Body></s:Envelope>";
 
-    // The Camel-Test with CXF will re-use jetty instances, so the ports1 to 6 are already blocked
-    private static final int JETTY_PORT = AvailablePortFinder.getNextAvailable();
+    // The Camel-Test with CXF will re-use undertow instances, so the ports1 to 6 are already blocked
+    private static final int UNDERTOW_PORT = AvailablePortFinder.getNextAvailable();
     
     private AbstractXmlApplicationContext applicationContext;
     private Server server;
 
     static {
-        System.setProperty("CXFTestSupport.jettyPort", Integer.toString(JETTY_PORT));
+        System.setProperty("CXFTestSupport.undertowPort", Integer.toString(UNDERTOW_PORT));
     }
 
     @Override
@@ -92,13 +92,13 @@ public class CxfPayloadRouterContentLengthTest extends CamelTestSupport {
          * the response The response must contain only a Content-Type and a
          * Content-Length but no other header
          */
-        log.info("Starting jetty server at port {}", JETTY_PORT);
+        log.info("Starting Jetty server at port {}", UNDERTOW_PORT);
         server = new Server();
         // Do not send a Server header
         HttpConfiguration httpconf = new HttpConfiguration();
         httpconf.setSendServerVersion(false);
         ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(httpconf));
-        http.setPort(JETTY_PORT);
+        http.setPort(UNDERTOW_PORT);
         server.addConnector(http);
         server.setHandler(new AbstractHandler() {
             @Override
@@ -127,7 +127,7 @@ public class CxfPayloadRouterContentLengthTest extends CamelTestSupport {
     public void tearDown() throws Exception {
         // close the spring context
         IOHelper.close(applicationContext);
-        // stop the jetty server
+        // stop the undertow server
         if (server != null && server.isRunning()) {
             server.stop();
             server.join();
