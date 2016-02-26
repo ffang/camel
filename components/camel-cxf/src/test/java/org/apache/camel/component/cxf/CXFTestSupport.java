@@ -42,7 +42,7 @@ public final class CXFTestSupport {
         System.setProperty("CXFTestSupport.port4", Integer.toString(PORT4));
         System.setProperty("CXFTestSupport.port5", Integer.toString(PORT5));
         System.setProperty("CXFTestSupport.port6", Integer.toString(PORT6));
-        System.setProperty("org.apache.cxf.transports.http_jetty.DontClosePort", "true");
+        System.setProperty("org.apache.cxf.transports.http_undertow.DontClosePort", "true");
     }
     
     private CXFTestSupport() {

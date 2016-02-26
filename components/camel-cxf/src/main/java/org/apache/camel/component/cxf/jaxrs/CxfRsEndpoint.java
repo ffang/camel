@@ -691,7 +691,7 @@ public class CxfRsEndpoint extends DefaultEndpoint implements HeaderFilterStrate
     }
 
     /**
-     * This option is used to set the CXF continuation timeout which could be used in CxfConsumer by default when the CXF server is using Jetty or Servlet transport.
+     * This option is used to set the CXF continuation timeout which could be used in CxfConsumer by default when the CXF server is using Undertow or Servlet transport.
      */
     public void setContinuationTimeout(long continuationTimeout) {
         this.continuationTimeout = continuationTimeout;

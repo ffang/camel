@@ -23,7 +23,7 @@ import org.springframework.context.support.AbstractXmlApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class CxfRsProducerAddressOverrideTest extends CxfRsProducerTest {
-    private static int port2 = CXFTestSupport.getPort("CxfRsProducerAddressOverrideTest.jetty"); 
+    private static int port2 = CXFTestSupport.getPort("CxfRsProducerAddressOverrideTest.undertow"); 
     public int getPort2() {
         return port2;
     }

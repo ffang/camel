@@ -22,8 +22,8 @@ import org.apache.camel.impl.DefaultCamelContext;
 import org.apache.camel.util.IOHelper;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
-import org.apache.cxf.transport.http_jetty.JettyHTTPServerEngine;
-import org.apache.cxf.transport.http_jetty.JettyHTTPServerEngineFactory;
+import org.apache.cxf.transport.http_undertow.UndertowHTTPServerEngine;
+import org.apache.cxf.transport.http_undertow.UndertowHTTPServerEngineFactory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -49,16 +49,16 @@ public class CxfCustomerStartStopTest extends Assert {
         Thread.sleep(300);
         context.stop();
         Bus bus = BusFactory.getDefaultBus();
-        JettyHTTPServerEngineFactory factory = bus.getExtension(JettyHTTPServerEngineFactory.class);
-        JettyHTTPServerEngine engine = factory.retrieveJettyHTTPServerEngine(PORT1);
-        assertNotNull("Jetty engine should be found there", engine);
+        UndertowHTTPServerEngineFactory factory = bus.getExtension(UndertowHTTPServerEngineFactory.class);
+        UndertowHTTPServerEngine engine = factory.retrieveUndertowHTTPServerEngine(PORT1);
+        assertNotNull("Undertow engine should be found there", engine);
         // Need to call the bus shutdown ourselves.
-        String orig = System.setProperty("org.apache.cxf.transports.http_jetty.DontClosePort", "false");
+        String orig = System.setProperty("org.apache.cxf.transports.http_undertow.DontClosePort", "false");
         bus.shutdown(true);
-        System.setProperty("org.apache.cxf.transports.http_jetty.DontClosePort",
+        System.setProperty("org.apache.cxf.transports.http_undertow.DontClosePort",
                            orig == null ? "true" : "false");
-        engine = factory.retrieveJettyHTTPServerEngine(PORT1);
-        assertNull("Jetty engine should be removed", engine);
+        engine = factory.retrieveUndertowHTTPServerEngine(PORT1);
+        assertNull("Undertow engine should be removed", engine);
     }
     
     @Test
@@ -69,14 +69,14 @@ public class CxfCustomerStartStopTest extends Assert {
             new ClassPathXmlApplicationContext("org/apache/camel/component/cxf/CamelCxfConsumerContext.xml");
         Bus bus = applicationContext.getBean("cxf", Bus.class);
         // Bus shutdown will be called when the application context is closed.
-        String orig = System.setProperty("org.apache.cxf.transports.http_jetty.DontClosePort", "false");
+        String orig = System.setProperty("org.apache.cxf.transports.http_undertow.DontClosePort", "false");
         IOHelper.close(applicationContext);
-        System.setProperty("org.apache.cxf.transports.http_jetty.DontClosePort",
+        System.setProperty("org.apache.cxf.transports.http_undertow.DontClosePort",
                            orig == null ? "true" : "false");
-        JettyHTTPServerEngineFactory factory = bus.getExtension(JettyHTTPServerEngineFactory.class);
+        UndertowHTTPServerEngineFactory factory = bus.getExtension(UndertowHTTPServerEngineFactory.class);
         // test if the port is still used
-        JettyHTTPServerEngine engine = factory.retrieveJettyHTTPServerEngine(PORT2);
-        assertNull("Jetty engine should be removed", engine);
+        UndertowHTTPServerEngine engine = factory.retrieveUndertowHTTPServerEngine(PORT2);
+        assertNull("Undertow engine should be removed", engine);
     }
     
     
