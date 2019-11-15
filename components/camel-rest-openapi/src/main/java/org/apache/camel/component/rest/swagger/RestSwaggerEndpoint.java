@@ -715,13 +715,13 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
         }
     }
 
-    static String pickBestScheme(final String specificationScheme, final List<Scheme> schemes) {
+    static String pickBestScheme(final String specificationScheme, final List<String> schemes) {
         if (schemes != null && !schemes.isEmpty()) {
-            if (schemes.contains(Scheme.HTTPS)) {
+            if (schemes.contains("https")) {
                 return "https";
             }
 
-            if (schemes.contains(Scheme.HTTP)) {
+            if (schemes.contains("http")) {
                 return "http";
             }
         }
@@ -757,31 +757,4 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
         OPTIONS
     }
 
-    enum Scheme {
-        HTTP("http"),
-        HTTPS("https"),
-        WS("ws"),
-        WSS("wss");
-
-        private final String value;
-
-        private Scheme(String value) {
-            this.value = value;
-        }
-
-        @JsonCreator
-        public static Scheme forValue(String value) {
-            for (Scheme item : Scheme.values()) {
-                if (item.toValue().equalsIgnoreCase(value)) {
-                    return item;
-                }
-            }
-            return null;
-        }
-
-        @JsonValue
-        public String toValue() {
-            return value;
-        }
-    }
 }

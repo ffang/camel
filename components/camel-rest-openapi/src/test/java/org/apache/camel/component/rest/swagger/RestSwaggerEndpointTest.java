@@ -18,23 +18,23 @@ package org.apache.camel.component.rest.swagger;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import io.swagger.models.Operation;
-import io.swagger.models.Scheme;
-import io.swagger.models.Swagger;
-import io.swagger.models.auth.ApiKeyAuthDefinition;
-import io.swagger.models.auth.In;
-import io.swagger.models.parameters.Parameter;
-import io.swagger.models.parameters.PathParameter;
-import io.swagger.models.parameters.QueryParameter;
 import org.apache.camel.CamelContext;
 import org.apache.camel.impl.engine.DefaultClassResolver;
 import org.apache.camel.spi.RestConfiguration;
 import org.junit.Test;
+
+import io.apicurio.datamodels.openapi.models.OasParameter;
+import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
+import io.apicurio.datamodels.openapi.v2.models.Oas20Operation;
+import io.apicurio.datamodels.openapi.v2.models.Oas20Parameter;
+import io.apicurio.datamodels.openapi.v2.models.Oas20SecurityScheme;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
@@ -65,17 +65,18 @@ public class RestSwaggerEndpointTest {
         final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint();
         endpoint.parameters = new HashMap<>();
         endpoint.parameters.put("literal", "value");
-
-        assertThat(endpoint.queryParameter(new QueryParameter())).isEqualTo("");
-        assertThat(endpoint.queryParameter(new QueryParameter().name("param"))).isEqualTo("param={param?}");
-        assertThat(endpoint.queryParameter(new QueryParameter().name("literal"))).isEqualTo("literal=value");
+        assertThat(endpoint.queryParameter(new Oas20Parameter())).isEqualTo("");
+        assertThat(endpoint.queryParameter(new Oas20Parameter("param"))).isEqualTo("param={param?}");
+        assertThat(endpoint.queryParameter(new Oas20Parameter("literal"))).isEqualTo("literal=value");
     }
 
     @Test
     public void shouldCreateQueryParameterExpressions() {
-        assertThat(RestSwaggerEndpoint.queryParameterExpression(new QueryParameter().name("q").required(true)))
+        Oas20Parameter oas20Parameter = new Oas20Parameter("q");
+        oas20Parameter.required = true;
+        assertThat(RestSwaggerEndpoint.queryParameterExpression(oas20Parameter))
             .isEqualTo("q={q}");
-        assertThat(RestSwaggerEndpoint.queryParameterExpression(new QueryParameter().name("q").required(false)))
+        assertThat(RestSwaggerEndpoint.queryParameterExpression(oas20Parameter))
             .isEqualTo("q={q?}");
     }
 
@@ -86,7 +87,7 @@ public class RestSwaggerEndpointTest {
         final CamelContext camelContext = mock(CamelContext.class);
         when(camelContext.getRestConfiguration("rest-swagger", true)).thenReturn(restConfiguration);
 
-        final Swagger swagger = new Swagger();
+        final Oas20Document swagger = new Oas20Document();
 
         final RestSwaggerComponent component = new RestSwaggerComponent();
         component.setCamelContext(camelContext);
@@ -102,7 +103,7 @@ public class RestSwaggerEndpointTest {
             "When base path is specified in REST configuration and not specified in component the base path should be from the REST configuration")
             .isEqualTo("/rest");
 
-        swagger.basePath("/specification");
+        swagger.basePath = "/specification";
         assertThat(endpoint.determineBasePath(swagger)).as(
             "When base path is specified in the specification it should take precedence the one specified in the REST configuration")
             .isEqualTo("/specification");
@@ -129,8 +130,8 @@ public class RestSwaggerEndpointTest {
             Collections.emptyMap());
         endpoint.setHost("http://petstore.swagger.io");
 
-        final Swagger swagger = new Swagger();
-        final Operation operation = new Operation();
+        final Oas20Document swagger = new Oas20Document();
+        final Oas20Operation operation = new Oas20Operation("get");
 
         assertThat(endpoint.determineEndpointParameters(swagger, operation))
             .containsOnly(entry("host", "http://petstore.swagger.io"));
@@ -139,7 +140,13 @@ public class RestSwaggerEndpointTest {
         assertThat(endpoint.determineEndpointParameters(swagger, operation))
             .containsOnly(entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "xyz"));
 
-        swagger.consumes("application/json").produces("application/xml");
+        List<String> consumers = new ArrayList<String>();
+        consumers.add("application/json");
+        List<String> produces = new ArrayList<String>();
+        produces.add("application/xml");
+        swagger.consumes = consumers;
+        swagger.produces = produces;
+                
         assertThat(endpoint.determineEndpointParameters(swagger, operation)).containsOnly(
             entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "xyz"),
             entry("consumes", "application/xml"), entry("produces", "application/json"));
@@ -161,13 +168,16 @@ public class RestSwaggerEndpointTest {
             entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "zyx"),
             entry("consumes", "application/json"), entry("produces", "application/atom+xml"));
 
-        operation.addParameter(new QueryParameter().name("q").required(true));
+        Oas20Parameter oas20Parameter = new Oas20Parameter("q");
+        oas20Parameter.required = true;
+        operation.addParameter(oas20Parameter);
         assertThat(endpoint.determineEndpointParameters(swagger, operation)).containsOnly(
             entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "zyx"),
             entry("consumes", "application/json"), entry("produces", "application/atom+xml"),
             entry("queryParameters", "q={q}"));
 
-        operation.addParameter(new QueryParameter().name("o"));
+        oas20Parameter = new Oas20Parameter("o");
+        operation.addParameter(oas20Parameter);
         assertThat(endpoint.determineEndpointParameters(swagger, operation)).containsOnly(
             entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "zyx"),
             entry("consumes", "application/json"), entry("produces", "application/atom+xml"),
@@ -211,12 +221,12 @@ public class RestSwaggerEndpointTest {
         final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint("rest-swagger:http://some-uri#getPetById",
             "http://some-uri#getPetById", component, Collections.emptyMap());
 
-        final Swagger swagger = new Swagger();
-        swagger.host("petstore.swagger.io");
+        final Oas20Document swagger = new Oas20Document();
+        swagger.host = "petstore.swagger.io";
 
         assertThat(endpoint.determineHost(swagger)).isEqualTo("http://petstore.swagger.io");
 
-        swagger.schemes(Arrays.asList(Scheme.HTTPS));
+        swagger.schemes = Arrays.asList("https");
         assertThat(endpoint.determineHost(swagger)).isEqualTo("https://petstore.swagger.io");
     }
 
@@ -281,7 +291,7 @@ public class RestSwaggerEndpointTest {
         final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint("petstore:http://specification-uri#getPetById",
             "http://specification-uri#getPetById", component, Collections.emptyMap());
 
-        final Swagger swagger = new Swagger();
+        final Oas20Document swagger = new Oas20Document();
         assertThat(endpoint.determineHost(swagger)).isEqualTo("http://specification-uri");
 
         globalRestConfiguration.setHost("global-rest");
@@ -296,7 +306,8 @@ public class RestSwaggerEndpointTest {
         specificRestConfiguration.setScheme("http");
         assertThat(endpoint.determineHost(swagger)).isEqualTo("http://specific-rest");
 
-        swagger.host("specification").scheme(Scheme.HTTP);
+        swagger.host = "specification";
+        swagger.schemes = Arrays.asList("http");
         assertThat(endpoint.determineHost(swagger)).isEqualTo("http://specification");
 
         component.setHost("http://component");
@@ -317,17 +328,21 @@ public class RestSwaggerEndpointTest {
             Collections.emptyMap());
         endpoint.setHost("http://petstore.swagger.io");
 
-        final Swagger swagger = new Swagger();
-        final ApiKeyAuthDefinition apiKeys = new ApiKeyAuthDefinition("key", In.HEADER);
-        swagger.securityDefinition("apiKeys", apiKeys);
-
-        final Operation operation = new Operation().parameter(new QueryParameter().name("q").required(true));
-        operation.addSecurity("apiKeys", Collections.emptyList());
-
+        final Oas20Document swagger = new Oas20Document();
+        final Oas20SecurityScheme apiKeys = new Oas20SecurityScheme("key");
+        apiKeys.in = "header";
+        swagger.securityDefinitions.addItem("apiKeys", apiKeys);
+        
+        final Oas20Operation operation = new Oas20Operation("get");
+        Oas20Parameter oas20Parameter = (Oas20Parameter)operation.createParameter();
+        oas20Parameter.name = "q";
+        oas20Parameter.required = true;
+        operation.createSecurityRequirement().addSecurityRequirementItem("apiKeys", Collections.emptyList());
+        
         assertThat(endpoint.determineEndpointParameters(swagger, operation))
             .containsOnly(entry("host", "http://petstore.swagger.io"), entry("queryParameters", "q={q}"));
 
-        apiKeys.setIn(In.QUERY);
+        apiKeys.in = "query";
         assertThat(endpoint.determineEndpointParameters(swagger, operation))
             .containsOnly(entry("host", "http://petstore.swagger.io"), entry("queryParameters", "key={key}&q={q}"));
     }
@@ -344,10 +359,10 @@ public class RestSwaggerEndpointTest {
 
     @Test
     public void shouldPickBestScheme() {
-        assertThat(RestSwaggerEndpoint.pickBestScheme("http", Arrays.asList(Scheme.HTTP, Scheme.HTTPS)))
+        assertThat(RestSwaggerEndpoint.pickBestScheme("http", Arrays.asList("http", "https")))
             .isEqualTo("https");
 
-        assertThat(RestSwaggerEndpoint.pickBestScheme("https", Arrays.asList(Scheme.HTTP))).isEqualTo("http");
+        assertThat(RestSwaggerEndpoint.pickBestScheme("https", Arrays.asList("http"))).isEqualTo("http");
 
         assertThat(RestSwaggerEndpoint.pickBestScheme("http", Collections.emptyList())).isEqualTo("http");
 
@@ -372,9 +387,9 @@ public class RestSwaggerEndpointTest {
         endpoint.parameters = new HashMap<>();
         endpoint.parameters.put("param1", "value1");
 
-        final Map<String, Parameter> pathParameters = new HashMap<>();
-        pathParameters.put("param1", new PathParameter().name("param1"));
-        pathParameters.put("param2", new PathParameter().name("param2"));
+        final Map<String, OasParameter> pathParameters = new HashMap<>();
+        pathParameters.put("param1", new Oas20Parameter("param1"));
+        pathParameters.put("param2", new Oas20Parameter("param2"));
 
         assertThat(endpoint.resolveUri("/path", pathParameters)).isEqualTo("/path");
         assertThat(endpoint.resolveUri("/path/{param1}", pathParameters)).isEqualTo("/path/value1");
@@ -391,11 +406,11 @@ public class RestSwaggerEndpointTest {
         endpoint.parameters = new HashMap<>();
         endpoint.parameters.put("param", "va lue");
 
-        final QueryParameter queryParameter = new QueryParameter().name("param");
+        final OasParameter queryParameter = new Oas20Parameter("param");
 
         assertThat(endpoint.literalQueryParameterValue(queryParameter)).isEqualTo("param=va%20lue");
 
-        final PathParameter pathParameter = new PathParameter().name("param");
+        final Oas20Parameter pathParameter = new Oas20Parameter("param");
         assertThat(endpoint.literalPathParameterValue(pathParameter)).isEqualTo("va%20lue");
     }
 
