@@ -57,7 +57,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 
 @RunWith(Parameterized.class)
-public class RestSwaggerComponentTest extends CamelTestSupport {
+public class RestOpenApiComponentTest extends CamelTestSupport {
 
     @ClassRule
     public static WireMockRule petstore = new WireMockRule(wireMockConfig().dynamicPort());
@@ -165,16 +165,16 @@ public class RestSwaggerComponentTest extends CamelTestSupport {
     protected CamelContext createCamelContext() throws Exception {
         final CamelContext camelContext = super.createCamelContext();
 
-        final RestSwaggerComponent component = new RestSwaggerComponent();
+        final RestOpenApiComponent component = new RestOpenApiComponent();
         component.setComponentName(componentName);
         component.setHost("http://localhost:" + petstore.port());
 
         camelContext.addComponent("petStore", component);
 
-        final RestSwaggerComponent altPetStore = new RestSwaggerComponent();
+        final RestOpenApiComponent altPetStore = new RestOpenApiComponent();
         altPetStore.setComponentName(componentName);
         altPetStore.setHost("http://localhost:" + petstore.port());
-        altPetStore.setSpecificationUri(RestSwaggerComponentTest.class.getResource("/alt-petstore.json").toURI());
+        altPetStore.setSpecificationUri(RestOpenApiComponentTest.class.getResource("/alt-petstore.json").toURI());
 
         camelContext.addComponent("altPetStore", altPetStore);
 
@@ -211,7 +211,7 @@ public class RestSwaggerComponentTest extends CamelTestSupport {
     @BeforeClass
     public static void setupStubs() throws IOException, URISyntaxException {
         petstore.stubFor(get(urlEqualTo("/swagger.json")).willReturn(aResponse().withBody(
-            Files.readAllBytes(Paths.get(RestSwaggerComponentTest.class.getResource("/swagger.json").toURI())))));
+            Files.readAllBytes(Paths.get(RestOpenApiComponentTest.class.getResource("/swagger.json").toURI())))));
 
         petstore.stubFor(post(urlEqualTo("/v2/pet"))
             .withRequestBody(equalTo(

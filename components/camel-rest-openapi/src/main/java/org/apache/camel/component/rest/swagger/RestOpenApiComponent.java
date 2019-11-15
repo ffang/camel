@@ -28,8 +28,8 @@ import org.apache.camel.spi.annotations.Component;
 import org.apache.camel.support.DefaultComponent;
 import org.apache.camel.support.jsse.SSLContextParameters;
 
-import static org.apache.camel.component.rest.swagger.RestSwaggerHelper.isHostParam;
-import static org.apache.camel.component.rest.swagger.RestSwaggerHelper.isMediaRange;
+import static org.apache.camel.component.rest.swagger.RestOpenApiHelper.isHostParam;
+import static org.apache.camel.component.rest.swagger.RestOpenApiHelper.isMediaRange;
 import static org.apache.camel.util.ObjectHelper.notNull;
 import static org.apache.camel.util.StringHelper.notEmpty;
 
@@ -78,10 +78,10 @@ import static org.apache.camel.util.StringHelper.notEmpty;
  * </pre>
  */
 @Component("rest-swagger")
-public final class RestSwaggerComponent extends DefaultComponent implements SSLContextParametersAware {
+public final class RestOpenApiComponent extends DefaultComponent implements SSLContextParametersAware {
     public static final String DEFAULT_BASE_PATH = "/";
 
-    static final URI DEFAULT_SPECIFICATION_URI = URI.create(RestSwaggerComponent.DEFAULT_SPECIFICATION_URI_STR);
+    static final URI DEFAULT_SPECIFICATION_URI = URI.create(RestOpenApiComponent.DEFAULT_SPECIFICATION_URI_STR);
 
     static final String DEFAULT_SPECIFICATION_URI_STR = "swagger.json";
 
@@ -135,16 +135,16 @@ public final class RestSwaggerComponent extends DefaultComponent implements SSLC
         defaultValue = "false")
     private boolean useGlobalSslContextParameters;
 
-    public RestSwaggerComponent() {
+    public RestOpenApiComponent() {
     }
 
-    public RestSwaggerComponent(final CamelContext context) {
+    public RestOpenApiComponent(final CamelContext context) {
         super(context);
     }
 
     @Override
     protected Endpoint createEndpoint(final String uri, final String remaining, final Map<String, Object> parameters) throws Exception {
-        Endpoint endpoint = new RestSwaggerEndpoint(uri, remaining, this, parameters);
+        Endpoint endpoint = new RestOpenApiEndpoint(uri, remaining, this, parameters);
         setProperties(endpoint, parameters);
         return endpoint;
     }

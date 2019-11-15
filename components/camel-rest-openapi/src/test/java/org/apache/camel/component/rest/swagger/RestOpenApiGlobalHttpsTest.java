@@ -18,14 +18,14 @@ package org.apache.camel.component.rest.swagger;
 
 import org.apache.camel.CamelContext;
 
-public class RestSwaggerGlobalHttpsTest extends HttpsTest {
+public class RestOpenApiGlobalHttpsTest extends HttpsTest {
 
     @Override
     protected CamelContext createCamelContext() throws Exception {
         CamelContext camelContext = super.createCamelContext();
         camelContext.setSSLContextParameters(createHttpsParameters(camelContext));
 
-        RestSwaggerComponent component = camelContext.getComponent("petStore", RestSwaggerComponent.class);
+        RestOpenApiComponent component = camelContext.getComponent("petStore", RestOpenApiComponent.class);
         component.setUseGlobalSslContextParameters(true);
 
         return camelContext;

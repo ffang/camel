@@ -28,7 +28,7 @@ import org.junit.runners.Parameterized.Parameters;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(Parameterized.class)
-public class RestSwaggerEndpointUriParsingTest {
+public class RestOpenApiEndpointUriParsingTest {
 
     @Parameter(3)
     public String operationId;
@@ -44,9 +44,9 @@ public class RestSwaggerEndpointUriParsingTest {
 
     @Test
     public void shouldParseEndpointUri() {
-        final RestSwaggerComponent component = new RestSwaggerComponent();
+        final RestOpenApiComponent component = new RestOpenApiComponent();
 
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint(specificationUri, remaining, component,
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint(specificationUri, remaining, component,
             Collections.emptyMap());
 
         assertThat(endpoint.getSpecificationUri().toString()).isEqualTo(specificationUri);

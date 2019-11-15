@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class RestSwaggerEndpointTest {
+public class RestOpenApiEndpointTest {
 
     URI componentJsonUri = URI.create("component.json");
 
@@ -53,9 +53,9 @@ public class RestSwaggerEndpointTest {
         final CamelContext camelContext = mock(CamelContext.class);
         when(camelContext.getClassResolver()).thenReturn(new DefaultClassResolver());
 
-        final RestSwaggerComponent component = new RestSwaggerComponent(camelContext);
+        final RestOpenApiComponent component = new RestOpenApiComponent(camelContext);
 
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint("rest-swagger:unknown", "unknown", component,
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:unknown", "unknown", component,
             Collections.emptyMap());
 
         endpoint.createProducer();
@@ -63,7 +63,7 @@ public class RestSwaggerEndpointTest {
 
     @Test
     public void shouldComputeQueryParameters() {
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint();
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint();
         endpoint.parameters = new HashMap<>();
         endpoint.parameters.put("literal", "value");
         assertThat(endpoint.queryParameter(new Oas20Parameter())).isEqualTo("");
@@ -75,10 +75,10 @@ public class RestSwaggerEndpointTest {
     public void shouldCreateQueryParameterExpressions() {
         Oas20Parameter oas20Parameter = new Oas20Parameter("q");
         oas20Parameter.required = true;
-        assertThat(RestSwaggerEndpoint.queryParameterExpression(oas20Parameter))
+        assertThat(RestOpenApiEndpoint.queryParameterExpression(oas20Parameter))
             .isEqualTo("q={q}");
         oas20Parameter.required = false;
-        assertThat(RestSwaggerEndpoint.queryParameterExpression(oas20Parameter))
+        assertThat(RestOpenApiEndpoint.queryParameterExpression(oas20Parameter))
             .isEqualTo("q={q?}");
     }
 
@@ -91,9 +91,9 @@ public class RestSwaggerEndpointTest {
 
         final Oas20Document swagger = new Oas20Document();
 
-        final RestSwaggerComponent component = new RestSwaggerComponent();
+        final RestOpenApiComponent component = new RestOpenApiComponent();
         component.setCamelContext(camelContext);
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint("rest-swagger:getPetById", "getPetById", component,
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:getPetById", "getPetById", component,
             Collections.emptyMap());
 
         assertThat(endpoint.determineBasePath(swagger))
@@ -125,10 +125,10 @@ public class RestSwaggerEndpointTest {
     public void shouldDetermineEndpointParameters() {
         final CamelContext camelContext = mock(CamelContext.class);
 
-        final RestSwaggerComponent component = new RestSwaggerComponent();
+        final RestOpenApiComponent component = new RestOpenApiComponent();
         component.setCamelContext(camelContext);
 
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint("uri", "remaining", component,
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("uri", "remaining", component,
             Collections.emptyMap());
         endpoint.setHost("http://petstore.swagger.io");
 
@@ -191,39 +191,39 @@ public class RestSwaggerEndpointTest {
 
     @Test
     public void shouldDetermineHostFromRestConfiguration() {
-        assertThat(RestSwaggerEndpoint.hostFrom(null)).isNull();
+        assertThat(RestOpenApiEndpoint.hostFrom(null)).isNull();
 
         final RestConfiguration configuration = new RestConfiguration();
-        assertThat(RestSwaggerEndpoint.hostFrom(configuration)).isNull();
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isNull();
 
         configuration.setScheme("ftp");
-        assertThat(RestSwaggerEndpoint.hostFrom(configuration)).isNull();
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isNull();
 
         configuration.setScheme("http");
-        assertThat(RestSwaggerEndpoint.hostFrom(configuration)).isNull();
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isNull();
 
         configuration.setHost("petstore.swagger.io");
-        assertThat(RestSwaggerEndpoint.hostFrom(configuration)).isEqualTo("http://petstore.swagger.io");
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("http://petstore.swagger.io");
 
         configuration.setPort(80);
-        assertThat(RestSwaggerEndpoint.hostFrom(configuration)).isEqualTo("http://petstore.swagger.io");
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("http://petstore.swagger.io");
 
         configuration.setPort(8080);
-        assertThat(RestSwaggerEndpoint.hostFrom(configuration)).isEqualTo("http://petstore.swagger.io:8080");
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("http://petstore.swagger.io:8080");
 
         configuration.setScheme("https");
         configuration.setPort(80);
-        assertThat(RestSwaggerEndpoint.hostFrom(configuration)).isEqualTo("https://petstore.swagger.io:80");
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("https://petstore.swagger.io:80");
 
         configuration.setPort(443);
-        assertThat(RestSwaggerEndpoint.hostFrom(configuration)).isEqualTo("https://petstore.swagger.io");
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("https://petstore.swagger.io");
     }
 
     @Test
     public void shouldDetermineHostFromSpecification() {
-        final RestSwaggerComponent component = new RestSwaggerComponent();
+        final RestOpenApiComponent component = new RestOpenApiComponent();
 
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint("rest-swagger:http://some-uri#getPetById",
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:http://some-uri#getPetById",
             "http://some-uri#getPetById", component, Collections.emptyMap());
 
         final Oas20Document swagger = new Oas20Document();
@@ -237,31 +237,31 @@ public class RestSwaggerEndpointTest {
 
     @Test
     public void shouldDetermineOptions() {
-        assertThat(RestSwaggerEndpoint.determineOption(null, null, null, null)).isNull();
+        assertThat(RestOpenApiEndpoint.determineOption(null, null, null, null)).isNull();
 
-        assertThat(RestSwaggerEndpoint.determineOption(Collections.emptyList(), Collections.emptyList(), "", ""))
+        assertThat(RestOpenApiEndpoint.determineOption(Collections.emptyList(), Collections.emptyList(), "", ""))
             .isNull();
 
-        assertThat(RestSwaggerEndpoint.determineOption(Arrays.asList("specification"), null, null, null))
+        assertThat(RestOpenApiEndpoint.determineOption(Arrays.asList("specification"), null, null, null))
             .isEqualTo("specification");
 
         assertThat(
-            RestSwaggerEndpoint.determineOption(Arrays.asList("specification"), Arrays.asList("operation"), null, null))
+            RestOpenApiEndpoint.determineOption(Arrays.asList("specification"), Arrays.asList("operation"), null, null))
                 .isEqualTo("operation");
 
-        assertThat(RestSwaggerEndpoint.determineOption(Arrays.asList("specification"), Arrays.asList("operation"),
+        assertThat(RestOpenApiEndpoint.determineOption(Arrays.asList("specification"), Arrays.asList("operation"),
             "component", null)).isEqualTo("component");
 
-        assertThat(RestSwaggerEndpoint.determineOption(Arrays.asList("specification"), Arrays.asList("operation"),
+        assertThat(RestOpenApiEndpoint.determineOption(Arrays.asList("specification"), Arrays.asList("operation"),
             "component", "operation")).isEqualTo("operation");
     }
 
     @Test
     public void shouldHonourComponentSpecificationPathProperty() throws Exception {
-        final RestSwaggerComponent component = new RestSwaggerComponent();
+        final RestOpenApiComponent component = new RestOpenApiComponent();
         component.setSpecificationUri(componentJsonUri);
 
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint("rest-swagger:getPetById", "getPetById", component,
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:getPetById", "getPetById", component,
             Collections.emptyMap());
 
         assertThat(endpoint.getSpecificationUri()).isEqualTo(componentJsonUri);
@@ -269,10 +269,10 @@ public class RestSwaggerEndpointTest {
 
     @Test
     public void shouldHonourEndpointUriPathSpecificationPathProperty() throws Exception {
-        final RestSwaggerComponent component = new RestSwaggerComponent();
+        final RestOpenApiComponent component = new RestOpenApiComponent();
         component.setSpecificationUri(componentJsonUri);
 
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint("rest-swagger:endpoint.json#getPetById",
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:endpoint.json#getPetById",
             "endpoint.json#getPetById", component, Collections.emptyMap());
 
         assertThat(endpoint.getSpecificationUri()).isEqualTo(endpointUri);
@@ -290,10 +290,10 @@ public class RestSwaggerEndpointTest {
         when(camelContext.getRestConfiguration("rest-swagger", false)).thenReturn(componentRestConfiguration);
         when(camelContext.getRestConfiguration("petstore", false)).thenReturn(specificRestConfiguration);
 
-        final RestSwaggerComponent component = new RestSwaggerComponent();
+        final RestOpenApiComponent component = new RestOpenApiComponent();
         component.setCamelContext(camelContext);
 
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint("petstore:http://specification-uri#getPetById",
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("petstore:http://specification-uri#getPetById",
             "http://specification-uri#getPetById", component, Collections.emptyMap());
 
         final Oas20Document swagger = new Oas20Document();
@@ -326,10 +326,10 @@ public class RestSwaggerEndpointTest {
     public void shouldIncludeApiKeysQueryParameters() {
         final CamelContext camelContext = mock(CamelContext.class);
 
-        final RestSwaggerComponent component = new RestSwaggerComponent();
+        final RestOpenApiComponent component = new RestOpenApiComponent();
         component.setCamelContext(camelContext);
 
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint("uri", "remaining", component,
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("uri", "remaining", component,
             Collections.emptyMap());
         endpoint.setHost("http://petstore.swagger.io");
 
@@ -364,24 +364,24 @@ public class RestSwaggerEndpointTest {
         when(camelContext.getClassResolver()).thenReturn(new DefaultClassResolver());
 
         assertThat(
-            RestSwaggerEndpoint.loadSpecificationFrom(camelContext, RestSwaggerComponent.DEFAULT_SPECIFICATION_URI))
+            RestOpenApiEndpoint.loadSpecificationFrom(camelContext, RestOpenApiComponent.DEFAULT_SPECIFICATION_URI))
                 .isNotNull();
     }
 
     @Test
     public void shouldPickBestScheme() {
-        assertThat(RestSwaggerEndpoint.pickBestScheme("http", Arrays.asList("http", "https")))
+        assertThat(RestOpenApiEndpoint.pickBestScheme("http", Arrays.asList("http", "https")))
             .isEqualTo("https");
 
-        assertThat(RestSwaggerEndpoint.pickBestScheme("https", Arrays.asList("http"))).isEqualTo("http");
+        assertThat(RestOpenApiEndpoint.pickBestScheme("https", Arrays.asList("http"))).isEqualTo("http");
 
-        assertThat(RestSwaggerEndpoint.pickBestScheme("http", Collections.emptyList())).isEqualTo("http");
+        assertThat(RestOpenApiEndpoint.pickBestScheme("http", Collections.emptyList())).isEqualTo("http");
 
-        assertThat(RestSwaggerEndpoint.pickBestScheme("http", null)).isEqualTo("http");
+        assertThat(RestOpenApiEndpoint.pickBestScheme("http", null)).isEqualTo("http");
 
-        assertThat(RestSwaggerEndpoint.pickBestScheme(null, Collections.emptyList())).isNull();
+        assertThat(RestOpenApiEndpoint.pickBestScheme(null, Collections.emptyList())).isNull();
 
-        assertThat(RestSwaggerEndpoint.pickBestScheme(null, null)).isNull();
+        assertThat(RestOpenApiEndpoint.pickBestScheme(null, null)).isNull();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -389,12 +389,12 @@ public class RestSwaggerEndpointTest {
         final CamelContext camelContext = mock(CamelContext.class);
         when(camelContext.getClassResolver()).thenReturn(new DefaultClassResolver());
 
-        RestSwaggerEndpoint.loadSpecificationFrom(camelContext, URI.create("non-existant.json"));
+        RestOpenApiEndpoint.loadSpecificationFrom(camelContext, URI.create("non-existant.json"));
     }
 
     @Test
     public void shouldResolveUris() {
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint();
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint();
         endpoint.parameters = new HashMap<>();
         endpoint.parameters.put("param1", "value1");
 
@@ -413,7 +413,7 @@ public class RestSwaggerEndpointTest {
 
     @Test
     public void shouldSerializeGivenLiteralValues() {
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint();
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint();
         endpoint.parameters = new HashMap<>();
         endpoint.parameters.put("param", "va lue");
 
@@ -427,22 +427,22 @@ public class RestSwaggerEndpointTest {
 
     @Test
     public void shouldUseDefaultSpecificationUri() throws Exception {
-        final RestSwaggerComponent component = new RestSwaggerComponent();
+        final RestOpenApiComponent component = new RestOpenApiComponent();
 
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint("rest-swagger:getPetById", "getPetById", component,
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:getPetById", "getPetById", component,
             Collections.emptyMap());
 
-        assertThat(endpoint.getSpecificationUri()).isEqualTo(RestSwaggerComponent.DEFAULT_SPECIFICATION_URI);
+        assertThat(endpoint.getSpecificationUri()).isEqualTo(RestOpenApiComponent.DEFAULT_SPECIFICATION_URI);
     }
 
     @Test
     public void shouldUseDefaultSpecificationUriEvenIfHashIsPresent() throws Exception {
-        final RestSwaggerComponent component = new RestSwaggerComponent();
+        final RestOpenApiComponent component = new RestOpenApiComponent();
 
-        final RestSwaggerEndpoint endpoint = new RestSwaggerEndpoint("rest-swagger:#getPetById", "#getPetById",
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:#getPetById", "#getPetById",
             component, Collections.emptyMap());
 
-        assertThat(endpoint.getSpecificationUri()).isEqualTo(RestSwaggerComponent.DEFAULT_SPECIFICATION_URI);
+        assertThat(endpoint.getSpecificationUri()).isEqualTo(RestOpenApiComponent.DEFAULT_SPECIFICATION_URI);
     }
 
 }

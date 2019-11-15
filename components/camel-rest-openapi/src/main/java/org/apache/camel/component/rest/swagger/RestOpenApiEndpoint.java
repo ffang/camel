@@ -76,8 +76,8 @@ import io.apicurio.datamodels.openapi.v3.models.Oas30Operation;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Response;
 import io.apicurio.datamodels.openapi.v3.models.Oas30SecurityScheme;
 
-import static org.apache.camel.component.rest.swagger.RestSwaggerHelper.isHostParam;
-import static org.apache.camel.component.rest.swagger.RestSwaggerHelper.isMediaRange;
+import static org.apache.camel.component.rest.swagger.RestOpenApiHelper.isHostParam;
+import static org.apache.camel.component.rest.swagger.RestOpenApiHelper.isMediaRange;
 import static org.apache.camel.util.ObjectHelper.isNotEmpty;
 import static org.apache.camel.util.ObjectHelper.notNull;
 import static org.apache.camel.util.StringHelper.after;
@@ -89,7 +89,7 @@ import static org.apache.camel.util.StringHelper.notEmpty;
  */
 @UriEndpoint(firstVersion = "2.19.0", scheme = "rest-swagger", title = "REST Swagger",
     syntax = "rest-swagger:specificationUri#operationId", label = "rest,swagger,http", producerOnly = true)
-public final class RestSwaggerEndpoint extends DefaultEndpoint {
+public final class RestOpenApiEndpoint extends DefaultEndpoint {
 
     /**
      * Remaining parameters specified in the Endpoint URI.
@@ -145,15 +145,15 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
         + " Support for https is limited to using the JDK installed UrlHandler, and as such it can be cumbersome to setup"
         + " TLS/SSL certificates for https (such as setting a number of javax.net.ssl JVM system properties)."
         + " How to do that consult the JDK documentation for UrlHandler.",
-        defaultValue = RestSwaggerComponent.DEFAULT_SPECIFICATION_URI_STR,
+        defaultValue = RestOpenApiComponent.DEFAULT_SPECIFICATION_URI_STR,
         defaultValueNote = "By default loads `swagger.json` file", label = "producer")
-    private URI specificationUri = RestSwaggerComponent.DEFAULT_SPECIFICATION_URI;
+    private URI specificationUri = RestOpenApiComponent.DEFAULT_SPECIFICATION_URI;
 
-    public RestSwaggerEndpoint() {
+    public RestOpenApiEndpoint() {
         // help tooling instantiate endpoint
     }
 
-    public RestSwaggerEndpoint(final String uri, final String remaining, final RestSwaggerComponent component,
+    public RestOpenApiEndpoint(final String uri, final String remaining, final RestOpenApiComponent component,
         final Map<String, Object> parameters) {
         super(notEmpty(uri, "uri"), notNull(component, "component"));
         this.parameters = parameters;
@@ -163,7 +163,7 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
         final URI componentSpecificationUri = component.getSpecificationUri();
 
         specificationUri = before(remaining, "#", StringHelper::trimToNull).map(URI::create)
-            .orElse(ofNullable(componentSpecificationUri).orElse(RestSwaggerComponent.DEFAULT_SPECIFICATION_URI));
+            .orElse(ofNullable(componentSpecificationUri).orElse(RestOpenApiComponent.DEFAULT_SPECIFICATION_URI));
 
         operationId = ofNullable(after(remaining, "#")).orElse(remaining);
 
@@ -305,8 +305,8 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
         this.specificationUri = notNull(specificationUri, "specificationUri");
     }
 
-    RestSwaggerComponent component() {
-        return (RestSwaggerComponent) getComponent();
+    RestOpenApiComponent component() {
+        return (RestOpenApiComponent) getComponent();
     }
 
     Producer createProducerFor(final Document swagger, final OasOperation operation, final String method,
@@ -330,7 +330,7 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
 
         // if there is a host then we should use this hardcoded host instead of any Header that may have an existing
         // Host header from some other HTTP input, and if so then lets remove it
-        return new RestSwaggerProducer(endpoint.createAsyncProducer(), hasHost);
+        return new RestOpenApiProducer(endpoint.createAsyncProducer(), hasHost);
     }
 
     String determineBasePath(final Document swagger) {
@@ -365,7 +365,7 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
             return restConfigurationBasePath;
         }
 
-        return RestSwaggerComponent.DEFAULT_BASE_PATH;
+        return RestOpenApiComponent.DEFAULT_BASE_PATH;
     }
 
     String determineComponentName() {
@@ -385,7 +385,7 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
             parameters.put("host", host);
         }
 
-        final RestSwaggerComponent component = component();
+        final RestOpenApiComponent component = component();
 
         // what we consume is what the API defined by Swagger specification
         // produces

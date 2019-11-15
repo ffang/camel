@@ -24,12 +24,12 @@ import org.apache.camel.Endpoint;
 import org.apache.camel.Exchange;
 import org.apache.camel.support.processor.DelegateAsyncProcessor;
 
-public class RestSwaggerProducer extends DelegateAsyncProcessor implements AsyncProducer {
+public class RestOpenApiProducer extends DelegateAsyncProcessor implements AsyncProducer {
 
     private final AsyncProducer delegate;
     private final boolean removeHostHeader;
 
-    public RestSwaggerProducer(AsyncProducer delegate, boolean removeHostHeader) {
+    public RestOpenApiProducer(AsyncProducer delegate, boolean removeHostHeader) {
         super(delegate);
         this.delegate = delegate;
         this.removeHostHeader = removeHostHeader;

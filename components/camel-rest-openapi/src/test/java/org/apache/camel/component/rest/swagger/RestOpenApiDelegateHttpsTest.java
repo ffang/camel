@@ -25,7 +25,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class RestSwaggerDelegateHttpsTest extends HttpsTest {
+public class RestOpenApiDelegateHttpsTest extends HttpsTest {
 
     @Override
     protected CamelContext createCamelContext() throws Exception {

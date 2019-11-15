@@ -20,31 +20,31 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RestSwaggerHelperTest {
+public class RestOpenApiHelperTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void emptyHostParamsAreNotAllowed() {
-        RestSwaggerHelper.isHostParam("");
+        RestOpenApiHelper.isHostParam("");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void nonUriHostParametersAreNotAllowed() {
-        RestSwaggerHelper.isHostParam("carrot");
+        RestOpenApiHelper.isHostParam("carrot");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void nullHostParamsAreNotAllowed() {
-        RestSwaggerHelper.isHostParam(null);
+        RestOpenApiHelper.isHostParam(null);
     }
 
     @Test
     public void shouldNiceify() {
-        assertThat(RestSwaggerHelper.isHostParam("http://api.example.com")).isEqualTo("http://api.example.com");
+        assertThat(RestOpenApiHelper.isHostParam("http://api.example.com")).isEqualTo("http://api.example.com");
     }
 
     @Test
     public void shouldReturnUriParameter() {
-        assertThat(RestSwaggerHelper.isHostParam("http://api.example.com")).isEqualTo("http://api.example.com");
+        assertThat(RestOpenApiHelper.isHostParam("http://api.example.com")).isEqualTo("http://api.example.com");
     }
 
 }

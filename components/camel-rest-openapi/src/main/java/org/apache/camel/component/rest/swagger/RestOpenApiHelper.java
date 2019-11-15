@@ -23,11 +23,11 @@ import org.apache.camel.util.StringHelper;
 
 import static org.apache.camel.util.StringHelper.notEmpty;
 
-final class RestSwaggerHelper {
+final class RestOpenApiHelper {
 
     private static final Pattern HOST_PATTERN = Pattern.compile("https?://[^:]+(:\\d+)?", Pattern.CASE_INSENSITIVE);
 
-    private RestSwaggerHelper() {
+    private RestOpenApiHelper() {
         // utility class
     }
 

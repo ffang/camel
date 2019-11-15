@@ -99,7 +99,7 @@ public abstract class HttpsTest extends CamelTestSupport {
     protected CamelContext createCamelContext() throws Exception {
         final CamelContext camelContext = super.createCamelContext();
 
-        final RestSwaggerComponent component = new RestSwaggerComponent();
+        final RestOpenApiComponent component = new RestOpenApiComponent();
         component.setComponentName(componentName);
         component.setHost("https://localhost:" + petstore.httpsPort());
 
@@ -139,7 +139,7 @@ public abstract class HttpsTest extends CamelTestSupport {
     @BeforeClass
     public static void setupStubs() throws IOException, URISyntaxException {
         petstore.stubFor(get(urlEqualTo("/swagger.json")).willReturn(aResponse().withBody(
-            Files.readAllBytes(Paths.get(RestSwaggerGlobalHttpsTest.class.getResource("/swagger.json").toURI())))));
+            Files.readAllBytes(Paths.get(RestOpenApiGlobalHttpsTest.class.getResource("/swagger.json").toURI())))));
 
         petstore.stubFor(
             get(urlEqualTo("/v2/pet/14")).willReturn(aResponse().withStatus(HttpURLConnection.HTTP_OK).withBody(
