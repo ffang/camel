@@ -343,7 +343,12 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
             return componentBasePath;
         }
 
-        final String specificationBasePath = "";// TODO swagger.getBasePath();
+        final String specificationBasePath;
+        if (swagger instanceof Oas20Document) {
+            specificationBasePath = ((Oas20Document)swagger).basePath;
+        } else {
+            specificationBasePath = "";
+        } 
         if (isNotEmpty(specificationBasePath)) {
             return specificationBasePath;
         }
@@ -483,6 +488,14 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
         if (isNotEmpty(swaggerScheme) && isNotEmpty(swaggerHost)) {
             return swaggerScheme + "://" + swaggerHost;
         }*/
+        if (swagger instanceof Oas20Document) {
+            final String swaggerScheme = pickBestScheme(specificationUri.getScheme(), ((Oas20Document)swagger).schemes);
+            final String swaggerHost = ((Oas20Document)swagger).host;
+
+            if (isNotEmpty(swaggerScheme) && isNotEmpty(swaggerHost)) {
+                return swaggerScheme + "://" + swaggerHost;
+            }
+        }
 
         final CamelContext camelContext = getCamelContext();
 
@@ -627,7 +640,8 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
                     for (final String securityRequirementName : securityRequirement.getSecurityRequirementNames()) {
                         final Oas20SecurityScheme securitySchemeDefinition = securityDefinitions
                             .getSecurityScheme(securityRequirementName);
-                        if (securitySchemeDefinition.in.equals("query")) {
+                        if (securitySchemeDefinition.in != null 
+                            && securitySchemeDefinition.in.equals("query")) {
                             Oas20Parameter securityParameter = new Oas20Parameter(securitySchemeDefinition.name);
                             securityParameter.required = true;
                             securityParameter.type = "string";
