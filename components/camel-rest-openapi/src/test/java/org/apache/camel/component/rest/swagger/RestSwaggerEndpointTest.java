@@ -30,6 +30,7 @@ import org.apache.camel.impl.engine.DefaultClassResolver;
 import org.apache.camel.spi.RestConfiguration;
 import org.junit.Test;
 
+import io.apicurio.datamodels.core.models.common.SecurityRequirement;
 import io.apicurio.datamodels.openapi.models.OasParameter;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Operation;
@@ -76,6 +77,7 @@ public class RestSwaggerEndpointTest {
         oas20Parameter.required = true;
         assertThat(RestSwaggerEndpoint.queryParameterExpression(oas20Parameter))
             .isEqualTo("q={q}");
+        oas20Parameter.required = false;
         assertThat(RestSwaggerEndpoint.queryParameterExpression(oas20Parameter))
             .isEqualTo("q={q?}");
     }
@@ -132,9 +134,10 @@ public class RestSwaggerEndpointTest {
 
         final Oas20Document swagger = new Oas20Document();
         final Oas20Operation operation = new Oas20Operation("get");
-
+        operation.createParameter();
         assertThat(endpoint.determineEndpointParameters(swagger, operation))
             .containsOnly(entry("host", "http://petstore.swagger.io"));
+        
 
         component.setComponentName("xyz");
         assertThat(endpoint.determineEndpointParameters(swagger, operation))
@@ -169,6 +172,7 @@ public class RestSwaggerEndpointTest {
             entry("consumes", "application/json"), entry("produces", "application/atom+xml"));
 
         Oas20Parameter oas20Parameter = new Oas20Parameter("q");
+        oas20Parameter.in = "query";
         oas20Parameter.required = true;
         operation.addParameter(oas20Parameter);
         assertThat(endpoint.determineEndpointParameters(swagger, operation)).containsOnly(
@@ -177,6 +181,7 @@ public class RestSwaggerEndpointTest {
             entry("queryParameters", "q={q}"));
 
         oas20Parameter = new Oas20Parameter("o");
+        oas20Parameter.in = "query";
         operation.addParameter(oas20Parameter);
         assertThat(endpoint.determineEndpointParameters(swagger, operation)).containsOnly(
             entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "zyx"),
@@ -330,14 +335,20 @@ public class RestSwaggerEndpointTest {
 
         final Oas20Document swagger = new Oas20Document();
         final Oas20SecurityScheme apiKeys = new Oas20SecurityScheme("key");
+        apiKeys.name = "key";
         apiKeys.in = "header";
+        swagger.securityDefinitions = swagger.createSecurityDefinitions();
         swagger.securityDefinitions.addItem("apiKeys", apiKeys);
         
         final Oas20Operation operation = new Oas20Operation("get");
-        Oas20Parameter oas20Parameter = (Oas20Parameter)operation.createParameter();
-        oas20Parameter.name = "q";
+        Oas20Parameter oas20Parameter = new Oas20Parameter("q");
+        oas20Parameter.in = "query";
         oas20Parameter.required = true;
-        operation.createSecurityRequirement().addSecurityRequirementItem("apiKeys", Collections.emptyList());
+        operation.addParameter(oas20Parameter);
+        SecurityRequirement securityRequirement =  operation.createSecurityRequirement();
+        securityRequirement.addSecurityRequirementItem("apiKeys", Collections.emptyList());
+        operation.addSecurityRequirement(securityRequirement);
+        
         
         assertThat(endpoint.determineEndpointParameters(swagger, operation))
             .containsOnly(entry("host", "http://petstore.swagger.io"), entry("queryParameters", "q={q}"));

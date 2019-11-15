@@ -673,8 +673,12 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
             
         }
 
-        return Stream.concat(apiKeyQueryParameters.stream(),
-            operation.getParameters().stream().filter(p -> "query".equals(p.in)));
+        if (operation.getParameters() != null) {
+            return Stream.concat(apiKeyQueryParameters.stream(),
+                                 operation.getParameters().stream().filter(p -> "query".equals(p.in)));
+        } else {
+            return apiKeyQueryParameters.stream();
+        }
     }
 
     static String hostFrom(final RestConfiguration restConfiguration) {
@@ -753,7 +757,7 @@ public final class RestSwaggerEndpoint extends DefaultEndpoint {
         final String name = parameter.getName();
 
         final StringBuilder expression = new StringBuilder(name).append("={").append(name);
-        if (!parameter.required) {
+        if (parameter.required == null || !parameter.required) {
             expression.append('?');
         }
         expression.append('}');
