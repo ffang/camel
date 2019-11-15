@@ -14,11 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.camel.component.rest.swagger;
+package org.apache.camel.component.rest.openapi;
 
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.apache.camel.component.rest.openapi.RestOpenApiHelper;
 
 public class RestOpenApiHelperTest {
 

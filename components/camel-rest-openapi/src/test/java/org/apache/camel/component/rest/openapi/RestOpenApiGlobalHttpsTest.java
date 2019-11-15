@@ -14,31 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.camel.component.rest.swagger;
+package org.apache.camel.component.rest.openapi;
 
 import org.apache.camel.CamelContext;
-import org.apache.camel.Component;
-import org.apache.camel.ExtendedCamelContext;
-import org.apache.camel.impl.DefaultCamelContext;
-import org.apache.camel.spi.BeanIntrospection;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.apache.camel.component.rest.openapi.RestOpenApiComponent;
 
-@RunWith(Parameterized.class)
-public class RestOpenApiDelegateHttpsTest extends HttpsTest {
+public class RestOpenApiGlobalHttpsTest extends HttpsTest {
 
     @Override
     protected CamelContext createCamelContext() throws Exception {
-        final CamelContext camelContext = super.createCamelContext();
+        CamelContext camelContext = super.createCamelContext();
+        camelContext.setSSLContextParameters(createHttpsParameters(camelContext));
 
-        final Component delegate = ((DefaultCamelContext) camelContext).getComponentResolver()
-            .resolveComponent(componentName, camelContext);
-
-        BeanIntrospection beanIntrospection = camelContext.adapt(ExtendedCamelContext.class).getBeanIntrospection();
-        beanIntrospection.setProperty(camelContext, delegate, "sslContextParameters", createHttpsParameters(camelContext));
-        camelContext.addComponent(componentName, delegate);
+        RestOpenApiComponent component = camelContext.getComponent("petStore", RestOpenApiComponent.class);
+        component.setUseGlobalSslContextParameters(true);
 
         return camelContext;
     }
-
 }

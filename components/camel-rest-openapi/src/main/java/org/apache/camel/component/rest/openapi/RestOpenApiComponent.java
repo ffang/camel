@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.camel.component.rest.swagger;
+package org.apache.camel.component.rest.openapi;
 
 import java.net.URI;
 import java.util.Map;
@@ -28,8 +28,8 @@ import org.apache.camel.spi.annotations.Component;
 import org.apache.camel.support.DefaultComponent;
 import org.apache.camel.support.jsse.SSLContextParameters;
 
-import static org.apache.camel.component.rest.swagger.RestOpenApiHelper.isHostParam;
-import static org.apache.camel.component.rest.swagger.RestOpenApiHelper.isMediaRange;
+import static org.apache.camel.component.rest.openapi.RestOpenApiHelper.isHostParam;
+import static org.apache.camel.component.rest.openapi.RestOpenApiHelper.isMediaRange;
 import static org.apache.camel.util.ObjectHelper.notNull;
 import static org.apache.camel.util.StringHelper.notEmpty;
 

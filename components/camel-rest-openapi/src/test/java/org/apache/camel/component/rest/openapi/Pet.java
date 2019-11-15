@@ -14,20 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.camel.component.rest.swagger;
+package org.apache.camel.component.rest.openapi;
 
-import java.util.List;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "pets")
-@XmlAccessorType(XmlAccessType.FIELD)
-public class Pets {
+@XmlRootElement(name = "Pet")
+public class Pet {
 
-    @XmlElement(name = "Pet")
-    public List<Pet> pets;
+    public Integer id;
+
+    public String name;
 
 }

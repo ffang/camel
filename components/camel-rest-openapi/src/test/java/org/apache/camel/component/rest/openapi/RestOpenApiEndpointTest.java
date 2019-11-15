@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.camel.component.rest.swagger;
+package org.apache.camel.component.rest.openapi;
 
 import java.io.IOException;
 import java.net.URI;
@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.camel.CamelContext;
+import org.apache.camel.component.rest.openapi.RestOpenApiComponent;
+import org.apache.camel.component.rest.openapi.RestOpenApiEndpoint;
 import org.apache.camel.impl.engine.DefaultClassResolver;
 import org.apache.camel.spi.RestConfiguration;
 import org.junit.Test;

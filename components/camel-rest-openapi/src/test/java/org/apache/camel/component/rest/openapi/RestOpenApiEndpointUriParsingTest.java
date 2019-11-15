@@ -14,10 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.camel.component.rest.swagger;
+package org.apache.camel.component.rest.openapi;
 
 import java.util.Arrays;
 import java.util.Collections;
+
+import org.apache.camel.component.rest.openapi.RestOpenApiComponent;
+import org.apache.camel.component.rest.openapi.RestOpenApiEndpoint;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
