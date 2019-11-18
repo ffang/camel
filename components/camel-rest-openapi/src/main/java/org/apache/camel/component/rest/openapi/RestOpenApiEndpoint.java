@@ -85,9 +85,9 @@ import static org.apache.camel.util.StringHelper.before;
 import static org.apache.camel.util.StringHelper.notEmpty;
 
 /**
- * An awesome REST endpoint backed by Swagger specifications.
+ * An awesome REST endpoint backed by OpenApi specifications.
  */
-@UriEndpoint(firstVersion = "2.19.0", scheme = "rest-swagger", title = "REST Swagger",
+@UriEndpoint(firstVersion = "2.19.0", scheme = "rest-swagger", title = "REST OpenApi",
     syntax = "rest-swagger:specificationUri#operationId", label = "rest,swagger,http", producerOnly = true)
 public final class RestOpenApiEndpoint extends DefaultEndpoint {
 
@@ -101,7 +101,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
 
     @UriParam(
         description = "API basePath, for example \"`/v2`\". Default is unset, if set overrides the value present in"
-            + " Swagger specification and in the component configuration.",
+            + " OpenApi specification and in the component configuration.",
         defaultValue = "", label = "producer")
     private String basePath;
 
@@ -114,7 +114,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
     @UriParam(
         description = "What payload type this component capable of consuming. Could be one type, like `application/json`"
             + " or multiple types as `application/json, application/xml; q=0.5` according to the RFC7231. This equates"
-            + " to the value of `Accept` HTTP header. If set overrides any value found in the Swagger specification and."
+            + " to the value of `Accept` HTTP header. If set overrides any value found in the OpenApi specification and."
             + " in the component configuration",
         label = "producer")
     private String consumes;
@@ -123,25 +123,25 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         + " `http[s]://hostname[:port]`. Can be configured at the endpoint, component or in the corresponding"
         + " REST configuration in the Camel Context. If you give this component a name (e.g. `petstore`) that"
         + " REST configuration is consulted first, `rest-swagger` next, and global configuration last. If set"
-        + " overrides any value found in the Swagger specification, RestConfiguration. Overrides all other "
+        + " overrides any value found in the OpenApi specification, RestConfiguration. Overrides all other "
         + " configuration.", label = "producer")
     private String host;
 
-    @UriPath(description = "ID of the operation from the Swagger specification.", label = "producer")
+    @UriPath(description = "ID of the operation from the OpenApi specification.", label = "producer")
     @Metadata(required = true)
     private String operationId;
 
     @UriParam(description = "What payload type this component is producing. For example `application/json`"
         + " according to the RFC7231. This equates to the value of `Content-Type` HTTP header. If set overrides"
-        + " any value present in the Swagger specification. Overrides all other configuration.", label = "producer")
+        + " any value present in the OpenApi specification. Overrides all other configuration.", label = "producer")
     private String produces;
 
-    @UriPath(description = "Path to the Swagger specification file. The scheme, host base path are taken from this"
+    @UriPath(description = "Path to the OpenApi specification file. The scheme, host base path are taken from this"
         + " specification, but these can be overridden with properties on the component or endpoint level. If not"
         + " given the component tries to load `swagger.json` resource from the classpath. Note that the `host` defined on the"
         + " component and endpoint of this Component should contain the scheme, hostname and optionally the"
         + " port in the URI syntax (i.e. `http://api.example.com:8080`). Overrides component configuration."
-        + " The Swagger specification can be loaded from different sources by prefixing with file: classpath: http: https:."
+        + " The OpenApi specification can be loaded from different sources by prefixing with file: classpath: http: https:."
         + " Support for https is limited to using the JDK installed UrlHandler, and as such it can be cumbersome to setup"
         + " TLS/SSL certificates for https (such as setting a number of javax.net.ssl JVM system properties)."
         + " How to do that consult the JDK documentation for UrlHandler.",
@@ -207,7 +207,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         String supportedOperations = getSupportedOperations(paths);
 
         throw new IllegalArgumentException("The specified operation with ID: `" + operationId
-            + "` cannot be found in the Swagger specification loaded from `" + specificationUri
+            + "` cannot be found in the OpenApi specification loaded from `" + specificationUri
             + "`. Operations defined in the specification are: " + supportedOperations);
     }
 
@@ -387,7 +387,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
 
         final RestOpenApiComponent component = component();
 
-        // what we consume is what the API defined by Swagger specification
+        // what we consume is what the API defined by OpenApi specification
         // produces
         List<String> specificationLevelConsumers = new ArrayList<String>();
         if (swagger instanceof Oas20Document) {
@@ -413,7 +413,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
             parameters.put("consumes", determinedConsumes);
         }
 
-        // what we produce is what the API defined by Swagger specification
+        // what we produce is what the API defined by OpenApi specification
         // consumes
         
         List<String> specificationLevelProducers = new ArrayList<String>();
@@ -530,7 +530,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
 
         final boolean areTheSame = "rest-swagger".equals(assignedComponentName);
 
-        throw new IllegalStateException("Unable to determine destination host for requests. The Swagger specification"
+        throw new IllegalStateException("Unable to determine destination host for requests. The OpenApi specification"
             + " does not specify `scheme` and `host` parameters, the specification URI is not absolute with `http` or"
             + " `https` scheme, and no RestConfigurations configured with `scheme`, `host` and `port` were found for `"
             + (areTheSame ? "rest-swagger` component" : assignedComponentName + "` or `rest-swagger` components")
@@ -704,9 +704,9 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
     }
 
     /**
-     * Loads the Swagger definition model from the given path. Tries to resolve
+     * Loads the OpenApi definition model from the given path. Tries to resolve
      * the resource using Camel's resource loading support, if it fails uses
-     * Swagger's resource loading support instead.
+     * OpenApi's resource loading support instead.
      *
      * @param uri URI of the specification
      * @param camelContext context to use
@@ -725,9 +725,9 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
             return Library.readDocument(node);
         } catch (final Exception e) {
             
-            throw new IllegalArgumentException("The given Swagger specification could not be loaded from `" + uri
-                + "`. Tried loading using Camel's resource resolution and using Swagger's own resource resolution."
-                + " Swagger tends to swallow exceptions while parsing, try specifying Java system property `debugParser`"
+            throw new IllegalArgumentException("The given OpenApi specification could not be loaded from `" + uri
+                + "`. Tried loading using Camel's resource resolution and using OpenApi's own resource resolution."
+                + " OpenApi tends to swallow exceptions while parsing, try specifying Java system property `debugParser`"
                 + " (e.g. `-DdebugParser=true`), the exception that occurred when loading using Camel's resource"
                 + " loader follows", e);
         }

@@ -30,7 +30,7 @@
 
     <artifactId>camel-rest-openapi</artifactId>
 
-    <name>Camel :: REST Swagger</name>
+    <name>Camel :: REST OpenApi</name>
     <description>Camel REST support using OpenApi</description>
 
     <properties>

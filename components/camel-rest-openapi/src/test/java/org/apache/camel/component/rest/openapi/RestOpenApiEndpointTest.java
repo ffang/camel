@@ -114,7 +114,7 @@ public class RestOpenApiEndpointTest {
 
         component.setBasePath("/component");
         assertThat(endpoint.determineBasePath(swagger)).as(
-            "When base path is specified on the component it should take precedence over Swagger specification and REST configuration")
+            "When base path is specified on the component it should take precedence over OpenApi specification and REST configuration")
             .isEqualTo("/component");
 
         endpoint.setBasePath("/endpoint");
@@ -361,7 +361,7 @@ public class RestOpenApiEndpointTest {
     }
 
     @Test
-    public void shouldLoadSwaggerSpecifications() throws IOException {
+    public void shouldLoadOpenApiSpecifications() throws IOException {
         final CamelContext camelContext = mock(CamelContext.class);
         when(camelContext.getClassResolver()).thenReturn(new DefaultClassResolver());
 

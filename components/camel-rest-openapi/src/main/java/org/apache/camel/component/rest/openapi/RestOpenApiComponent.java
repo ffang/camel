@@ -34,10 +34,10 @@ import static org.apache.camel.util.ObjectHelper.notNull;
 import static org.apache.camel.util.StringHelper.notEmpty;
 
 /**
- * An awesome REST component backed by Swagger specifications. Creates endpoints
- * that connect to REST APIs defined by Swagger specification. This component
+ * An awesome REST component backed by OpenApi specifications. Creates endpoints
+ * that connect to REST APIs defined by OpenApi specification. This component
  * delegates to other {@link RestProducerFactory} components to act as REST
- * clients, but it configures them from Swagger specification. Client needs to
+ * clients, but it configures them from OpenApi specification. Client needs to
  * point to operation that it wants to invoke via REST, provide any additional
  * HTTP headers as headers in the Camel message, and any payload as the body of
  * the incoming message.
@@ -68,7 +68,7 @@ import static org.apache.camel.util.StringHelper.notEmpty;
  * Camel context under a meaningful name, for example:
  *
  * <pre>
- * Component petstore = new RestSwaggerComponent();
+ * Component petstore = new RestOpenApiComponent();
  * petstore.setSpecificationUri("http://petstore.swagger.io/v2/swagger.json");
  * petstore.setComponentName("undertow");
  * //...
@@ -86,7 +86,7 @@ public final class RestOpenApiComponent extends DefaultComponent implements SSLC
     static final String DEFAULT_SPECIFICATION_URI_STR = "swagger.json";
 
     @Metadata(
-        description = "API basePath, for example \"`/v2`\". Default is unset, if set overrides the value present in Swagger specification.",
+        description = "API basePath, for example \"`/v2`\". Default is unset, if set overrides the value present in OpenApi specification.",
         defaultValue = "", label = "producer")
     private String basePath = "";
 
@@ -99,7 +99,7 @@ public final class RestOpenApiComponent extends DefaultComponent implements SSLC
     @Metadata(
         description = "What payload type this component capable of consuming. Could be one type, like `application/json`"
             + " or multiple types as `application/json, application/xml; q=0.5` according to the RFC7231. This equates"
-            + " to the value of `Accept` HTTP header. If set overrides any value found in the Swagger specification."
+            + " to the value of `Accept` HTTP header. If set overrides any value found in the OpenApi specification."
             + " Can be overridden in endpoint configuration",
         label = "producer")
     private String consumes;
@@ -108,18 +108,18 @@ public final class RestOpenApiComponent extends DefaultComponent implements SSLC
         + " `http[s]://hostname[:port]`. Can be configured at the endpoint, component or in the corresponding"
         + " REST configuration in the Camel Context. If you give this component a name (e.g. `petstore`) that"
         + " REST configuration is consulted first, `rest-swagger` next, and global configuration last. If set"
-        + " overrides any value found in the Swagger specification, RestConfiguration. Can be overridden in endpoint"
+        + " overrides any value found in the OpenApi specification, RestConfiguration. Can be overridden in endpoint"
         + " configuration.", label = "producer")
     private String host;
 
     @Metadata(
         description = "What payload type this component is producing. For example `application/json`"
             + " according to the RFC7231. This equates to the value of `Content-Type` HTTP header. If set overrides"
-            + " any value present in the Swagger specification. Can be overridden in endpoint configuration.",
+            + " any value present in the OpenApi specification. Can be overridden in endpoint configuration.",
         label = "producer")
     private String produces;
 
-    @Metadata(description = "Path to the Swagger specification file. The scheme, host base path are taken from this"
+    @Metadata(description = "Path to the OpenApi specification file. The scheme, host base path are taken from this"
         + " specification, but these can be overridden with properties on the component or endpoint level. If not"
         + " given the component tries to load `swagger.json` resource. Note that the `host` defined on the"
         + " component and endpoint of this Component should contain the scheme, hostname and optionally the"
