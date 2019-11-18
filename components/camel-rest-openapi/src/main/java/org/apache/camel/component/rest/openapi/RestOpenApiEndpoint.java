@@ -191,9 +191,14 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
                 final Entry<HttpMethod, OasOperation> operationEntry = maybeOperationEntry.get();
 
                 final OasOperation operation = operationEntry.getValue();
-                final Map<String, OasParameter> pathParameters = operation.getParameters().stream()
-                    .filter(p -> "path".equals(p.in))
-                    .collect(Collectors.toMap(OasParameter::getName, Function.identity()));
+                Map<String, OasParameter> pathParameters = null;
+                if (operation.getParameters() != null) {
+                    pathParameters = operation.getParameters().stream()
+                        .filter(p -> "path".equals(p.in))
+                        .collect(Collectors.toMap(OasParameter::getName, Function.identity()));
+                } else {
+                    pathParameters = new HashMap<String, OasParameter>();
+                }
                 final String uriTemplate = resolveUri(path.getPath(), pathParameters);
 
                 final HttpMethod httpMethod = operationEntry.getKey();
@@ -425,9 +430,13 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
             operationLevelProducers = ((Oas20Operation)operation).consumes;
         } else if (operation instanceof Oas30Operation) {
             Oas30Operation oas30Operation = (Oas30Operation)operation;
-            for (String ct : oas30Operation.requestBody.content.keySet()) {
-                operationLevelProducers.add(ct);
+            if (oas30Operation.requestBody != null 
+                && oas30Operation.requestBody.content != null) { 
+                for (String ct : oas30Operation.requestBody.content.keySet()) {
+                    operationLevelProducers.add(ct);
+                }
             }
+                
         }
         
         final String determinedProducers = determineOption(specificationLevelProducers, operationLevelProducers,
@@ -657,7 +666,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
                     for (final String securityRequirementName : securityRequirement.getSecurityRequirementNames()) {
                         final Oas30SecurityScheme securitySchemeDefinition = oas30Document.components
                             .getSecurityScheme(securityRequirementName);
-                        if (securitySchemeDefinition.in.equals("query")) {
+                        if (securitySchemeDefinition.in != null && securitySchemeDefinition.in.equals("query")) {
                             Oas20Parameter securityParameter = new Oas20Parameter(securitySchemeDefinition.name);
                             securityParameter.required = true;
                             securityParameter.type = "string";
