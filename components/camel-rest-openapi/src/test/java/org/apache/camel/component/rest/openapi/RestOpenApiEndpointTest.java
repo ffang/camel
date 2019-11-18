@@ -57,7 +57,7 @@ public class RestOpenApiEndpointTest {
 
         final RestOpenApiComponent component = new RestOpenApiComponent(camelContext);
 
-        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:unknown", "unknown", component,
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-openapi:unknown", "unknown", component,
             Collections.emptyMap());
 
         endpoint.createProducer();
@@ -89,36 +89,36 @@ public class RestOpenApiEndpointTest {
         final RestConfiguration restConfiguration = new RestConfiguration();
 
         final CamelContext camelContext = mock(CamelContext.class);
-        when(camelContext.getRestConfiguration("rest-swagger", true)).thenReturn(restConfiguration);
+        when(camelContext.getRestConfiguration("rest-openapi", true)).thenReturn(restConfiguration);
 
-        final Oas20Document swagger = new Oas20Document();
+        final Oas20Document openapi = new Oas20Document();
 
         final RestOpenApiComponent component = new RestOpenApiComponent();
         component.setCamelContext(camelContext);
-        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:getPetById", "getPetById", component,
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-openapi:getPetById", "getPetById", component,
             Collections.emptyMap());
 
-        assertThat(endpoint.determineBasePath(swagger))
+        assertThat(endpoint.determineBasePath(openapi))
             .as("When no base path is specified on component, endpoint or rest configuration it should default to `/`")
             .isEqualTo("/");
 
         restConfiguration.setContextPath("/rest");
-        assertThat(endpoint.determineBasePath(swagger)).as(
+        assertThat(endpoint.determineBasePath(openapi)).as(
             "When base path is specified in REST configuration and not specified in component the base path should be from the REST configuration")
             .isEqualTo("/rest");
 
-        swagger.basePath = "/specification";
-        assertThat(endpoint.determineBasePath(swagger)).as(
+        openapi.basePath = "/specification";
+        assertThat(endpoint.determineBasePath(openapi)).as(
             "When base path is specified in the specification it should take precedence the one specified in the REST configuration")
             .isEqualTo("/specification");
 
         component.setBasePath("/component");
-        assertThat(endpoint.determineBasePath(swagger)).as(
+        assertThat(endpoint.determineBasePath(openapi)).as(
             "When base path is specified on the component it should take precedence over OpenApi specification and REST configuration")
             .isEqualTo("/component");
 
         endpoint.setBasePath("/endpoint");
-        assertThat(endpoint.determineBasePath(swagger))
+        assertThat(endpoint.determineBasePath(openapi))
             .as("When base path is specified on the endpoint it should take precedence over any other")
             .isEqualTo("/endpoint");
     }
@@ -132,61 +132,61 @@ public class RestOpenApiEndpointTest {
 
         final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("uri", "remaining", component,
             Collections.emptyMap());
-        endpoint.setHost("http://petstore.swagger.io");
+        endpoint.setHost("http://petstore.openapi.io");
 
-        final Oas20Document swagger = new Oas20Document();
+        final Oas20Document openapi = new Oas20Document();
         final Oas20Operation operation = new Oas20Operation("get");
         operation.createParameter();
-        assertThat(endpoint.determineEndpointParameters(swagger, operation))
-            .containsOnly(entry("host", "http://petstore.swagger.io"));
+        assertThat(endpoint.determineEndpointParameters(openapi, operation))
+            .containsOnly(entry("host", "http://petstore.openapi.io"));
         
 
         component.setComponentName("xyz");
-        assertThat(endpoint.determineEndpointParameters(swagger, operation))
-            .containsOnly(entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "xyz"));
+        assertThat(endpoint.determineEndpointParameters(openapi, operation))
+            .containsOnly(entry("host", "http://petstore.openapi.io"), entry("producerComponentName", "xyz"));
 
         List<String> consumers = new ArrayList<String>();
         consumers.add("application/json");
         List<String> produces = new ArrayList<String>();
         produces.add("application/xml");
-        swagger.consumes = consumers;
-        swagger.produces = produces;
+        openapi.consumes = consumers;
+        openapi.produces = produces;
                 
-        assertThat(endpoint.determineEndpointParameters(swagger, operation)).containsOnly(
-            entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "xyz"),
+        assertThat(endpoint.determineEndpointParameters(openapi, operation)).containsOnly(
+            entry("host", "http://petstore.openapi.io"), entry("producerComponentName", "xyz"),
             entry("consumes", "application/xml"), entry("produces", "application/json"));
 
         component.setProduces("application/json");
         component.setConsumes("application/atom+xml");
-        assertThat(endpoint.determineEndpointParameters(swagger, operation)).containsOnly(
-            entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "xyz"),
+        assertThat(endpoint.determineEndpointParameters(openapi, operation)).containsOnly(
+            entry("host", "http://petstore.openapi.io"), entry("producerComponentName", "xyz"),
             entry("consumes", "application/atom+xml"), entry("produces", "application/json"));
 
         endpoint.setProduces("application/atom+xml");
         endpoint.setConsumes("application/json");
-        assertThat(endpoint.determineEndpointParameters(swagger, operation)).containsOnly(
-            entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "xyz"),
+        assertThat(endpoint.determineEndpointParameters(openapi, operation)).containsOnly(
+            entry("host", "http://petstore.openapi.io"), entry("producerComponentName", "xyz"),
             entry("consumes", "application/json"), entry("produces", "application/atom+xml"));
 
         endpoint.setComponentName("zyx");
-        assertThat(endpoint.determineEndpointParameters(swagger, operation)).containsOnly(
-            entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "zyx"),
+        assertThat(endpoint.determineEndpointParameters(openapi, operation)).containsOnly(
+            entry("host", "http://petstore.openapi.io"), entry("producerComponentName", "zyx"),
             entry("consumes", "application/json"), entry("produces", "application/atom+xml"));
 
         Oas20Parameter oas20Parameter = new Oas20Parameter("q");
         oas20Parameter.in = "query";
         oas20Parameter.required = true;
         operation.addParameter(oas20Parameter);
-        assertThat(endpoint.determineEndpointParameters(swagger, operation)).containsOnly(
-            entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "zyx"),
+        assertThat(endpoint.determineEndpointParameters(openapi, operation)).containsOnly(
+            entry("host", "http://petstore.openapi.io"), entry("producerComponentName", "zyx"),
             entry("consumes", "application/json"), entry("produces", "application/atom+xml"),
             entry("queryParameters", "q={q}"));
 
         oas20Parameter = new Oas20Parameter("o");
         oas20Parameter.in = "query";
         operation.addParameter(oas20Parameter);
-        assertThat(endpoint.determineEndpointParameters(swagger, operation)).containsOnly(
-            entry("host", "http://petstore.swagger.io"), entry("producerComponentName", "zyx"),
+        assertThat(endpoint.determineEndpointParameters(openapi, operation)).containsOnly(
+            entry("host", "http://petstore.openapi.io"), entry("producerComponentName", "zyx"),
             entry("consumes", "application/json"), entry("produces", "application/atom+xml"),
             entry("queryParameters", "q={q}&o={o?}"));
     }
@@ -204,37 +204,37 @@ public class RestOpenApiEndpointTest {
         configuration.setScheme("http");
         assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isNull();
 
-        configuration.setHost("petstore.swagger.io");
-        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("http://petstore.swagger.io");
+        configuration.setHost("petstore.openapi.io");
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("http://petstore.openapi.io");
 
         configuration.setPort(80);
-        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("http://petstore.swagger.io");
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("http://petstore.openapi.io");
 
         configuration.setPort(8080);
-        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("http://petstore.swagger.io:8080");
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("http://petstore.openapi.io:8080");
 
         configuration.setScheme("https");
         configuration.setPort(80);
-        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("https://petstore.swagger.io:80");
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("https://petstore.openapi.io:80");
 
         configuration.setPort(443);
-        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("https://petstore.swagger.io");
+        assertThat(RestOpenApiEndpoint.hostFrom(configuration)).isEqualTo("https://petstore.openapi.io");
     }
 
     @Test
     public void shouldDetermineHostFromSpecification() {
         final RestOpenApiComponent component = new RestOpenApiComponent();
 
-        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:http://some-uri#getPetById",
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-openapi:http://some-uri#getPetById",
             "http://some-uri#getPetById", component, Collections.emptyMap());
 
-        final Oas20Document swagger = new Oas20Document();
-        swagger.host = "petstore.swagger.io";
+        final Oas20Document openapi = new Oas20Document();
+        openapi.host = "petstore.swagger.io";
 
-        assertThat(endpoint.determineHost(swagger)).isEqualTo("http://petstore.swagger.io");
+        assertThat(endpoint.determineHost(openapi)).isEqualTo("http://petstore.swagger.io");
 
-        swagger.schemes = Arrays.asList("https");
-        assertThat(endpoint.determineHost(swagger)).isEqualTo("https://petstore.swagger.io");
+        openapi.schemes = Arrays.asList("https");
+        assertThat(endpoint.determineHost(openapi)).isEqualTo("https://petstore.swagger.io");
     }
 
     @Test
@@ -263,7 +263,7 @@ public class RestOpenApiEndpointTest {
         final RestOpenApiComponent component = new RestOpenApiComponent();
         component.setSpecificationUri(componentJsonUri);
 
-        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:getPetById", "getPetById", component,
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-openapi:getPetById", "getPetById", component,
             Collections.emptyMap());
 
         assertThat(endpoint.getSpecificationUri()).isEqualTo(componentJsonUri);
@@ -274,7 +274,7 @@ public class RestOpenApiEndpointTest {
         final RestOpenApiComponent component = new RestOpenApiComponent();
         component.setSpecificationUri(componentJsonUri);
 
-        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:endpoint.json#getPetById",
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-openapi:endpoint.json#getPetById",
             "endpoint.json#getPetById", component, Collections.emptyMap());
 
         assertThat(endpoint.getSpecificationUri()).isEqualTo(endpointUri);
@@ -289,7 +289,7 @@ public class RestOpenApiEndpointTest {
 
         final CamelContext camelContext = mock(CamelContext.class);
         when(camelContext.getRestConfiguration()).thenReturn(globalRestConfiguration);
-        when(camelContext.getRestConfiguration("rest-swagger", false)).thenReturn(componentRestConfiguration);
+        when(camelContext.getRestConfiguration("rest-openapi", false)).thenReturn(componentRestConfiguration);
         when(camelContext.getRestConfiguration("petstore", false)).thenReturn(specificRestConfiguration);
 
         final RestOpenApiComponent component = new RestOpenApiComponent();
@@ -298,30 +298,30 @@ public class RestOpenApiEndpointTest {
         final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("petstore:http://specification-uri#getPetById",
             "http://specification-uri#getPetById", component, Collections.emptyMap());
 
-        final Oas20Document swagger = new Oas20Document();
-        assertThat(endpoint.determineHost(swagger)).isEqualTo("http://specification-uri");
+        final Oas20Document openapi = new Oas20Document();
+        assertThat(endpoint.determineHost(openapi)).isEqualTo("http://specification-uri");
 
         globalRestConfiguration.setHost("global-rest");
         globalRestConfiguration.setScheme("http");
-        assertThat(endpoint.determineHost(swagger)).isEqualTo("http://global-rest");
+        assertThat(endpoint.determineHost(openapi)).isEqualTo("http://global-rest");
 
         globalRestConfiguration.setHost("component-rest");
         globalRestConfiguration.setScheme("http");
-        assertThat(endpoint.determineHost(swagger)).isEqualTo("http://component-rest");
+        assertThat(endpoint.determineHost(openapi)).isEqualTo("http://component-rest");
 
         specificRestConfiguration.setHost("specific-rest");
         specificRestConfiguration.setScheme("http");
-        assertThat(endpoint.determineHost(swagger)).isEqualTo("http://specific-rest");
+        assertThat(endpoint.determineHost(openapi)).isEqualTo("http://specific-rest");
 
-        swagger.host = "specification";
-        swagger.schemes = Arrays.asList("http");
-        assertThat(endpoint.determineHost(swagger)).isEqualTo("http://specification");
+        openapi.host = "specification";
+        openapi.schemes = Arrays.asList("http");
+        assertThat(endpoint.determineHost(openapi)).isEqualTo("http://specification");
 
         component.setHost("http://component");
-        assertThat(endpoint.determineHost(swagger)).isEqualTo("http://component");
+        assertThat(endpoint.determineHost(openapi)).isEqualTo("http://component");
 
         endpoint.setHost("http://endpoint");
-        assertThat(endpoint.determineHost(swagger)).isEqualTo("http://endpoint");
+        assertThat(endpoint.determineHost(openapi)).isEqualTo("http://endpoint");
     }
 
     @Test
@@ -333,14 +333,14 @@ public class RestOpenApiEndpointTest {
 
         final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("uri", "remaining", component,
             Collections.emptyMap());
-        endpoint.setHost("http://petstore.swagger.io");
+        endpoint.setHost("http://petstore.openapi.io");
 
-        final Oas20Document swagger = new Oas20Document();
+        final Oas20Document openapi = new Oas20Document();
         final Oas20SecurityScheme apiKeys = new Oas20SecurityScheme("key");
         apiKeys.name = "key";
         apiKeys.in = "header";
-        swagger.securityDefinitions = swagger.createSecurityDefinitions();
-        swagger.securityDefinitions.addItem("apiKeys", apiKeys);
+        openapi.securityDefinitions = openapi.createSecurityDefinitions();
+        openapi.securityDefinitions.addItem("apiKeys", apiKeys);
         
         final Oas20Operation operation = new Oas20Operation("get");
         Oas20Parameter oas20Parameter = new Oas20Parameter("q");
@@ -352,12 +352,12 @@ public class RestOpenApiEndpointTest {
         operation.addSecurityRequirement(securityRequirement);
         
         
-        assertThat(endpoint.determineEndpointParameters(swagger, operation))
-            .containsOnly(entry("host", "http://petstore.swagger.io"), entry("queryParameters", "q={q}"));
+        assertThat(endpoint.determineEndpointParameters(openapi, operation))
+            .containsOnly(entry("host", "http://petstore.openapi.io"), entry("queryParameters", "q={q}"));
 
         apiKeys.in = "query";
-        assertThat(endpoint.determineEndpointParameters(swagger, operation))
-            .containsOnly(entry("host", "http://petstore.swagger.io"), entry("queryParameters", "key={key}&q={q}"));
+        assertThat(endpoint.determineEndpointParameters(openapi, operation))
+            .containsOnly(entry("host", "http://petstore.openapi.io"), entry("queryParameters", "key={key}&q={q}"));
     }
 
     @Test
@@ -431,7 +431,7 @@ public class RestOpenApiEndpointTest {
     public void shouldUseDefaultSpecificationUri() throws Exception {
         final RestOpenApiComponent component = new RestOpenApiComponent();
 
-        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:getPetById", "getPetById", component,
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-openapi:getPetById", "getPetById", component,
             Collections.emptyMap());
 
         assertThat(endpoint.getSpecificationUri()).isEqualTo(RestOpenApiComponent.DEFAULT_SPECIFICATION_URI);
@@ -441,7 +441,7 @@ public class RestOpenApiEndpointTest {
     public void shouldUseDefaultSpecificationUriEvenIfHashIsPresent() throws Exception {
         final RestOpenApiComponent component = new RestOpenApiComponent();
 
-        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-swagger:#getPetById", "#getPetById",
+        final RestOpenApiEndpoint endpoint = new RestOpenApiEndpoint("rest-openapi:#getPetById", "#getPetById",
             component, Collections.emptyMap());
 
         assertThat(endpoint.getSpecificationUri()).isEqualTo(RestOpenApiComponent.DEFAULT_SPECIFICATION_URI);

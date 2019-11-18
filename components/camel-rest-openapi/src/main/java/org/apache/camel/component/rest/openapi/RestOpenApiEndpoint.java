@@ -87,8 +87,8 @@ import static org.apache.camel.util.StringHelper.notEmpty;
 /**
  * An awesome REST endpoint backed by OpenApi specifications.
  */
-@UriEndpoint(firstVersion = "2.19.0", scheme = "rest-swagger", title = "REST OpenApi",
-    syntax = "rest-swagger:specificationUri#operationId", label = "rest,swagger,http", producerOnly = true)
+@UriEndpoint(firstVersion = "2.19.0", scheme = "rest-openapi", title = "REST OpenApi",
+    syntax = "rest-openapi:specificationUri#operationId", label = "rest,swagger,http", producerOnly = true)
 public final class RestOpenApiEndpoint extends DefaultEndpoint {
 
     /**
@@ -96,7 +96,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
      */
     Map<String, Object> parameters = Collections.emptyMap();
 
-    /** The name of the Camel component, be it `rest-swagger` or `petstore` */
+    /** The name of the Camel component, be it `rest-openapi` or `petstore` */
     private String assignedComponentName;
 
     @UriParam(
@@ -122,7 +122,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
     @UriParam(description = "Scheme hostname and port to direct the HTTP requests to in the form of"
         + " `http[s]://hostname[:port]`. Can be configured at the endpoint, component or in the corresponding"
         + " REST configuration in the Camel Context. If you give this component a name (e.g. `petstore`) that"
-        + " REST configuration is consulted first, `rest-swagger` next, and global configuration last. If set"
+        + " REST configuration is consulted first, `rest-openapi` next, and global configuration last. If set"
         + " overrides any value found in the OpenApi specification, RestConfiguration. Overrides all other "
         + " configuration.", label = "producer")
     private String host;
@@ -178,9 +178,9 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
     @Override
     public Producer createProducer() throws Exception {
         final CamelContext camelContext = getCamelContext();
-        final Document openApiDoc = loadSpecificationFrom(camelContext, specificationUri);
+        final Document openapiDoc = loadSpecificationFrom(camelContext, specificationUri);
 
-        final OasPaths paths = ((OasDocument)openApiDoc).paths;
+        final OasPaths paths = ((OasDocument)openapiDoc).paths;
 
         for (final OasPathItem path : paths.getItems()) {
             final Optional<Entry<HttpMethod, OasOperation>> maybeOperationEntry = getOperationMap(path).entrySet()
@@ -199,7 +199,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
                 final HttpMethod httpMethod = operationEntry.getKey();
                 final String method = httpMethod.name();
 
-                return createProducerFor(openApiDoc, operation, method, uriTemplate);
+                return createProducerFor(openapiDoc, operation, method, uriTemplate);
             }
         }
 
@@ -309,9 +309,9 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         return (RestOpenApiComponent) getComponent();
     }
 
-    Producer createProducerFor(final Document swagger, final OasOperation operation, final String method,
+    Producer createProducerFor(final Document openapi, final OasOperation operation, final String method,
         final String uriTemplate) throws Exception {
-        final String basePath = determineBasePath(swagger);
+        final String basePath = determineBasePath(openapi);
 
         final StringBuilder componentEndpointUri = new StringBuilder(200).append("rest:").append(method).append(":")
             .append(basePath).append(":").append(uriTemplate);
@@ -320,7 +320,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
 
         final Endpoint endpoint = camelContext.getEndpoint(componentEndpointUri.toString());
 
-        Map<String, Object> params = determineEndpointParameters(swagger, operation);
+        Map<String, Object> params = determineEndpointParameters(openapi, operation);
         boolean hasHost = params.containsKey("host");
         if (endpoint instanceof DefaultEndpoint) {
             // let the rest endpoint configure itself
@@ -333,7 +333,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         return new RestOpenApiProducer(endpoint.createAsyncProducer(), hasHost);
     }
 
-    String determineBasePath(final Document swagger) {
+    String determineBasePath(final Document openapi) {
         if (isNotEmpty(basePath)) {
             return basePath;
         }
@@ -344,8 +344,8 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         }
 
         final String specificationBasePath;
-        if (swagger instanceof Oas20Document) {
-            specificationBasePath = ((Oas20Document)swagger).basePath;
+        if (openapi instanceof Oas20Document) {
+            specificationBasePath = ((Oas20Document)openapi).basePath;
         } else {
             specificationBasePath = "";
         } 
@@ -359,7 +359,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
             return specificConfiguration.getContextPath();
         }
 
-        final RestConfiguration restConfiguration = camelContext.getRestConfiguration("rest-swagger", true);
+        final RestConfiguration restConfiguration = camelContext.getRestConfiguration("rest-openapi", true);
         final String restConfigurationBasePath = restConfiguration.getContextPath();
         if (isNotEmpty(restConfigurationBasePath)) {
             return restConfigurationBasePath;
@@ -372,7 +372,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         return Optional.ofNullable(componentName).orElse(component().getComponentName());
     }
 
-    Map<String, Object> determineEndpointParameters(final Document swagger, final OasOperation operation) {
+    Map<String, Object> determineEndpointParameters(final Document openapi, final OasOperation operation) {
         final Map<String, Object> parameters = new HashMap<>();
 
         final String componentName = determineComponentName();
@@ -380,7 +380,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
             parameters.put("producerComponentName", componentName);
         }
 
-        final String host = determineHost(swagger);
+        final String host = determineHost(openapi);
         if (host != null) {
             parameters.put("host", host);
         }
@@ -390,8 +390,8 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         // what we consume is what the API defined by OpenApi specification
         // produces
         List<String> specificationLevelConsumers = new ArrayList<String>();
-        if (swagger instanceof Oas20Document) {
-            specificationLevelConsumers = ((Oas20Document)swagger).produces;
+        if (openapi instanceof Oas20Document) {
+            specificationLevelConsumers = ((Oas20Document)openapi).produces;
         } 
         List<String> operationLevelConsumers = new ArrayList<String>();
         if (operation instanceof Oas20Operation) {
@@ -417,8 +417,8 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         // consumes
         
         List<String> specificationLevelProducers = new ArrayList<String>();
-        if (swagger instanceof Oas20Document) {
-            specificationLevelProducers = ((Oas20Document)swagger).consumes;
+        if (openapi instanceof Oas20Document) {
+            specificationLevelProducers = ((Oas20Document)openapi).consumes;
         } 
         List<String> operationLevelProducers = new ArrayList<String>();
         if (operation instanceof Oas20Operation) {
@@ -437,7 +437,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
             parameters.put("produces", determinedProducers);
         }
 
-        final String queryParameters = determineQueryParameters(swagger, operation).map(this::queryParameter)
+        final String queryParameters = determineQueryParameters(openapi, operation).map(this::queryParameter)
             .collect(Collectors.joining("&"));
         if (isNotEmpty(queryParameters)) {
             parameters.put("queryParameters", queryParameters);
@@ -467,7 +467,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         return parameters;
     }
 
-    String determineHost(final Document swagger) {
+    String determineHost(final Document openapi) {
         if (isNotEmpty(host)) {
             return host;
         }
@@ -482,18 +482,18 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         //In OpenApi 3.0, scheme/host are in servers url section
         //But there could be many servers url(like one for production and one for test)
         //So which one could be used become uncertain.
-        /*final String swaggerScheme = pickBestScheme(specificationUri.getScheme(), swagger.getSchemes());
-        final String swaggerHost = swagger.getHost();
+        /*final String openapiScheme = pickBestScheme(specificationUri.getScheme(), swagger.getSchemes());
+        final String openapiHost = swagger.getHost();
 
-        if (isNotEmpty(swaggerScheme) && isNotEmpty(swaggerHost)) {
-            return swaggerScheme + "://" + swaggerHost;
+        if (isNotEmpty(openapiScheme) && isNotEmpty(swaggerHost)) {
+            return openapiScheme + "://" + swaggerHost;
         }*/
-        if (swagger instanceof Oas20Document) {
-            final String swaggerScheme = pickBestScheme(specificationUri.getScheme(), ((Oas20Document)swagger).schemes);
-            final String swaggerHost = ((Oas20Document)swagger).host;
+        if (openapi instanceof Oas20Document) {
+            final String openapiScheme = pickBestScheme(specificationUri.getScheme(), ((Oas20Document)openapi).schemes);
+            final String openapiHost = ((Oas20Document)openapi).host;
 
-            if (isNotEmpty(swaggerScheme) && isNotEmpty(swaggerHost)) {
-                return swaggerScheme + "://" + swaggerHost;
+            if (isNotEmpty(openapiScheme) && isNotEmpty(openapiHost)) {
+                return openapiScheme + "://" + openapiHost;
             }
         }
 
@@ -506,7 +506,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
             return specificConfigurationHost;
         }
 
-        final RestConfiguration componentRestConfiguration = camelContext.getRestConfiguration("rest-swagger", false);
+        final RestConfiguration componentRestConfiguration = camelContext.getRestConfiguration("rest-openapi", false);
         final String componentConfigurationHost = hostFrom(componentRestConfiguration);
         if (componentConfigurationHost != null) {
             return componentConfigurationHost;
@@ -528,12 +528,12 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
             }
         }
 
-        final boolean areTheSame = "rest-swagger".equals(assignedComponentName);
+        final boolean areTheSame = "rest-openapi".equals(assignedComponentName);
 
         throw new IllegalStateException("Unable to determine destination host for requests. The OpenApi specification"
             + " does not specify `scheme` and `host` parameters, the specification URI is not absolute with `http` or"
             + " `https` scheme, and no RestConfigurations configured with `scheme`, `host` and `port` were found for `"
-            + (areTheSame ? "rest-swagger` component" : assignedComponentName + "` or `rest-swagger` components")
+            + (areTheSame ? "rest-openapi` component" : assignedComponentName + "` or `rest-swagger` components")
             + " and there is no global RestConfiguration with those properties");
     }
 
@@ -628,12 +628,12 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         return null;
     }
 
-    static Stream<OasParameter> determineQueryParameters(final Document swagger, final OasOperation operation) {
+    static Stream<OasParameter> determineQueryParameters(final Document openapi, final OasOperation operation) {
         final List<SecurityRequirement> securityRequirements = operation.security;
         final List<OasParameter> apiKeyQueryParameters = new ArrayList<>();
         if (securityRequirements != null) {
-            if (swagger instanceof Oas20Document) {
-                Oas20Document oas20Document = (Oas20Document)swagger;
+            if (openapi instanceof Oas20Document) {
+                Oas20Document oas20Document = (Oas20Document)openapi;
                 Oas20SecurityDefinitions securityDefinitions = oas20Document.securityDefinitions;
                 
                 for (final SecurityRequirement securityRequirement : securityRequirements) {
@@ -651,8 +651,8 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
                         
                     }
                 }
-            } else if (swagger instanceof Oas30Document) {
-                Oas30Document oas30Document = (Oas30Document)swagger;
+            } else if (openapi instanceof Oas30Document) {
+                Oas30Document oas30Document = (Oas30Document)openapi;
                 for (final SecurityRequirement securityRequirement : securityRequirements) {
                     for (final String securityRequirementName : securityRequirement.getSecurityRequirementNames()) {
                         final Oas30SecurityScheme securitySchemeDefinition = oas30Document.components

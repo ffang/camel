@@ -46,7 +46,7 @@ import static org.apache.camel.util.StringHelper.notEmpty;
  * <p>
  *
  * <pre>
- * from(...).to("rest-swagger:http://petstore.swagger.io/v2/swagger.json#getPetById")
+ * from(...).to("rest-openapi:http://petstore.swagger.io/v2/swagger.json#getPetById")
  * </pre>
  *
  * This relies on only one {@link RestProducerFactory} component being available
@@ -61,7 +61,7 @@ import static org.apache.camel.util.StringHelper.notEmpty;
  * //...
  * camelContext.addComponent("myUndertow", undertow);
  *
- * from(...).to("rest-swagger:http://petstore.swagger.io/v2/swagger.json#getPetById?componentName=myUndertow")
+ * from(...).to("rest-openapi:http://petstore.swagger.io/v2/swagger.json#getPetById?componentName=myUndertow")
  * </pre>
  *
  * The most concise way of using this component would be to define it in the
@@ -69,7 +69,7 @@ import static org.apache.camel.util.StringHelper.notEmpty;
  *
  * <pre>
  * Component petstore = new RestOpenApiComponent();
- * petstore.setSpecificationUri("http://petstore.swagger.io/v2/swagger.json");
+ * petstore.setSpecificationUri("http://petstore.openapi.io/v2/swagger.json");
  * petstore.setComponentName("undertow");
  * //...
  * camelContext.addComponent("petstore", petstore);
@@ -77,7 +77,7 @@ import static org.apache.camel.util.StringHelper.notEmpty;
  * from(...).to("petstore:getPetById")
  * </pre>
  */
-@Component("rest-swagger")
+@Component("rest-openapi")
 public final class RestOpenApiComponent extends DefaultComponent implements SSLContextParametersAware {
     public static final String DEFAULT_BASE_PATH = "/";
 
@@ -107,7 +107,7 @@ public final class RestOpenApiComponent extends DefaultComponent implements SSLC
     @Metadata(description = "Scheme hostname and port to direct the HTTP requests to in the form of"
         + " `http[s]://hostname[:port]`. Can be configured at the endpoint, component or in the corresponding"
         + " REST configuration in the Camel Context. If you give this component a name (e.g. `petstore`) that"
-        + " REST configuration is consulted first, `rest-swagger` next, and global configuration last. If set"
+        + " REST configuration is consulted first, `rest-openapi` next, and global configuration last. If set"
         + " overrides any value found in the OpenApi specification, RestConfiguration. Can be overridden in endpoint"
         + " configuration.", label = "producer")
     private String host;
