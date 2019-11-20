@@ -54,7 +54,6 @@ public class RestSwaggerReaderDayOfWeekTest extends CamelTestSupport {
 
     @Test
     public void testReaderRead() throws Exception {
-        try {
         BeanConfig config = new BeanConfig();
         config.setHost("localhost:8080");
         config.setSchemes(new String[] {"http"});
@@ -85,9 +84,7 @@ public class RestSwaggerReaderDayOfWeekTest extends CamelTestSupport {
         assertTrue(json.contains("\"description\" : \"The number of allowed requests in the current period\""));
 
         context.stop();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        
     }
 
 }

@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -260,6 +261,7 @@ public class RestSwaggerReader {
             extension.name = "x-camelContextId";
             extension.value = camelContextId;
             op.addExtension(extension.name, extension);
+            extension = op.createExtension();
             extension.name = "x-routeId";
             extension.value = routeId;
             op.addExtension(extension.name, extension);
@@ -397,13 +399,11 @@ public class RestSwaggerReader {
                         if (type != null) {
                             if (type.endsWith("[]")) {
                                 type = type.substring(0, type.length() - 2);
-                                Oas20Items prop = modelTypeAsProperty(type, swagger);
-                                if (prop != null) {
+                                    
                                     Oas20Schema arrayModel = (Oas20Schema)bp.createSchema();
-                                    arrayModel.items = prop;
-                                    bp.items = prop;
+                                    arrayModel = modelTypeAsProperty(type, swagger, arrayModel);
                                     bp.schema = arrayModel;
-                                }
+                                
                             } else {
                                 String ref = modelTypeAsRef(type, swagger);
                                 if (ref != null) {
@@ -411,13 +411,11 @@ public class RestSwaggerReader {
                                     refModel.$ref = ref;
                                     bp.schema = refModel;
                                 } else {
-                                    Oas20Items prop = modelTypeAsProperty(type, swagger);
-                                    if (prop != null) {
-                                        Oas20Schema model = (Oas20Schema)bp.createSchema();
-                                        model.format = prop.format;
-                                        model.type = prop.type;
-                                        bp.schema = model;
-                                    }
+                                    Oas20Schema model = (Oas20Schema)bp.createSchema();
+                                    model = modelTypeAsProperty(type, swagger, model);
+                                       
+                                    bp.schema = model;
+                                    
                                 }
                             }
                         }
@@ -444,9 +442,9 @@ public class RestSwaggerReader {
             // if we have an out type then set that as response message
             if (verb.getOutType() != null) {
                 Oas20Response response = (Oas20Response)op.responses.createResponse("200");
-                Oas20Items prop = modelTypeAsProperty(verb.getOutType(), swagger);
                 Oas20Schema model = response.createSchema();
-                model.items = prop;
+                model = modelTypeAsProperty(verb.getOutType(), swagger, model);
+                
                 response.schema = model;
                 response.description = "Output type";
                 op.responses.addResponse("200", response);
@@ -533,9 +531,9 @@ public class RestSwaggerReader {
                 op.responses.addResponse(msg.getCode(), response);
             }
             if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getResponseModel())) {
-                Oas20Items prop = modelTypeAsProperty(msg.getResponseModel(), swagger);
                 Oas20Schema model = response.createSchema();
-                model.items = prop;
+                model = modelTypeAsProperty(msg.getResponseModel(), swagger, model);
+                
                 response.schema = model;
             }
             if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getMessage())) {
@@ -758,8 +756,10 @@ public class RestSwaggerReader {
 
         if (swagger.definitions != null) {
             for (Oas20SchemaDefinition model : swagger.definitions.getDefinitions()) {
-                 String modelType = (String) model.getExtension("x-className").value;
-                if (modelType != null && typeName.equals(modelType)) {
+                @SuppressWarnings("rawtypes")
+                Map modelType = (Map)model.getExtension("x-className").value;
+                
+                if (modelType != null && typeName.equals(modelType.get("format"))) {
                     return model;
                 }
             }
@@ -784,7 +784,7 @@ public class RestSwaggerReader {
         return null;
     }
 
-    private Oas20Items modelTypeAsProperty(String typeName, Oas20Document swagger) {
+    private Oas20Schema modelTypeAsProperty(String typeName, Oas20Document swagger, Oas20Schema prop) {
         boolean array = typeName.endsWith("[]");
         if (array) {
             typeName = typeName.substring(0, typeName.length() - 2);
@@ -792,43 +792,33 @@ public class RestSwaggerReader {
 
         String ref = modelTypeAsRef(typeName, swagger);
 
-        Oas20Items prop;
-
+            
         if (ref != null) {
-            prop = new Oas20Items();
-            prop.type = "ref";
+            prop.$ref = "#/definitions/" + ref;
         } else {
             // special for byte arrays
             if (array && ("byte".equals(typeName) || "java.lang.Byte".equals(typeName))) {
-                prop = new Oas20Items();
                 prop.type = "byte";
                 array = false;
             } else if ("string".equalsIgnoreCase(typeName) || "java.lang.String".equals(typeName)) {
-                prop = new Oas20Items();
                 prop.type = "string";
             } else if ("int".equals(typeName) || "java.lang.Integer".equals(typeName)) {
-                prop = new Oas20Items();
                 prop.type = "integer";
             } else if ("long".equals(typeName) || "java.lang.Long".equals(typeName)) {
-                prop = new Oas20Items();
                 prop.type = "long";
             } else if ("float".equals(typeName) || "java.lang.Float".equals(typeName)) {
-                prop = new Oas20Items();
                 prop.type = "float";
             } else if ("double".equals(typeName) || "java.lang.Double".equals(typeName)) {
-                prop = new Oas20Items();
                 prop.type = "double";
             } else if ("boolean".equals(typeName) || "java.lang.Boolean".equals(typeName)) {
-                prop = new Oas20Items();
                 prop.type = "boolean";
             } else {
-                prop = new Oas20Items();
                 prop.type = "string";
             }
         }
 
         if (array) {
-            Oas20Items ret = new Oas20Items();
+            Oas20Schema ret = new Oas20Schema();
             ret.items = prop;
             ret.type = "array";
             return ret;
@@ -848,7 +838,6 @@ public class RestSwaggerReader {
         RestModelConverters converters = new RestModelConverters();
         Oas20Definitions models = converters.readClass(swagger, clazz);
         if (models == null) {
-            //TODO
             return;
         }
         for (Oas20SchemaDefinition entry : models.getDefinitions()) {

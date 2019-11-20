@@ -17,6 +17,9 @@
 package org.apache.camel.swagger;
 
 
+import java.util.HashMap;
+import java.util.Map;
+
 import io.apicurio.datamodels.core.models.Extension;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Definitions;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
@@ -41,6 +44,19 @@ public class RestModelConverters {
                 model.getExtensions().add(extension);
             }
 
+        } else {
+            resolved = oas20Document.createDefinitions();
+            oas20Document.definitions = resolved;
+            Oas20SchemaDefinition model = resolved.createSchemaDefinition(clazz.getSimpleName());
+            resolved.addDefinition(clazz.getSimpleName(), model);
+            model.type = clazz.getSimpleName();
+            Extension extension = model.createExtension();
+            extension.name = "x-className";
+            Map<String, String> value = new HashMap<String, String>();
+            value.put("type", "string");
+            value.put("format", name);
+            extension.value = value;
+            model.addExtension("x-className", extension);
         }
         return resolved;
     }
