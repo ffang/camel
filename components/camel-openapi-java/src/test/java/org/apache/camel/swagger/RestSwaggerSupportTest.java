@@ -21,8 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import io.swagger.models.Scheme;
-import io.swagger.models.Swagger;
+
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,6 +29,9 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+
+import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
+
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -39,7 +41,9 @@ public class RestSwaggerSupportTest {
 
     @Test
     public void shouldAdaptFromXForwardHeaders() {
-        final Swagger swagger = spy(new Swagger().basePath("/base"));
+        Oas20Document doc = new Oas20Document();
+        doc.basePath = "/base";
+        final Oas20Document swagger = spy(doc);
 
         final Map<String, Object> headers = new HashMap<>();
         headers.put(RestSwaggerSupport.HEADER_X_FORWARDED_PREFIX, "/prefix");
@@ -47,11 +51,11 @@ public class RestSwaggerSupportTest {
         headers.put(RestSwaggerSupport.HEADER_X_FORWARDED_PROTO, "http, HTTPS ");
         RestSwaggerSupport.setupXForwardedHeaders(swagger, headers);
 
-        verify(swagger).getBasePath();
-        verify(swagger).setBasePath("/prefix/base");
-        verify(swagger).setHost("host");
-        verify(swagger).addScheme(Scheme.HTTP);
-        verify(swagger).addScheme(Scheme.HTTPS);
+        
+        verify(swagger).basePath = "/prefix/base";
+        verify(swagger).host = "host";
+        verify(swagger).schemes.add("http");
+        verify(swagger).schemes.add("https");
         verifyNoMoreInteractions(swagger);
     }
 
@@ -59,27 +63,29 @@ public class RestSwaggerSupportTest {
     @MethodSource("basePathAndPrefixVariations")
     public void shouldAdaptWithVaryingBasePathsAndPrefixes(final String prefix, final String basePath,
         final String expected) {
-        final Swagger swagger = spy(new Swagger().basePath(basePath));
+        Oas20Document doc = new Oas20Document();
+        doc.basePath = basePath;
+        final Oas20Document swagger = spy(doc);
 
         final Map<String, Object> headers = new HashMap<>();
         headers.put(RestSwaggerSupport.HEADER_X_FORWARDED_PREFIX, prefix);
         RestSwaggerSupport.setupXForwardedHeaders(swagger, headers);
 
-        verify(swagger).getBasePath();
-        verify(swagger).setBasePath(expected);
+        //verify(swagger).getBasePath();
+        verify(swagger).basePath = expected;
         verifyNoMoreInteractions(swagger);
     }
 
     @ParameterizedTest
     @MethodSource("schemeVariations")
-    public void shouldAdaptWithVaryingSchemes(final String xForwardedScheme, final Scheme[] expected) {
-        final Swagger swagger = spy(new Swagger());
+    public void shouldAdaptWithVaryingSchemes(final String xForwardedScheme, final String[] expected) {
+        final Oas20Document swagger = spy(new Oas20Document());
 
         RestSwaggerSupport.setupXForwardedHeaders(swagger,
             Collections.singletonMap(RestSwaggerSupport.HEADER_X_FORWARDED_PROTO, xForwardedScheme));
 
-        for (final Scheme scheme : expected) {
-            verify(swagger).addScheme(scheme);
+        for (final String scheme : expected) {
+            verify(swagger).schemes.add(scheme);
         }
 
         verifyNoMoreInteractions(swagger);
@@ -87,7 +93,7 @@ public class RestSwaggerSupportTest {
 
     @Test
     public void shouldNotAdaptFromXForwardHeadersWhenNoHeadersSpecified() {
-        final Swagger swagger = spy(new Swagger());
+        final Oas20Document swagger = spy(new Oas20Document());
 
         RestSwaggerSupport.setupXForwardedHeaders(swagger, Collections.emptyMap());
 
@@ -124,17 +130,17 @@ public class RestSwaggerSupportTest {
     }
 
     static Stream<Arguments> schemeVariations() {
-        final Scheme[] none = new Scheme[0];
+        final String[] none = new String[0];
 
         return Stream.of(//
             arguments(null, none), //
             arguments("", none), //
             arguments(",", none), //
             arguments(" , ", none), //
-            arguments("HTTPS,http", new Scheme[] {Scheme.HTTPS, Scheme.HTTP}), //
-            arguments(" HTTPS,  http ", new Scheme[] {Scheme.HTTPS, Scheme.HTTP}), //
-            arguments(",http,", new Scheme[] {Scheme.HTTP}), //
-            arguments("hTtpS", new Scheme[] {Scheme.HTTPS})//
+            arguments("HTTPS,http", new String[] {"https", "http"}), //
+            arguments(" HTTPS,  http ", new String[] {"https", "http"}), //
+            arguments(",http,", new String[] {"http"}), //
+            arguments("hTtpS", new String[] {"https"})//
         );
     }
 }

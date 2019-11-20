@@ -16,6 +16,8 @@
  */
 package org.apache.camel.swagger;
 
+import java.util.ArrayList;
+
 import io.apicurio.datamodels.core.models.common.Info;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
@@ -191,6 +193,9 @@ public class BeanConfig {
     
     public Oas20Document configure(Oas20Document swagger) {
         if (schemes != null) {
+            if (swagger.schemes == null) {
+                swagger.schemes = new ArrayList<String>();
+            }
             for (String scheme : schemes) {
                 swagger.schemes.add(scheme);
             }

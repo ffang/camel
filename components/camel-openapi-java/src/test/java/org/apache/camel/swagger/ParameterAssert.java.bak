@@ -21,24 +21,24 @@ import java.util.List;
 
 import static java.lang.invoke.MethodHandles.publicLookup;
 
-import io.swagger.models.parameters.Parameter;
-import io.swagger.models.parameters.SerializableParameter;
-import io.swagger.models.properties.Property;
+import io.apicurio.datamodels.openapi.models.OasParameter;
+import io.apicurio.datamodels.openapi.v2.models.Oas20Items;
+import io.apicurio.datamodels.openapi.v2.models.Oas20Schema;
 
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.ObjectAssert;
 
-public final class ParameterAssert extends ObjectAssert<Parameter> {
+public final class ParameterAssert extends ObjectAssert<OasParameter> {
 
-    private ParameterAssert(final Parameter actual) {
+    private ParameterAssert(final OasParameter actual) {
         super(actual);
     }
 
     public <T> ParameterAssert hasArrayEnumSpecifiedWith(@SuppressWarnings("unchecked") final T... values) {
         isSerializable();
 
-        final SerializableParameter serializableParameter = (SerializableParameter) actual;
-        final Property items = serializableParameter.getItems();
+        final OasParameter serializableParameter = (OasParameter) actual;
+        final Oas20Schema schema = ((Oas20Schema)serializableParameter.schema).items;
         final List<T> arrayItems = fetchEnums(items);
         Assertions.assertThat(arrayItems).containsOnly(values);
 
@@ -100,11 +100,11 @@ public final class ParameterAssert extends ObjectAssert<Parameter> {
         return this;
     }
 
-    public static ParameterAssert assertThat(final Parameter actual) {
+    public static ParameterAssert assertThat(final OasParameter actual) {
         return new ParameterAssert(actual);
     }
 
-    private static <T> List<T> fetchEnums(final Property items) {
+    private static <T> List<T> fetchEnums(final Oas20Items items) {
         try {
             return (List<T>) publicLookup().bind(items, "getEnum", MethodType.methodType(List.class)).invoke();
         } catch (final Throwable e) {

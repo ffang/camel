@@ -24,7 +24,6 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,7 +32,6 @@ import static java.lang.invoke.MethodHandles.publicLookup;
 
 import io.apicurio.datamodels.core.models.Extension;
 import io.apicurio.datamodels.core.models.common.SecurityRequirement;
-import io.apicurio.datamodels.core.models.common.Tag;
 import io.apicurio.datamodels.openapi.models.OasOperation;
 import io.apicurio.datamodels.openapi.models.OasParameter;
 import io.apicurio.datamodels.openapi.models.OasPathItem;
@@ -43,13 +41,11 @@ import io.apicurio.datamodels.openapi.v2.models.Oas20Header;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Items;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Operation;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Parameter;
-import io.apicurio.datamodels.openapi.v2.models.Oas20PathItem;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Response;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Schema;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SchemaDefinition;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SecurityRequirement;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SecurityScheme;
-import io.apicurio.datamodels.openapi.v2.models.Oas20Tag;
 
 import org.apache.camel.model.rest.RestDefinition;
 import org.apache.camel.model.rest.RestOperationParamDefinition;
@@ -116,10 +112,7 @@ public class RestSwaggerReader {
 
         if (org.apache.camel.util.ObjectHelper.isNotEmpty(pathAsTag)) {
             // add rest as tag
-            Oas20Tag tag = new Oas20Tag();
-            tag.description = summary;
-            tag.name = pathAsTag;
-            swagger.tags.add(tag);
+            swagger.addTag(pathAsTag, summary);
         }
 
         // setup security definitions
@@ -219,8 +212,7 @@ public class RestSwaggerReader {
 
     private void doParseVerbs(Oas20Document swagger, RestDefinition rest, String camelContextId, List<VerbDefinition> verbs, String pathAsTag) {
         // used during gathering of apis
-        List<OasPathItem> paths = new ArrayList<>();
-
+        
         String basePath = rest.getPath();
 
         for (VerbDefinition verb : verbs) {
@@ -240,10 +232,21 @@ public class RestSwaggerReader {
             // operation path is a key
             String opPath = SwaggerHelper.buildUrl(basePath, verb.getUri());
 
-            Oas20Operation op = new Oas20Operation(method);
+            
+            if (swagger.paths == null) {
+                swagger.paths = swagger.createPaths();
+            }
+            OasPathItem path = swagger.paths.getPathItem(opPath);
+            if (path == null) {
+                path = swagger.paths.createPathItem(opPath);
+            }
+            
+            Oas20Operation op = (Oas20Operation)path.createOperation(method);
             if (org.apache.camel.util.ObjectHelper.isNotEmpty(pathAsTag)) {
                 // group in the same tag
-                
+                if (op.tags == null) {
+                    op.tags = new ArrayList<String>();
+                }
                 op.tags.add(pathAsTag);
             }
 
@@ -253,24 +256,21 @@ public class RestSwaggerReader {
             
 
             // add id as vendor extensions
-            Extension extension = new Extension();
+            Extension extension = op.createExtension();
             extension.name = "x-camelContextId";
             extension.value = camelContextId;
-            op.getExtensions().add(extension);
+            op.addExtension(extension.name, extension);
             extension.name = "x-routeId";
             extension.value = routeId;
-            op.getExtensions().add(extension);
-
-            OasPathItem path = swagger.paths.getPathItem(opPath);
-            if (path == null) {
-                path = new Oas20PathItem(opPath);
-                paths.add(path);
-            }
+            op.addExtension(extension.name, extension);
             path = setPathOperation(path, op, method);
 
             String consumes = verb.getConsumes() != null ? verb.getConsumes() : rest.getConsumes();
             if (consumes != null) {
                 String[] parts = consumes.split(",");
+                if (op.consumes == null) {
+                    op.consumes = new ArrayList<String>();
+                }
                 for (String part : parts) {
                     op.consumes.add(part);
                 }
@@ -279,6 +279,9 @@ public class RestSwaggerReader {
             String produces = verb.getProduces() != null ? verb.getProduces() : rest.getProduces();
             if (produces != null) {
                 String[] parts = produces.split(",");
+                if (op.produces == null) {
+                    op.produces = new ArrayList<String>();
+                }
                 for (String part : parts) {
                     op.produces.add(part);
                 }
@@ -304,19 +307,19 @@ public class RestSwaggerReader {
             for (RestOperationParamDefinition param : verb.getParams()) {
                 OasParameter parameter = null;
                 if (param.getType().equals(RestParamType.body)) {
-                    parameter = new Oas20Parameter();
+                    parameter = op.createParameter();
                     parameter.in = "body";
                 } else if (param.getType().equals(RestParamType.formData)) {
-                    parameter = new Oas20Parameter();
+                    parameter = op.createParameter();
                     parameter.in = "formData";
                 } else if (param.getType().equals(RestParamType.header)) {
-                    parameter = new Oas20Parameter();
+                    parameter = op.createParameter();
                     parameter.in = "header";
                 } else if (param.getType().equals(RestParamType.path)) {
-                    parameter = new Oas20Parameter();
+                    parameter = op.createParameter();
                     parameter.in = "path";
                 } else if (param.getType().equals(RestParamType.query)) {
-                    parameter = new Oas20Parameter();
+                    parameter = op.createParameter();
                     parameter.in = "query";
                 }
 
@@ -379,7 +382,7 @@ public class RestSwaggerReader {
                         // add examples
                         if (param.getExamples() != null && param.getExamples().size() >= 1) {
                             // we can only set one example on the parameter
-                            Extension exampleExtension = new Extension();
+                            Extension exampleExtension = qp.createExtension();
                             exampleExtension.name = "x-example";
                             exampleExtension.value = param.getExamples().get(0).getValue();
                             qp.getExtensions().add(exampleExtension);
@@ -396,7 +399,7 @@ public class RestSwaggerReader {
                                 type = type.substring(0, type.length() - 2);
                                 Oas20Items prop = modelTypeAsProperty(type, swagger);
                                 if (prop != null) {
-                                    Oas20Schema arrayModel = new Oas20Schema();
+                                    Oas20Schema arrayModel = (Oas20Schema)bp.createSchema();
                                     arrayModel.items = prop;
                                     bp.items = prop;
                                     bp.schema = arrayModel;
@@ -404,13 +407,13 @@ public class RestSwaggerReader {
                             } else {
                                 String ref = modelTypeAsRef(type, swagger);
                                 if (ref != null) {
-                                    Oas20Schema refModel = new Oas20Schema();
+                                    Oas20Schema refModel = (Oas20Schema)bp.createSchema();
                                     refModel.$ref = ref;
                                     bp.schema = refModel;
                                 } else {
                                     Oas20Items prop = modelTypeAsProperty(type, swagger);
                                     if (prop != null) {
-                                        Oas20Schema model = new Oas20Schema();
+                                        Oas20Schema model = (Oas20Schema)bp.createSchema();
                                         model.format = prop.format;
                                         model.type = prop.type;
                                         bp.schema = model;
@@ -421,7 +424,7 @@ public class RestSwaggerReader {
                         // add examples
                         if (param.getExamples() != null) {
                             for (RestPropertyDefinition prop : param.getExamples()) {
-                                Extension exampleExtension = new Extension();
+                                Extension exampleExtension = bp.createExtension();
                                 exampleExtension.name = prop.getKey();
                                 exampleExtension.value = prop.getValue();
                                 bp.getExtensions().add(exampleExtension);
@@ -440,9 +443,9 @@ public class RestSwaggerReader {
 
             // if we have an out type then set that as response message
             if (verb.getOutType() != null) {
-                Oas20Response response = new Oas20Response(verb.getOutType());
+                Oas20Response response = (Oas20Response)op.responses.createResponse("200");
                 Oas20Items prop = modelTypeAsProperty(verb.getOutType(), swagger);
-                Oas20Schema model = new Oas20Schema();
+                Oas20Schema model = response.createSchema();
                 model.items = prop;
                 response.schema = model;
                 response.description = "Output type";
@@ -516,6 +519,9 @@ public class RestSwaggerReader {
     }
 
     private void doParseResponseMessages(Oas20Document swagger, VerbDefinition verb, Oas20Operation op) {
+        if (op.responses == null) {
+            op.responses = op.createResponses();
+        }
         for (RestOperationResponseMsgDefinition msg : verb.getResponseMsgs()) {
             Oas20Response response = null;
             
@@ -523,11 +529,12 @@ public class RestSwaggerReader {
                 response = (Oas20Response)op.responses.getResponse(msg.getCode());
             }
             if (response == null) {
-                response = new Oas20Response(msg.getMessage());
+                response = (Oas20Response)op.responses.createResponse(msg.getCode());
+                op.responses.addResponse(msg.getCode(), response);
             }
             if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getResponseModel())) {
                 Oas20Items prop = modelTypeAsProperty(msg.getResponseModel(), swagger);
-                Oas20Schema model = new Oas20Schema();
+                Oas20Schema model = response.createSchema();
                 model.items = prop;
                 response.schema = model;
             }
@@ -541,8 +548,11 @@ public class RestSwaggerReader {
                     String name = header.getName();
                     String type = header.getDataType();
                     String format = header.getDataFormat();
+                    if (response.headers == null) {
+                        response.headers = response.createHeaders();
+                    }
                     if ("string".equals(type)) {
-                        Oas20Header sp = new Oas20Header(name);
+                        Oas20Header sp = response.headers.createHeader(name);
                         sp.type = "string";
                         if (format != null) {
                             sp.format = format;
@@ -553,7 +563,7 @@ public class RestSwaggerReader {
                         }
                         // add example
                         if (header.getExample() != null) {
-                            Extension exampleExtension = new Extension();
+                            Extension exampleExtension = sp.createExtension();
                             exampleExtension.name = "x-example";
                             exampleExtension.value = header.getExample();
                             sp.getExtensions().add(exampleExtension);
@@ -561,7 +571,7 @@ public class RestSwaggerReader {
                         }
                         response.headers.addHeader(name, sp);
                     } else if ("int".equals(type) || "integer".equals(type)) {
-                        Oas20Header ip = new Oas20Header(name);
+                        Oas20Header ip = response.headers.createHeader(name);
                         ip.type = "integer";
                         if (format != null) {
                             ip.format = format;
@@ -578,14 +588,14 @@ public class RestSwaggerReader {
                         }
                         // add example
                         if (header.getExample() != null) {
-                            Extension exampleExtension = new Extension();
+                            Extension exampleExtension = ip.createExtension();
                             exampleExtension.name = "x-example";
                             exampleExtension.value = header.getExample();
                             ip.getExtensions().add(exampleExtension);
                         }
                         response.headers.addHeader(name, ip);
                     } else if ("long".equals(type)) {
-                        Oas20Header lp = new Oas20Header(name);
+                        Oas20Header lp = response.headers.createHeader(name);
                         lp.type = type;
                         if (format != null) {
                             lp.format = format;
@@ -602,7 +612,7 @@ public class RestSwaggerReader {
                         }
                         // add example
                         if (header.getExample() != null) {
-                            Extension exampleExtension = new Extension();
+                            Extension exampleExtension = lp.createExtension();
                             exampleExtension.name = "x-example";
                             exampleExtension.value = header.getExample();
                             lp.getExtensions().add(exampleExtension);
@@ -610,7 +620,7 @@ public class RestSwaggerReader {
                         
                         response.headers.addHeader(name, lp);
                     } else if ("float".equals(type)) {
-                        Oas20Header fp = new Oas20Header(name);
+                        Oas20Header fp = response.headers.createHeader(name);
                         fp.type = "float";
                         if (format != null) {
                             fp.format = format;
@@ -627,14 +637,14 @@ public class RestSwaggerReader {
                         }
                         // add example
                         if (header.getExample() != null) {
-                            Extension exampleExtension = new Extension();
+                            Extension exampleExtension = fp.createExtension();
                             exampleExtension.name = "x-example";
                             exampleExtension.value = header.getExample();
                             fp.getExtensions().add(exampleExtension);
                         }
                         response.headers.addHeader(name, fp);
                     } else if ("double".equals(type)) {
-                        Oas20Header dp = new Oas20Header(name);
+                        Oas20Header dp = response.headers.createHeader(name);
                         dp.type = "double";
                         if (format != null) {
                             dp.format = format;
@@ -651,14 +661,14 @@ public class RestSwaggerReader {
                         }
                         // add example
                         if (header.getExample() != null) {
-                            Extension exampleExtension = new Extension();
+                            Extension exampleExtension = dp.createExtension();
                             exampleExtension.name = "x-example";
                             exampleExtension.value = header.getExample();
                             dp.getExtensions().add(exampleExtension);
                         }
                         response.headers.addHeader(name, dp);
                     } else if ("boolean".equals(type)) {
-                        Oas20Header bp = new Oas20Header(name);
+                        Oas20Header bp = response.headers.createHeader(name);
                         bp.type = "boolean";
                         if (format != null) {
                             bp.format = format;
@@ -666,53 +676,53 @@ public class RestSwaggerReader {
                         bp.description = header.getDescription();
                         // add example
                         if (header.getExample() != null) {
-                            Extension exampleExtension = new Extension();
+                            Extension exampleExtension = bp.createExtension();
                             exampleExtension.name = "x-example";
                             exampleExtension.value = header.getExample();
                             bp.getExtensions().add(exampleExtension);
                         }
                         response.headers.addHeader(name, bp);
                     } else if ("array".equals(type)) {
-                        Oas20Header ap = new Oas20Header("name");
+                        Oas20Header ap = response.headers.createHeader(name);
                         
                         if (org.apache.camel.util.ObjectHelper.isNotEmpty(header.getDescription())) {
                             ap.description = header.getDescription();
                         }
                         if (header.getArrayType() != null) {
                             if (header.getArrayType().equalsIgnoreCase("string")) {
-                                Oas20Items items = new Oas20Items();
+                                Oas20Items items = ap.createItems();
                                 items.type = "string";
                                 ap.items = items;
                             }
                             if (header.getArrayType().equalsIgnoreCase("int") || header.getArrayType().equalsIgnoreCase("integer")) {
-                                Oas20Items items = new Oas20Items();
+                                Oas20Items items = ap.createItems();
                                 items.type = "integer";
                                 ap.items = items;
                             }
                             if (header.getArrayType().equalsIgnoreCase("long")) {
-                                Oas20Items items = new Oas20Items();
+                                Oas20Items items = ap.createItems();
                                 items.type = "long";
                                 ap.items = items;
                             }
                             if (header.getArrayType().equalsIgnoreCase("float")) {
-                                Oas20Items items = new Oas20Items();
+                                Oas20Items items = ap.createItems();
                                 items.type = "float";
                                 ap.items = items;
                             }
                             if (header.getArrayType().equalsIgnoreCase("double")) {
-                                Oas20Items items = new Oas20Items();
+                                Oas20Items items = ap.createItems();
                                 items.type = "double";
                                 ap.items = items;
                             }
                             if (header.getArrayType().equalsIgnoreCase("boolean")) {
-                                Oas20Items items = new Oas20Items();
+                                Oas20Items items = ap.createItems();
                                 items.type = "boolean";
                                 ap.items = items;
                             }
                         }
                         // add example
                         if (header.getExample() != null) {
-                            Extension exampleExtension = new Extension();
+                            Extension exampleExtension = ap.createExtension();
                             exampleExtension.name = "x-example";
                             exampleExtension.value = header.getExample();
                             ap.getExtensions().add(exampleExtension);
@@ -725,19 +735,18 @@ public class RestSwaggerReader {
             // add examples
             if (msg.getExamples() != null) {
                 for (RestPropertyDefinition prop : msg.getExamples()) {
-                    Extension exampleExtension = new Extension();
+                    Extension exampleExtension = response.createExtension();
                     exampleExtension.name = "x-example";
                     exampleExtension.value = msg.getExamples();
                     response.getExtensions().add(exampleExtension);
                 }
             }
-
-            op.responses.addResponse(msg.getCode(), response);
+            
         }
 
         // must include an empty noop response if none exists
         if (op.responses == null || op.responses.getResponses().isEmpty()) {
-            op.responses.addResponse("200", new Oas20Response("empty"));
+            op.responses.addResponse("200", op.responses.createResponse("200"));
         }
     }
 
@@ -838,6 +847,10 @@ public class RestSwaggerReader {
     private void appendModels(Class clazz, Oas20Document swagger) {
         RestModelConverters converters = new RestModelConverters();
         Oas20Definitions models = converters.readClass(swagger, clazz);
+        if (models == null) {
+            //TODO
+            return;
+        }
         for (Oas20SchemaDefinition entry : models.getDefinitions()) {
 
             // favor keeping any existing model that has the vendor extension in the model

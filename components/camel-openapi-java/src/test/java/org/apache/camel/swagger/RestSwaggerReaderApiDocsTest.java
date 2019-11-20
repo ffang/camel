@@ -19,8 +19,6 @@ package org.apache.camel.swagger;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import io.swagger.jaxrs.config.BeanConfig;
-import io.swagger.models.Swagger;
 
 import org.apache.camel.BindToRegistry;
 import org.apache.camel.builder.RouteBuilder;
@@ -28,6 +26,9 @@ import org.apache.camel.impl.engine.DefaultClassResolver;
 import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Test;
+
+import io.apicurio.datamodels.Library;
+import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
 public class RestSwaggerReaderApiDocsTest extends CamelTestSupport {
 
@@ -56,13 +57,15 @@ public class RestSwaggerReaderApiDocsTest extends CamelTestSupport {
         config.setBasePath("/api");
         RestSwaggerReader reader = new RestSwaggerReader();
 
-        Swagger swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
+        Oas20Document swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
         assertNotNull(swagger);
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        String json = mapper.writeValueAsString(swagger);
+        Object dump = Library.writeNode(swagger);
+        String json = mapper.writeValueAsString(dump);
+        System.out.println("the json is =====>" + json);
 
         log.info(json);
 

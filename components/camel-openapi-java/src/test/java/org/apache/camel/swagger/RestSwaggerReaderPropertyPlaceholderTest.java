@@ -22,8 +22,6 @@ import java.util.Properties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import io.swagger.jaxrs.config.BeanConfig;
-import io.swagger.models.Swagger;
 
 import org.apache.camel.BindToRegistry;
 import org.apache.camel.builder.RouteBuilder;
@@ -34,6 +32,9 @@ import org.apache.camel.swagger.producer.DummyRestProducerFactory;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import io.apicurio.datamodels.Library;
+import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
 @Ignore("Does not run well on CI due test uses JMX mbeans")
 public class RestSwaggerReaderPropertyPlaceholderTest extends CamelTestSupport {
@@ -79,14 +80,17 @@ public class RestSwaggerReaderPropertyPlaceholderTest extends CamelTestSupport {
         RestSwaggerSupport support = new RestSwaggerSupport();
         List<RestDefinition> rests = support.getRestDefinitions(context.getName());
 
-        Swagger swagger = reader.read(rests, null, config, context.getName(), new DefaultClassResolver());
+        Oas20Document swagger = reader.read(rests, null, config, context.getName(), new DefaultClassResolver());
         assertNotNull(swagger);
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        String json = mapper.writeValueAsString(swagger);
-
+        
+        Object dump = Library.writeNode(swagger);
+        String json = mapper.writeValueAsString(dump);
+        System.out.println("the json is =====>" + json);
+        
         log.info(json);
 
         assertTrue(json.contains("\"host\" : \"localhost:8080\""));
