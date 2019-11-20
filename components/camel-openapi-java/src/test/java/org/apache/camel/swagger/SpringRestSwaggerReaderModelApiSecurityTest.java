@@ -39,6 +39,7 @@ public class SpringRestSwaggerReaderModelApiSecurityTest extends CamelSpringTest
 
     @Test
     public void testReaderRead() throws Exception {
+        
         BeanConfig config = new BeanConfig();
         config.setHost("localhost:8080");
         config.setSchemes(new String[]{"http"});
@@ -61,8 +62,8 @@ public class SpringRestSwaggerReaderModelApiSecurityTest extends CamelSpringTest
         log.info(json);
 
         assertTrue(json.contains("\"securityDefinitions\" : {"));
-        assertTrue(json.contains("\"type\" : \"oauth2\","));
-        assertTrue(json.contains("\"authorizationUrl\" : \"http://petstore.swagger.io/oauth/dialog\","));
+        assertTrue(json.contains("\"type\" : \"oauth2\""));
+        assertTrue(json.contains("\"authorizationUrl\" : \"http://petstore.swagger.io/oauth/dialog\""));
         assertTrue(json.contains("\"flow\" : \"implicit\""));
         assertTrue(json.contains("\"type\" : \"apiKey\","));
         assertTrue(json.contains("\"in\" : \"header\""));
@@ -78,5 +79,6 @@ public class SpringRestSwaggerReaderModelApiSecurityTest extends CamelSpringTest
         assertTrue(json.contains("\"format\" : \"date\""));
         assertFalse(json.contains("\"enum\""));
         context.stop();
+        
     }
 }

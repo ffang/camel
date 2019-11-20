@@ -45,7 +45,6 @@ import io.apicurio.datamodels.openapi.v2.models.Oas20Parameter;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Response;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Schema;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SchemaDefinition;
-import io.apicurio.datamodels.openapi.v2.models.Oas20SecurityRequirement;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SecurityScheme;
 
 import org.apache.camel.model.rest.RestDefinition;
@@ -118,15 +117,20 @@ public class RestSwaggerReader {
 
         // setup security definitions
         RestSecuritiesDefinition sd = rest.getSecurityDefinitions();
+        if (swagger.securityDefinitions == null) {
+            swagger.securityDefinitions = swagger.createSecurityDefinitions();
+        }
         if (sd != null) {
             for (RestSecurityDefinition def : sd.getSecurityDefinitions()) {
                 if (def instanceof RestSecurityBasicAuth) {
-                    Oas20SecurityScheme auth = new Oas20SecurityScheme("BasicAuth");
+                    Oas20SecurityScheme auth = swagger.securityDefinitions.createSecurityScheme(def.getKey());
+                    auth.type = "basicAuth";
                     auth.description = def.getDescription();
                     swagger.securityDefinitions.addSecurityScheme("BasicAuth", auth);
                 } else if (def instanceof RestSecurityApiKey) {
                     RestSecurityApiKey rs = (RestSecurityApiKey) def;
-                    Oas20SecurityScheme auth = new Oas20SecurityScheme("ApiKeyAuth");
+                    Oas20SecurityScheme auth = swagger.securityDefinitions.createSecurityScheme(def.getKey());
+                    auth.type = "apiKey";
                     auth.description = rs.getDescription();
                     auth.name = rs.getName();
                     if (rs.getInHeader() != null && rs.getInHeader()) {
@@ -137,7 +141,9 @@ public class RestSwaggerReader {
                     swagger.securityDefinitions.addSecurityScheme(def.getKey(), auth);
                 } else if (def instanceof RestSecurityOAuth2) {
                     RestSecurityOAuth2 rs = (RestSecurityOAuth2) def;
-                    Oas20SecurityScheme auth = new Oas20SecurityScheme("OAuth2");
+                    
+                    Oas20SecurityScheme auth = swagger.securityDefinitions.createSecurityScheme(def.getKey());
+                    auth.type = "oauth2";
                     auth.description = rs.getDescription();
                     String flow = rs.getFlow();
                     if (flow == null) {
@@ -152,6 +158,9 @@ public class RestSwaggerReader {
                     auth.tokenUrl = rs.getTokenUrl();
                     for (RestPropertyDefinition scope : rs.getScopes()) {
                         auth.scopes.addScope(scope.getKey(), scope.getValue());
+                    }
+                    if (swagger.securityDefinitions == null) {
+                        swagger.securityDefinitions = swagger.createSecurityDefinitions();
                     }
                     swagger.securityDefinitions.addSecurityScheme(def.getKey(), auth);
                 }
@@ -301,7 +310,7 @@ public class RestSwaggerReader {
                         scopes.add(scope);
                     }
                 }
-                SecurityRequirement securityRequirement = new Oas20SecurityRequirement();
+                SecurityRequirement securityRequirement = op.createSecurityRequirement();
                 securityRequirement.addSecurityRequirementItem(sd.getKey(), scopes);
                 op.addSecurityRequirement(securityRequirement);
             }
@@ -408,7 +417,7 @@ public class RestSwaggerReader {
                                 String ref = modelTypeAsRef(type, swagger);
                                 if (ref != null) {
                                     Oas20Schema refModel = (Oas20Schema)bp.createSchema();
-                                    refModel.$ref = ref;
+                                    refModel.$ref = "#/definitions/" + ref;
                                     bp.schema = refModel;
                                 } else {
                                     Oas20Schema model = (Oas20Schema)bp.createSchema();
@@ -435,12 +444,15 @@ public class RestSwaggerReader {
             }
 
             // clear parameters if its empty
-            if (op.getParameters().isEmpty()) {
+            if (op.getParameters() != null && op.getParameters().isEmpty()) {
                 op.parameters.clear();
             }
 
             // if we have an out type then set that as response message
             if (verb.getOutType() != null) {
+                if (op.responses == null) {
+                    op.responses = op.createResponses();
+                }
                 Oas20Response response = (Oas20Response)op.responses.createResponse("200");
                 Oas20Schema model = response.createSchema();
                 model = modelTypeAsProperty(verb.getOutType(), swagger, model);
@@ -818,7 +830,7 @@ public class RestSwaggerReader {
         }
 
         if (array) {
-            Oas20Schema ret = new Oas20Schema();
+            Oas20Schema ret = (Oas20Schema)prop.createItemsSchema();
             ret.items = prop;
             ret.type = "array";
             return ret;
