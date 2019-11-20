@@ -85,8 +85,8 @@ public class RestSwaggerReaderModelApiSecurityTest extends CamelTestSupport {
         log.info(json);
 
         assertTrue(json.contains("\"securityDefinitions\" : {"));
-        assertTrue(json.contains("\"type\" : \"oauth2\","));
-        assertTrue(json.contains("\"authorizationUrl\" : \"http://petstore.swagger.io/oauth/dialog\","));
+        assertTrue(json.contains("\"type\" : \"oauth2\""));
+        assertTrue(json.contains("\"authorizationUrl\" : \"http://petstore.swagger.io/oauth/dialog\""));
         assertTrue(json.contains("\"flow\" : \"implicit\""));
         assertTrue(json.contains("\"type\" : \"apiKey\","));
         assertTrue(json.contains("\"in\" : \"header\""));

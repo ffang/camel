@@ -34,7 +34,24 @@ public class RestModelConverters {
 
     public Oas20Definitions readClass(Oas20Document oas20Document, Class clazz) {
         String name = clazz.getName();
+        if (!name.contains(".")) {
+            return null;
+        }
+        if (oas20Document.definitions == null) {
+            oas20Document.definitions = oas20Document.createDefinitions();
+        }
         Oas20Definitions resolved = oas20Document.definitions;
+        Oas20SchemaDefinition model = resolved.createSchemaDefinition(clazz.getSimpleName());
+        resolved.addDefinition(clazz.getSimpleName(), model);
+        model.type = clazz.getSimpleName();
+        Extension extension = model.createExtension();
+        extension.name = "x-className";
+        Map<String, String> value = new HashMap<String, String>();
+        value.put("type", "string");
+        value.put("format", name);
+        extension.value = value;
+        model.addExtension("x-className", extension);
+        /*Oas20Definitions resolved = oas20Document.definitions;
         if (resolved != null) {
             for (Oas20SchemaDefinition model : resolved.getDefinitions()) {
                 // enrich with the class name of the model
@@ -57,7 +74,7 @@ public class RestModelConverters {
             value.put("format", name);
             extension.value = value;
             model.addExtension("x-className", extension);
-        }
+        }*/
         return resolved;
     }
 }

@@ -314,6 +314,8 @@ public class RestSwaggerReader {
                 securityRequirement.addSecurityRequirementItem(sd.getKey(), scopes);
                 op.addSecurityRequirement(securityRequirement);
             }
+            
+            
 
             for (RestOperationParamDefinition param : verb.getParams()) {
                 OasParameter parameter = null;
@@ -396,7 +398,7 @@ public class RestSwaggerReader {
                             Extension exampleExtension = qp.createExtension();
                             exampleExtension.name = "x-example";
                             exampleExtension.value = param.getExamples().get(0).getValue();
-                            qp.getExtensions().add(exampleExtension);
+                            qp.addExtension("x-example", exampleExtension);
                         }
                     }
 
@@ -434,7 +436,7 @@ public class RestSwaggerReader {
                                 Extension exampleExtension = bp.createExtension();
                                 exampleExtension.name = prop.getKey();
                                 exampleExtension.value = prop.getValue();
-                                bp.getExtensions().add(exampleExtension);
+                                bp.addExtension(prop.getKey(), exampleExtension);
                             }
                         }
                     }
@@ -748,7 +750,7 @@ public class RestSwaggerReader {
                     Extension exampleExtension = response.createExtension();
                     exampleExtension.name = "x-example";
                     exampleExtension.value = msg.getExamples();
-                    response.getExtensions().add(exampleExtension);
+                    response.addExtension("x-example", exampleExtension);
                 }
             }
             
@@ -810,20 +812,27 @@ public class RestSwaggerReader {
         } else {
             // special for byte arrays
             if (array && ("byte".equals(typeName) || "java.lang.Byte".equals(typeName))) {
-                prop.type = "byte";
+                prop.format = "byte";
+                prop.type = "number";
                 array = false;
             } else if ("string".equalsIgnoreCase(typeName) || "java.lang.String".equals(typeName)) {
-                prop.type = "string";
+                prop.format = "string";
+                prop.type = "sting";
             } else if ("int".equals(typeName) || "java.lang.Integer".equals(typeName)) {
-                prop.type = "integer";
+                prop.format = "integer";
+                prop.type = "number";
             } else if ("long".equals(typeName) || "java.lang.Long".equals(typeName)) {
-                prop.type = "long";
+                prop.format = "long";
+                prop.type = "number";
             } else if ("float".equals(typeName) || "java.lang.Float".equals(typeName)) {
-                prop.type = "float";
+                prop.format = "float";
+                prop.type = "number";
             } else if ("double".equals(typeName) || "java.lang.Double".equals(typeName)) {
-                prop.type = "double";
+                prop.format = "double";
+                prop.type = "number";
             } else if ("boolean".equals(typeName) || "java.lang.Boolean".equals(typeName)) {
-                prop.type = "boolean";
+                prop.format = "boolean";
+                prop.type = "number";
             } else {
                 prop.type = "string";
             }
