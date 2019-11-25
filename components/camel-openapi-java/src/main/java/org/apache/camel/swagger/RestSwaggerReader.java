@@ -21,6 +21,7 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -344,7 +345,7 @@ public class RestSwaggerReader {
                     parameter.required = param.getRequired();
 
                     // set type on parameter
-                    if (!parameter.in.contentEquals("in")) {
+                    if (!parameter.in.equals("body")) {
                         Oas20Parameter serializableParameter = (Oas20Parameter)parameter;
 
                         final boolean isArray = param.getDataType().equalsIgnoreCase("array");
@@ -386,7 +387,7 @@ public class RestSwaggerReader {
                         }
                     }
 
-                    if (!parameter.in.contentEquals("in")) {
+                    if (!parameter.in.equals("body")) {
                         Oas20Parameter qp = (Oas20Parameter)parameter;
                         // set default value on parameter
                         if (org.apache.camel.util.ObjectHelper.isNotEmpty(param.getDefaultValue())) {
@@ -396,14 +397,23 @@ public class RestSwaggerReader {
                         if (param.getExamples() != null && param.getExamples().size() >= 1) {
                             // we can only set one example on the parameter
                             Extension exampleExtension = qp.createExtension();
-                            exampleExtension.name = "x-example";
-                            exampleExtension.value = param.getExamples().get(0).getValue();
-                            qp.addExtension("x-example", exampleExtension);
+                            boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
+                            if (emptyKey) {
+                                exampleExtension.name = "x-example";
+                                exampleExtension.value = param.getExamples().get(0).getValue();
+                                qp.addExtension("x-example", exampleExtension);
+                            } else {
+                                Map<String, String> exampleValue = new HashMap<String, String>();
+                                exampleValue.put(param.getExamples().get(0).getKey(), param.getExamples().get(0).getValue());
+                                exampleExtension.name = "x-examples";
+                                exampleExtension.value = exampleValue;
+                                qp.addExtension("x-examples", exampleExtension);
+                            }
                         }
                     }
 
                     // set schema on body parameter
-                    if (parameter.in.contentEquals("body")) {
+                    if (parameter.in.equals("body")) {
                         Oas20Parameter bp = (Oas20Parameter) parameter;
 
                         String type = param.getDataType() != null ? param.getDataType() : verb.getType();
@@ -434,9 +444,18 @@ public class RestSwaggerReader {
                         if (param.getExamples() != null) {
                             for (RestPropertyDefinition prop : param.getExamples()) {
                                 Extension exampleExtension = bp.createExtension();
-                                exampleExtension.name = prop.getKey();
-                                exampleExtension.value = prop.getValue();
-                                bp.addExtension(prop.getKey(), exampleExtension);
+                                boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
+                                if (emptyKey) {
+                                    exampleExtension.name = "x-example";
+                                    exampleExtension.value = param.getExamples().get(0).getValue();
+                                    bp.addExtension("x-example", exampleExtension);
+                                } else {
+                                    Map<String, String> exampleValue = new HashMap<String, String>();
+                                    exampleValue.put(param.getExamples().get(0).getKey(), param.getExamples().get(0).getValue());
+                                    exampleExtension.name = "x-examples";
+                                    exampleExtension.value = exampleValue;
+                                    bp.addExtension("x-examples", exampleExtension);
+                                }
                             }
                         }
                     }
@@ -474,19 +493,19 @@ public class RestSwaggerReader {
     }
 
     private OasPathItem setPathOperation(OasPathItem path, OasOperation operation, String method) {
-        if (method.contentEquals("post")) {
+        if (method.equals("post")) {
             path.post = operation;
-        } else if (method.contentEquals("get")) {
+        } else if (method.equals("get")) {
             path.get = operation;
-        } else if (method.contentEquals("put")) {
+        } else if (method.equals("put")) {
             path.put = operation;
-        } else if (method.contentEquals("patch")) {
+        } else if (method.equals("patch")) {
             path.patch = operation;
-        } else if (method.contentEquals("delete")) {
+        } else if (method.equals("delete")) {
             path.delete = operation;
-        } else if (method.contentEquals("head")) {
+        } else if (method.equals("head")) {
             path.head = operation;
-        } else if (method.contentEquals("options")) {
+        } else if (method.equals("options")) {
             path.options = operation;
         }
         return path;
@@ -746,12 +765,15 @@ public class RestSwaggerReader {
 
             // add examples
             if (msg.getExamples() != null) {
+                Extension exampleExtension = response.createExtension();
+                exampleExtension.name = "examples";
+                Map<String, String> examplesValue = new HashMap<String, String>();
                 for (RestPropertyDefinition prop : msg.getExamples()) {
-                    Extension exampleExtension = response.createExtension();
-                    exampleExtension.name = "x-example";
-                    exampleExtension.value = msg.getExamples();
-                    response.addExtension("x-example", exampleExtension);
+                    examplesValue.put(prop.getKey(), prop.getValue());
+                    
                 }
+                exampleExtension.value = examplesValue;
+                response.addExtension(exampleExtension.name, exampleExtension);
             }
             
         }

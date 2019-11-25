@@ -439,6 +439,9 @@ public class RestSwaggerSupport {
             for (String scheme : schemes) {
                 String trimmedScheme = scheme.trim();
                 if (ObjectHelper.isNotEmpty(trimmedScheme)) {
+                    if (swagger.schemes == null) {
+                        swagger.schemes = new ArrayList();
+                    }
                     swagger.schemes.add(trimmedScheme) ;
                 }
             }
