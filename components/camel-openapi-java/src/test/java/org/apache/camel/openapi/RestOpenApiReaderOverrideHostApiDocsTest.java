@@ -27,7 +27,8 @@ import org.apache.camel.openapi.RestOpenApiReader;
 import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
-import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
+import io.apicurio.datamodels.openapi.models.OasDocument;
+
 
 public class RestOpenApiReaderOverrideHostApiDocsTest extends RestOpenApiReaderApiDocsTest {
 
@@ -41,7 +42,7 @@ public class RestOpenApiReaderOverrideHostApiDocsTest extends RestOpenApiReaderA
         config.setHost("http:mycoolserver:8888/myapi");
         RestOpenApiReader reader = new RestOpenApiReader();
 
-        Oas20Document openApi = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
+        OasDocument openApi = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
         assertNotNull(openApi);
 
         ObjectMapper mapper = new ObjectMapper();

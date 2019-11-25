@@ -37,7 +37,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
-import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
+import io.apicurio.datamodels.openapi.models.OasDocument;
+
 
 @Ignore("Does not run well on CI due test uses JMX mbeans")
 public class RestOpenApiReaderPropertyPlaceholderTest extends CamelTestSupport {
@@ -83,7 +84,7 @@ public class RestOpenApiReaderPropertyPlaceholderTest extends CamelTestSupport {
         RestOpenApiSupport support = new RestOpenApiSupport();
         List<RestDefinition> rests = support.getRestDefinitions(context.getName());
 
-        Oas20Document openApi = reader.read(rests, null, config, context.getName(), new DefaultClassResolver());
+        OasDocument openApi = reader.read(rests, null, config, context.getName(), new DefaultClassResolver());
         assertNotNull(openApi);
 
         ObjectMapper mapper = new ObjectMapper();

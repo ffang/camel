@@ -31,7 +31,8 @@ import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
-import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
+import io.apicurio.datamodels.openapi.models.OasDocument;
+
 
 public class RestOpenApiReaderApiDocsOverrideTest extends CamelTestSupport {
 
@@ -59,7 +60,7 @@ public class RestOpenApiReaderApiDocsOverrideTest extends CamelTestSupport {
         config.setSchemes(new String[] {"http"});
         config.setBasePath("/api");
         RestOpenApiReader reader = new RestOpenApiReader();
-        Oas20Document openApi = null;
+        OasDocument openApi = null;
         try {
             openApi = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
         

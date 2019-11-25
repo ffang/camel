@@ -34,6 +34,7 @@ import static java.lang.invoke.MethodHandles.publicLookup;
 
 import io.apicurio.datamodels.core.models.Extension;
 import io.apicurio.datamodels.core.models.common.SecurityRequirement;
+import io.apicurio.datamodels.openapi.models.OasDocument;
 import io.apicurio.datamodels.openapi.models.OasOperation;
 import io.apicurio.datamodels.openapi.models.OasParameter;
 import io.apicurio.datamodels.openapi.models.OasPathItem;
@@ -68,7 +69,7 @@ import org.apache.camel.util.FileUtil;
 /**
  * A Camel REST-DSL openApi reader that parse the rest-dsl into a openApi model representation.
  * <p/>
- * This reader supports the <a href="http://swagger.io/specification/">OpenApi Specification 2.0</a>
+ * This reader supports the <a href="http://swagger.io/specification/">OpenApi Specification 2.0 and 3.0</a>
  */
 public class RestOpenApiReader {
 
@@ -82,9 +83,8 @@ public class RestOpenApiReader {
      * @return the openApi model
      * @throws ClassNotFoundException 
      */
-    public Oas20Document read(List<RestDefinition> rests, String route, BeanConfig config, String camelContextId, ClassResolver classResolver) throws ClassNotFoundException {
+    public OasDocument read(List<RestDefinition> rests, String route, BeanConfig config, String camelContextId, ClassResolver classResolver) throws ClassNotFoundException {
         Oas20Document openApi = new Oas20Document();
-
         for (RestDefinition rest : rests) {
 
             if (org.apache.camel.util.ObjectHelper.isNotEmpty(route) && !route.equals("/")) {

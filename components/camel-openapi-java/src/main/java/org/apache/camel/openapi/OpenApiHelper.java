@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.apache.camel.util.FileUtil;
 
+import io.apicurio.datamodels.openapi.models.OasDocument;
 import io.apicurio.datamodels.openapi.models.OasOperation;
 import io.apicurio.datamodels.openapi.models.OasPathItem;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
@@ -47,28 +48,31 @@ public final class OpenApiHelper {
     /**
      * Clears all the vendor extension on the openApi model. This may be needed as some API tooling does not support this.
      */
-    public static void clearVendorExtensions(Oas20Document openApi) {
+    public static void clearVendorExtensions(OasDocument openApi) {
         
-        if (openApi.getExtensions() != null) {
-            openApi.getExtensions().clear();
-        }
+        if (openApi instanceof Oas20Document) {
+        
+            if (openApi.getExtensions() != null) {
+                openApi.getExtensions().clear();
+            }
 
-        if (openApi.definitions.getDefinitions() != null) {
-            for (Oas20SchemaDefinition schemaDefinition : openApi.definitions.getDefinitions()) {
-                if (schemaDefinition.getExtensions() != null) {
-                    schemaDefinition.getExtensions().clear();
+            if (((Oas20Document)openApi).definitions.getDefinitions() != null) {
+                for (Oas20SchemaDefinition schemaDefinition : ((Oas20Document)openApi).definitions.getDefinitions()) {
+                    if (schemaDefinition.getExtensions() != null) {
+                        schemaDefinition.getExtensions().clear();
+                    }
                 }
             }
-        }
-        
-        if (openApi.paths != null) {
-            for (OasPathItem path : openApi.paths.getPathItems()) {
-                if (path.getExtensions() != null) {
-                    path.getExtensions().clear();
-                }
-                for (OasOperation op : getOperationMap(path).values()) {
-                    if (op.getExtensions() != null) {
-                        op.getExtensions().clear();
+
+            if (openApi.paths != null) {
+                for (OasPathItem path : openApi.paths.getPathItems()) {
+                    if (path.getExtensions() != null) {
+                        path.getExtensions().clear();
+                    }
+                    for (OasOperation op : getOperationMap(path).values()) {
+                        if (op.getExtensions() != null) {
+                            op.getExtensions().clear();
+                        }
                     }
                 }
             }

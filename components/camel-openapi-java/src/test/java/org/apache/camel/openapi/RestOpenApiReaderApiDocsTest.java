@@ -30,7 +30,8 @@ import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
-import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
+import io.apicurio.datamodels.openapi.models.OasDocument;
+
 
 public class RestOpenApiReaderApiDocsTest extends CamelTestSupport {
 
@@ -59,7 +60,7 @@ public class RestOpenApiReaderApiDocsTest extends CamelTestSupport {
         config.setBasePath("/api");
         RestOpenApiReader reader = new RestOpenApiReader();
 
-        Oas20Document openApi = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
+        OasDocument openApi = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
         assertNotNull(openApi);
 
         ObjectMapper mapper = new ObjectMapper();

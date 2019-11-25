@@ -205,5 +205,9 @@ public class BeanConfig {
         openApi.basePath = basePath;
         return openApi;
     }
+    
+    public boolean isOpenApi3() {
+        return this.version == null || this.version.startsWith("3");
+    }
 
 }
