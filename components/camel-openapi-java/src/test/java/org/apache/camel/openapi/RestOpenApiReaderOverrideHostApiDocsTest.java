@@ -20,49 +20,28 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-
-import org.apache.camel.BindToRegistry;
-import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.engine.DefaultClassResolver;
-import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.openapi.BeanConfig;
-import org.apache.camel.openapi.RestSwaggerReader;
-import org.apache.camel.test.junit4.CamelTestSupport;
+import org.apache.camel.openapi.RestOpenApiReader;
+
 import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
-public class RestSwaggerReaderApiDocsOverrideTest extends CamelTestSupport {
-
-    @BindToRegistry("dummy-rest")
-    private DummyRestConsumerFactory factory = new DummyRestConsumerFactory();
+public class RestOpenApiReaderOverrideHostApiDocsTest extends RestOpenApiReaderApiDocsTest {
 
     @Override
-    protected RouteBuilder createRouteBuilder() throws Exception {
-        return new RouteBuilder() {
-            @Override
-            public void configure() throws Exception {
-                rest("/hello").apiDocs(false).consumes("application/json").produces("application/json").get("/hi/{name}").description("Saying hi").param().name("name")
-                    .type(RestParamType.path).dataType("string").description("Who is it").endParam().to("log:hi").get("/bye/{name}").apiDocs(true).description("Saying bye").param()
-                    .name("name").type(RestParamType.path).dataType("string").description("Who is it").endParam().responseMessage().code(200).message("A reply message")
-                    .endResponseMessage().to("log:bye").post("/bye").description("To update the greeting message").consumes("application/xml").produces("application/xml").param()
-                    .name("greeting").type(RestParamType.body).dataType("string").description("Message to use as greeting").endParam().to("log:bye");
-            }
-        };
-    }
-
     @Test
     public void testReaderRead() throws Exception {
         BeanConfig config = new BeanConfig();
         config.setHost("localhost:8080");
-        config.setSchemes(new String[] {"http"});
+        config.setSchemes(new String[]{"http"});
         config.setBasePath("/api");
-        RestSwaggerReader reader = new RestSwaggerReader();
-        Oas20Document swagger = null;
-        try {
-            swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
-        
+        config.setHost("http:mycoolserver:8888/myapi");
+        RestOpenApiReader reader = new RestOpenApiReader();
+
+        Oas20Document swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
         assertNotNull(swagger);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -71,15 +50,16 @@ public class RestSwaggerReaderApiDocsOverrideTest extends CamelTestSupport {
         Object dump = Library.writeNode(swagger);
         String json = mapper.writeValueAsString(dump);
         System.out.println("the json is =====>" + json);
+
         log.info(json);
+
+        assertTrue(json.contains("\"host\" : \"http:mycoolserver:8888/myapi\""));
+        assertTrue(json.contains("\"basePath\" : \"/api\""));
 
         assertFalse(json.contains("\"/hello/bye\""));
         assertFalse(json.contains("\"summary\" : \"To update the greeting message\""));
-        assertTrue(json.contains("\"/hello/bye/{name}\""));
-        assertFalse(json.contains("\"/hello/hi/{name}\""));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        assertFalse(json.contains("\"/hello/bye/{name}\""));
+        assertTrue(json.contains("\"/hello/hi/{name}\""));
 
         context.stop();
     }

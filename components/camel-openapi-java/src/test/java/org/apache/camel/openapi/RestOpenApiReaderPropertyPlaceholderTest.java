@@ -29,8 +29,8 @@ import org.apache.camel.impl.engine.DefaultClassResolver;
 import org.apache.camel.model.rest.RestDefinition;
 import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.openapi.BeanConfig;
-import org.apache.camel.openapi.RestSwaggerReader;
-import org.apache.camel.openapi.RestSwaggerSupport;
+import org.apache.camel.openapi.RestOpenApiReader;
+import org.apache.camel.openapi.RestOpenApiSupport;
 import org.apache.camel.openapi.producer.DummyRestProducerFactory;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Ignore;
@@ -40,7 +40,7 @@ import io.apicurio.datamodels.Library;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
 @Ignore("Does not run well on CI due test uses JMX mbeans")
-public class RestSwaggerReaderPropertyPlaceholderTest extends CamelTestSupport {
+public class RestOpenApiReaderPropertyPlaceholderTest extends CamelTestSupport {
 
     @BindToRegistry("dummy-rest")
     private DummyRestProducerFactory factory = new DummyRestProducerFactory();
@@ -78,9 +78,9 @@ public class RestSwaggerReaderPropertyPlaceholderTest extends CamelTestSupport {
         config.setHost("localhost:8080");
         config.setSchemes(new String[] {"http"});
         config.setBasePath("/api");
-        RestSwaggerReader reader = new RestSwaggerReader();
+        RestOpenApiReader reader = new RestOpenApiReader();
 
-        RestSwaggerSupport support = new RestSwaggerSupport();
+        RestOpenApiSupport support = new RestOpenApiSupport();
         List<RestDefinition> rests = support.getRestDefinitions(context.getName());
 
         Oas20Document swagger = reader.read(rests, null, config, context.getName(), new DefaultClassResolver());

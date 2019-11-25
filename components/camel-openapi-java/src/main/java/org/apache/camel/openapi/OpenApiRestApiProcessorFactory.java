@@ -24,7 +24,7 @@ import org.apache.camel.Processor;
 import org.apache.camel.spi.RestApiProcessorFactory;
 import org.apache.camel.spi.RestConfiguration;
 
-public class SwaggerRestApiProcessorFactory implements RestApiProcessorFactory {
+public class OpenApiRestApiProcessorFactory implements RestApiProcessorFactory {
 
     @Override
     public Processor createApiProcessor(CamelContext camelContext, String contextPath, String contextIdPattern, boolean contextIdListing,
@@ -76,6 +76,6 @@ public class SwaggerRestApiProcessorFactory implements RestApiProcessorFactory {
             options.put("cors", "true");
         }
 
-        return new RestSwaggerProcessor(contextIdPattern, contextIdListing, options, configuration);
+        return new RestOpenApiProcessor(contextIdPattern, contextIdListing, options, configuration);
     }
 }

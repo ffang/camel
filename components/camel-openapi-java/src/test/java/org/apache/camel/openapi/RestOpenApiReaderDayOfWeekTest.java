@@ -26,14 +26,14 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.engine.DefaultClassResolver;
 import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.openapi.BeanConfig;
-import org.apache.camel.openapi.RestSwaggerReader;
+import org.apache.camel.openapi.RestOpenApiReader;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
-public class RestSwaggerReaderModelTest extends CamelTestSupport {
+public class RestOpenApiReaderDayOfWeekTest extends CamelTestSupport {
 
     @BindToRegistry("dummy-rest")
     private DummyRestConsumerFactory factory = new DummyRestConsumerFactory();
@@ -44,17 +44,12 @@ public class RestSwaggerReaderModelTest extends CamelTestSupport {
             @Override
             public void configure() throws Exception {
                 // this user REST service is json only
-                rest("/user").tag("dude").description("User rest service").consumes("application/json").produces("application/json")
+                rest("/day").tag("dude").description("Day service").consumes("application/json").produces("application/json")
 
-                    .get("/{id}/{date}").description("Find user by id and date").outType(User.class).responseMessage().message("The user returned").endResponseMessage().param()
-                    .name("id").type(RestParamType.path).description("The id of the user to get").endParam().param().name("date").type(RestParamType.path).description("The date")
-                    .dataFormat("date").endParam().to("bean:userService?method=getUser(${header.id})")
-
-                    .put().description("Updates or create a user").type(User.class).param().name("body").type(RestParamType.body).description("The user to update or create")
-                    .endParam().to("bean:userService?method=updateUser")
-
-                    .get("/findAll").description("Find all users").outType(User[].class).responseMessage().message("All the found users").endResponseMessage()
-                    .to("bean:userService?method=listUsers");
+                    .get("/week").description("Day of week").param().name("day").type(RestParamType.query).description("Day of week").defaultValue("friday").dataType("string")
+                    .allowableValues("monday", "tuesday", "wednesday", "thursday", "friday").endParam().responseMessage().code(200).responseModel(DayResponse.class)
+                    .header("X-Rate-Limit-Limit").description("The number of allowed requests in the current period").dataType("integer").endHeader().endResponseMessage()
+                    .to("log:week");
             }
         };
     }
@@ -65,10 +60,10 @@ public class RestSwaggerReaderModelTest extends CamelTestSupport {
         config.setHost("localhost:8080");
         config.setSchemes(new String[] {"http"});
         config.setBasePath("/api");
-        config.setTitle("Camel User store");
+        config.setTitle("Day");
         config.setLicense("Apache 2.0");
         config.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
-        RestSwaggerReader reader = new RestSwaggerReader();
+        RestOpenApiReader reader = new RestOpenApiReader();
 
         Oas20Document swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
         assertNotNull(swagger);
@@ -83,14 +78,15 @@ public class RestSwaggerReaderModelTest extends CamelTestSupport {
         log.info(json);
 
         assertTrue(json.contains("\"host\" : \"localhost:8080\""));
-        assertTrue(json.contains("\"description\" : \"The user returned\""));
-        assertTrue(json.contains("\"$ref\" : \"#/definitions/User\""));
-        assertTrue(json.contains("\"x-className\""));
-        assertTrue(json.contains("\"format\" : \"org.apache.camel.openapi.User\""));
-        assertTrue(json.contains("\"type\" : \"string\""));
-        assertTrue(json.contains("\"format\" : \"date\""));
-        assertFalse(json.contains("\"enum\""));
+        assertTrue(json.contains("\"default\" : \"friday\""));
+        assertTrue(json.contains("\"enum\" : [ \"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\" ]"));
+        assertTrue(json.contains("\"$ref\" : \"#/definitions/DayResponse\""));
+        assertTrue(json.contains("\"format\" : \"org.apache.camel.openapi.DayResponse\""));
+        assertTrue(json.contains("\"X-Rate-Limit-Limit\" : {"));
+        assertTrue(json.contains("\"description\" : \"The number of allowed requests in the current period\""));
+
         context.stop();
+        
     }
 
 }

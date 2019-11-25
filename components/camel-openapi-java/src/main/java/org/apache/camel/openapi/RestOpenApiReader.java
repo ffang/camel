@@ -70,7 +70,7 @@ import org.apache.camel.util.FileUtil;
  * <p/>
  * This reader supports the <a href="http://swagger.io/specification/">Swagger Specification 2.0</a>
  */
-public class RestSwaggerReader {
+public class RestOpenApiReader {
 
     /**
      * Read the REST-DSL definition's and parse that as a Swagger model representation
@@ -241,7 +241,7 @@ public class RestSwaggerReader {
             // the method must be in lower case
             String method = verb.asVerb().toLowerCase(Locale.US);
             // operation path is a key
-            String opPath = SwaggerHelper.buildUrl(basePath, verb.getUri());
+            String opPath = OpenApiHelper.buildUrl(basePath, verb.getUri());
 
             
             if (swagger.paths == null) {

@@ -42,9 +42,9 @@ import io.apicurio.datamodels.openapi.v2.models.Oas20Operation;
 
 import static org.apache.camel.support.ResourceHelper.resolveMandatoryResourceAsInputStream;
 
-public class SwaggerRestProducerFactory implements RestProducerFactory {
+public class OpenApiRestProducerFactory implements RestProducerFactory {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SwaggerRestProducerFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(OpenApiRestProducerFactory.class);
 
     @Override
     public Producer createProducer(CamelContext camelContext, String host,

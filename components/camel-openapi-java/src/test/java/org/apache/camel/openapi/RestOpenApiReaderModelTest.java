@@ -20,19 +20,20 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+
 import org.apache.camel.BindToRegistry;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.engine.DefaultClassResolver;
 import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.openapi.BeanConfig;
-import org.apache.camel.openapi.RestSwaggerReader;
+import org.apache.camel.openapi.RestOpenApiReader;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
-public class RestSwaggerReaderModelApiSecurityTest extends CamelTestSupport {
+public class RestOpenApiReaderModelTest extends CamelTestSupport {
 
     @BindToRegistry("dummy-rest")
     private DummyRestConsumerFactory factory = new DummyRestConsumerFactory();
@@ -42,20 +43,15 @@ public class RestSwaggerReaderModelApiSecurityTest extends CamelTestSupport {
         return new RouteBuilder() {
             @Override
             public void configure() throws Exception {
-                rest("/user").tag("dude").description("User rest service")
-                    // setup security definitions
-                    .securityDefinitions().oauth2("petstore_auth").authorizationUrl("http://petstore.swagger.io/oauth/dialog").end().apiKey("api_key").withHeader("myHeader").end()
-                    .end().consumes("application/json").produces("application/json")
+                // this user REST service is json only
+                rest("/user").tag("dude").description("User rest service").consumes("application/json").produces("application/json")
 
-                    .get("/{id}/{date}").description("Find user by id and date").outType(User.class).responseMessage().message("The user returned").endResponseMessage()
-                    // setup security for this rest verb
-                    .security("api_key").param().name("id").type(RestParamType.path).description("The id of the user to get").endParam().param().name("date")
-                    .type(RestParamType.path).description("The date").dataFormat("date").endParam().to("bean:userService?method=getUser(${header.id})")
+                    .get("/{id}/{date}").description("Find user by id and date").outType(User.class).responseMessage().message("The user returned").endResponseMessage().param()
+                    .name("id").type(RestParamType.path).description("The id of the user to get").endParam().param().name("date").type(RestParamType.path).description("The date")
+                    .dataFormat("date").endParam().to("bean:userService?method=getUser(${header.id})")
 
-                    .put().description("Updates or create a user").type(User.class)
-                    // setup security for this rest verb
-                    .security("petstore_auth", "write:pets,read:pets").param().name("body").type(RestParamType.body).description("The user to update or create").endParam()
-                    .to("bean:userService?method=updateUser")
+                    .put().description("Updates or create a user").type(User.class).param().name("body").type(RestParamType.body).description("The user to update or create")
+                    .endParam().to("bean:userService?method=updateUser")
 
                     .get("/findAll").description("Find all users").outType(User[].class).responseMessage().message("All the found users").endResponseMessage()
                     .to("bean:userService?method=listUsers");
@@ -72,7 +68,7 @@ public class RestSwaggerReaderModelApiSecurityTest extends CamelTestSupport {
         config.setTitle("Camel User store");
         config.setLicense("Apache 2.0");
         config.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
-        RestSwaggerReader reader = new RestSwaggerReader();
+        RestOpenApiReader reader = new RestOpenApiReader();
 
         Oas20Document swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
         assertNotNull(swagger);
@@ -86,16 +82,7 @@ public class RestSwaggerReaderModelApiSecurityTest extends CamelTestSupport {
 
         log.info(json);
 
-        assertTrue(json.contains("\"securityDefinitions\" : {"));
-        assertTrue(json.contains("\"type\" : \"oauth2\""));
-        assertTrue(json.contains("\"authorizationUrl\" : \"http://petstore.swagger.io/oauth/dialog\""));
-        assertTrue(json.contains("\"flow\" : \"implicit\""));
-        assertTrue(json.contains("\"type\" : \"apiKey\","));
-        assertTrue(json.contains("\"in\" : \"header\""));
         assertTrue(json.contains("\"host\" : \"localhost:8080\""));
-        assertTrue(json.contains("\"security\" : [ {"));
-        assertTrue(json.contains("\"petstore_auth\" : [ \"write:pets\", \"read:pets\" ]"));
-        assertTrue(json.contains("\"api_key\" : [ ]"));
         assertTrue(json.contains("\"description\" : \"The user returned\""));
         assertTrue(json.contains("\"$ref\" : \"#/definitions/User\""));
         assertTrue(json.contains("\"x-className\""));

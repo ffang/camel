@@ -26,14 +26,14 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.engine.DefaultClassResolver;
 import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.openapi.BeanConfig;
-import org.apache.camel.openapi.RestSwaggerReader;
+import org.apache.camel.openapi.RestOpenApiReader;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
-public class RestSwaggerReaderTest extends CamelTestSupport {
+public class RestOpenApiReaderTest extends CamelTestSupport {
 
     @BindToRegistry("dummy-rest")
     private DummyRestConsumerFactory factory = new DummyRestConsumerFactory();
@@ -60,7 +60,7 @@ public class RestSwaggerReaderTest extends CamelTestSupport {
         config.setHost("localhost:8080");
         config.setSchemes(new String[] {"http"});
         config.setBasePath("/api");
-        RestSwaggerReader reader = new RestSwaggerReader();
+        RestOpenApiReader reader = new RestOpenApiReader();
 
         Oas20Document swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
         assertNotNull(swagger);

@@ -20,20 +20,19 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-
 import org.apache.camel.BindToRegistry;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.engine.DefaultClassResolver;
 import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.openapi.BeanConfig;
-import org.apache.camel.openapi.RestSwaggerReader;
+import org.apache.camel.openapi.RestOpenApiReader;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
-public class RestSwaggerReaderEnableVendorExtensionTest extends CamelTestSupport {
+public class RestOpenApiReaderModelBookOrderTest extends CamelTestSupport {
 
     @BindToRegistry("dummy-rest")
     private DummyRestConsumerFactory factory = new DummyRestConsumerFactory();
@@ -43,26 +42,18 @@ public class RestSwaggerReaderEnableVendorExtensionTest extends CamelTestSupport
         return new RouteBuilder() {
             @Override
             public void configure() throws Exception {
-                // enable vendor extensions
-                restConfiguration().apiVendorExtension(true);
-
                 // this user REST service is json only
-                rest("/user").tag("dude").description("User rest service").consumes("application/json").produces("application/json")
+                rest("/books").tag("dude").description("Book order service").consumes("application/json").produces("application/json")
 
-                    .get("/{id}").description("Find user by id").outType(User.class).responseMessage().message("The user returned").endResponseMessage().param().name("id")
-                    .type(RestParamType.path).description("The id of the user to get").dataType("integer").endParam().to("bean:userService?method=getUser(${header.id})")
-
-                    .put().description("Updates or create a user").type(User.class).param().name("body").type(RestParamType.body).description("The user to update or create")
-                    .endParam().to("bean:userService?method=updateUser")
-
-                    .get("/findAll").description("Find all users").outType(User[].class).responseMessage().message("All the found users").endResponseMessage()
-                    .to("bean:userService?method=listUsers");
+                    .get("/{id}").description("Find order by id").outType(BookOrder.class).responseMessage().message("The order returned").endResponseMessage().param().name("id")
+                    .type(RestParamType.path).description("The id of the order to get").dataType("integer").endParam().to("bean:bookService?method=getOrder(${header.id})")
+                    .get("/books/{id}/line/{lineNum}").outType(LineItem.class).to("bean:bookService?method=getOrder(${header.id})");
             }
         };
     }
 
     @Test
-    public void testEnableVendorExtension() throws Exception {
+    public void testReaderRead() throws Exception {
         BeanConfig config = new BeanConfig();
         config.setHost("localhost:8080");
         config.setSchemes(new String[] {"http"});
@@ -70,7 +61,7 @@ public class RestSwaggerReaderEnableVendorExtensionTest extends CamelTestSupport
         config.setTitle("Camel User store");
         config.setLicense("Apache 2.0");
         config.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
-        RestSwaggerReader reader = new RestSwaggerReader();
+        RestOpenApiReader reader = new RestOpenApiReader();
 
         Oas20Document swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
         assertNotNull(swagger);
@@ -84,15 +75,16 @@ public class RestSwaggerReaderEnableVendorExtensionTest extends CamelTestSupport
 
         log.info(json);
 
-        String camelId = context.getName();
-        String routeId = context.getRouteDefinitions().get(0).getId();
-
         assertTrue(json.contains("\"host\" : \"localhost:8080\""));
-        assertTrue(json.contains("\"description\" : \"The user returned\""));
-        assertTrue(json.contains("\"$ref\" : \"#/definitions/User\""));
-        assertFalse(json.contains("\"enum\""));
-        assertTrue(json.contains("\"x-camelContextId\" : \"" + camelId + "\""));
-        assertTrue(json.contains("\"x-routeId\" : \"" + routeId + "\""));
+        assertTrue(json.contains("\"description\" : \"The order returned\""));
+        assertTrue(json.contains("\"BookOrder\""));
+        assertTrue(json.contains("\"LineItem\""));
+        assertTrue(json.contains("\"$ref\" : \"#/definitions/BookOrder\""));
+        assertTrue(json.contains("\"$ref\" : \"#/definitions/LineItem\""));
+        assertTrue(json.contains("\"x-className\""));
+        assertTrue(json.contains("\"format\" : \"org.apache.camel.openapi.BookOrder\""));
+        assertTrue(json.contains("\"format\" : \"org.apache.camel.openapi.LineItem\""));
+
         context.stop();
     }
 

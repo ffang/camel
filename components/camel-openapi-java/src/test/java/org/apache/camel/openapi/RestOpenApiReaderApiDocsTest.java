@@ -20,20 +20,19 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-
 import org.apache.camel.BindToRegistry;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.engine.DefaultClassResolver;
 import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.openapi.BeanConfig;
-import org.apache.camel.openapi.RestSwaggerReader;
+import org.apache.camel.openapi.RestOpenApiReader;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
-public class RestSwaggerReaderDayOfWeekTest extends CamelTestSupport {
+public class RestOpenApiReaderApiDocsTest extends CamelTestSupport {
 
     @BindToRegistry("dummy-rest")
     private DummyRestConsumerFactory factory = new DummyRestConsumerFactory();
@@ -43,13 +42,11 @@ public class RestSwaggerReaderDayOfWeekTest extends CamelTestSupport {
         return new RouteBuilder() {
             @Override
             public void configure() throws Exception {
-                // this user REST service is json only
-                rest("/day").tag("dude").description("Day service").consumes("application/json").produces("application/json")
-
-                    .get("/week").description("Day of week").param().name("day").type(RestParamType.query).description("Day of week").defaultValue("friday").dataType("string")
-                    .allowableValues("monday", "tuesday", "wednesday", "thursday", "friday").endParam().responseMessage().code(200).responseModel(DayResponse.class)
-                    .header("X-Rate-Limit-Limit").description("The number of allowed requests in the current period").dataType("integer").endHeader().endResponseMessage()
-                    .to("log:week");
+                rest("/hello").consumes("application/json").produces("application/json").get("/hi/{name}").description("Saying hi").param().name("name").type(RestParamType.path)
+                    .dataType("string").description("Who is it").endParam().to("log:hi").get("/bye/{name}").apiDocs(false).description("Saying bye").param().name("name")
+                    .type(RestParamType.path).dataType("string").description("Who is it").endParam().responseMessage().code(200).message("A reply message").endResponseMessage()
+                    .to("log:bye").post("/bye").apiDocs(false).description("To update the greeting message").consumes("application/xml").produces("application/xml").param()
+                    .name("greeting").type(RestParamType.body).dataType("string").description("Message to use as greeting").endParam().to("log:bye");
             }
         };
     }
@@ -60,10 +57,7 @@ public class RestSwaggerReaderDayOfWeekTest extends CamelTestSupport {
         config.setHost("localhost:8080");
         config.setSchemes(new String[] {"http"});
         config.setBasePath("/api");
-        config.setTitle("Day");
-        config.setLicense("Apache 2.0");
-        config.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
-        RestSwaggerReader reader = new RestSwaggerReader();
+        RestOpenApiReader reader = new RestOpenApiReader();
 
         Oas20Document swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
         assertNotNull(swagger);
@@ -78,15 +72,14 @@ public class RestSwaggerReaderDayOfWeekTest extends CamelTestSupport {
         log.info(json);
 
         assertTrue(json.contains("\"host\" : \"localhost:8080\""));
-        assertTrue(json.contains("\"default\" : \"friday\""));
-        assertTrue(json.contains("\"enum\" : [ \"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\" ]"));
-        assertTrue(json.contains("\"$ref\" : \"#/definitions/DayResponse\""));
-        assertTrue(json.contains("\"format\" : \"org.apache.camel.openapi.DayResponse\""));
-        assertTrue(json.contains("\"X-Rate-Limit-Limit\" : {"));
-        assertTrue(json.contains("\"description\" : \"The number of allowed requests in the current period\""));
+        assertTrue(json.contains("\"basePath\" : \"/api\""));
+
+        assertFalse(json.contains("\"/hello/bye\""));
+        assertFalse(json.contains("\"summary\" : \"To update the greeting message\""));
+        assertFalse(json.contains("\"/hello/bye/{name}\""));
+        assertTrue(json.contains("\"/hello/hi/{name}\""));
 
         context.stop();
-        
     }
 
 }

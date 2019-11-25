@@ -22,7 +22,7 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Test;
 
-public class RestSwaggerGetUriParamTest extends CamelTestSupport {
+public class RestOpenApiGetUriParamTest extends CamelTestSupport {
 
     @BindToRegistry("dummy")
     private DummyRestProducerFactory factory = new DummyRestProducerFactory();

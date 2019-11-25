@@ -27,9 +27,9 @@ import io.apicurio.datamodels.openapi.models.OasPathItem;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SchemaDefinition;
 
-public final class SwaggerHelper {
+public final class OpenApiHelper {
 
-    private SwaggerHelper() {
+    private OpenApiHelper() {
     }
 
     public static String buildUrl(String path1, String path2) {

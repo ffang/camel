@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.apache.camel.openapi.RestSwaggerSupport;
+import org.apache.camel.openapi.RestOpenApiSupport;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,7 +37,7 @@ import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-public class RestSwaggerSupportTest {
+public class RestOpenApiSupportTest {
 
     @Test
     public void shouldAdaptFromXForwardHeaders() {
@@ -46,10 +46,10 @@ public class RestSwaggerSupportTest {
         final Oas20Document swagger = spy(doc);
 
         final Map<String, Object> headers = new HashMap<>();
-        headers.put(RestSwaggerSupport.HEADER_X_FORWARDED_PREFIX, "/prefix");
-        headers.put(RestSwaggerSupport.HEADER_X_FORWARDED_HOST, "host");
-        headers.put(RestSwaggerSupport.HEADER_X_FORWARDED_PROTO, "http, HTTPS ");
-        RestSwaggerSupport.setupXForwardedHeaders(swagger, headers);
+        headers.put(RestOpenApiSupport.HEADER_X_FORWARDED_PREFIX, "/prefix");
+        headers.put(RestOpenApiSupport.HEADER_X_FORWARDED_HOST, "host");
+        headers.put(RestOpenApiSupport.HEADER_X_FORWARDED_PROTO, "http, HTTPS ");
+        RestOpenApiSupport.setupXForwardedHeaders(swagger, headers);
 
         
         assertEquals(swagger.basePath, "/prefix/base");
@@ -68,8 +68,8 @@ public class RestSwaggerSupportTest {
         final Oas20Document swagger = spy(doc);
 
         final Map<String, Object> headers = new HashMap<>();
-        headers.put(RestSwaggerSupport.HEADER_X_FORWARDED_PREFIX, prefix);
-        RestSwaggerSupport.setupXForwardedHeaders(swagger, headers);
+        headers.put(RestOpenApiSupport.HEADER_X_FORWARDED_PREFIX, prefix);
+        RestOpenApiSupport.setupXForwardedHeaders(swagger, headers);
 
         assertEquals(swagger.basePath, expected);
     }
@@ -79,8 +79,8 @@ public class RestSwaggerSupportTest {
     public void shouldAdaptWithVaryingSchemes(final String xForwardedScheme, final String[] expected) {
         final Oas20Document swagger = spy(new Oas20Document());
 
-        RestSwaggerSupport.setupXForwardedHeaders(swagger,
-            Collections.singletonMap(RestSwaggerSupport.HEADER_X_FORWARDED_PROTO, xForwardedScheme));
+        RestOpenApiSupport.setupXForwardedHeaders(swagger,
+            Collections.singletonMap(RestOpenApiSupport.HEADER_X_FORWARDED_PROTO, xForwardedScheme));
 
         for (final String scheme : expected) {
             assertTrue(swagger.schemes.contains(scheme));
@@ -92,7 +92,7 @@ public class RestSwaggerSupportTest {
     public void shouldNotAdaptFromXForwardHeadersWhenNoHeadersSpecified() {
         final Oas20Document swagger = spy(new Oas20Document());
 
-        RestSwaggerSupport.setupXForwardedHeaders(swagger, Collections.emptyMap());
+        RestOpenApiSupport.setupXForwardedHeaders(swagger, Collections.emptyMap());
 
         verifyZeroInteractions(swagger);
     }

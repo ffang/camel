@@ -17,15 +17,15 @@
 package org.apache.camel.openapi;
 
 import org.apache.camel.impl.DefaultCamelContext;
-import org.apache.camel.openapi.SwaggerRestProducerFactory;
+import org.apache.camel.openapi.OpenApiRestProducerFactory;
 
 import org.junit.Test;
 
-public class SwaggerRestProducerFactoryTest {
+public class OpenApiRestProducerFactoryTest {
 
     @Test
     public void shouldLoadSwaggerPetStoreModel() throws Exception {
-        SwaggerRestProducerFactory factory = new SwaggerRestProducerFactory();
+        OpenApiRestProducerFactory factory = new OpenApiRestProducerFactory();
 
         factory.loadSwaggerModel(new DefaultCamelContext(), "petstore.json");
     }

@@ -29,21 +29,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class RestSwaggerProcessor implements Processor {
+public class RestOpenApiProcessor implements Processor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RestSwaggerProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RestOpenApiProcessor.class);
     private final BeanConfig swaggerConfig;
-    private final RestSwaggerSupport support;
+    private final RestOpenApiSupport support;
     private final String contextIdPattern;
     private final boolean contextIdListing;
     private final RestConfiguration configuration;
 
     @SuppressWarnings("unchecked")
-    public RestSwaggerProcessor(String contextIdPattern, boolean contextIdListing, Map<String, Object> parameters, RestConfiguration configuration) {
+    public RestOpenApiProcessor(String contextIdPattern, boolean contextIdListing, Map<String, Object> parameters, RestConfiguration configuration) {
         this.contextIdPattern = contextIdPattern;
         this.contextIdListing = contextIdListing;
         this.configuration = configuration;
-        this.support = new RestSwaggerSupport();
+        this.support = new RestOpenApiSupport();
         this.swaggerConfig = new BeanConfig();
 
         if (parameters == null) {

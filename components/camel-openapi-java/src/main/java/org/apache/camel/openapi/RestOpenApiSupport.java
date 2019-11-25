@@ -16,7 +16,7 @@
  */
 package org.apache.camel.openapi;
 
-import static org.apache.camel.openapi.SwaggerHelper.clearVendorExtensions;
+import static org.apache.camel.openapi.OpenApiHelper.clearVendorExtensions;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -69,15 +69,15 @@ import io.apicurio.datamodels.openapi.v2.models.Oas20License;
  * and offer Swagger API service listings as part of the Camel component. This allows rest-dsl components
  * such as servlet/jetty/netty-http to offer Swagger API listings with minimal effort.
  */
-public class RestSwaggerSupport {
+public class RestOpenApiSupport {
 
     static final String HEADER_X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
     static final String HEADER_X_FORWARDED_HOST = "X-Forwarded-Host";
     static final String HEADER_X_FORWARDED_PROTO = "X-Forwarded-Proto";
     static final String HEADER_HOST = "Host";
 
-    private static final Logger LOG = LoggerFactory.getLogger(RestSwaggerSupport.class);
-    private RestSwaggerReader reader = new RestSwaggerReader();
+    private static final Logger LOG = LoggerFactory.getLogger(RestOpenApiSupport.class);
+    private RestOpenApiReader reader = new RestOpenApiReader();
     private boolean cors;
 
     public void initSwagger(BeanConfig swaggerConfig, Map<String, Object> config) {

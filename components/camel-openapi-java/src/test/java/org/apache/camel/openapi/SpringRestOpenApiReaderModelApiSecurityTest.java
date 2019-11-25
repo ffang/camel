@@ -20,48 +20,36 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import org.apache.camel.BindToRegistry;
-import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.engine.DefaultClassResolver;
-import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.openapi.BeanConfig;
-import org.apache.camel.openapi.RestSwaggerReader;
-import org.apache.camel.test.junit4.CamelTestSupport;
+import org.apache.camel.openapi.RestOpenApiReader;
+import org.apache.camel.test.spring.CamelSpringTestSupport;
 import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
-public class RestSwaggerReaderModelBookOrderTest extends CamelTestSupport {
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-    @BindToRegistry("dummy-rest")
-    private DummyRestConsumerFactory factory = new DummyRestConsumerFactory();
+public class SpringRestOpenApiReaderModelApiSecurityTest extends CamelSpringTestSupport {
 
     @Override
-    protected RouteBuilder createRouteBuilder() throws Exception {
-        return new RouteBuilder() {
-            @Override
-            public void configure() throws Exception {
-                // this user REST service is json only
-                rest("/books").tag("dude").description("Book order service").consumes("application/json").produces("application/json")
-
-                    .get("/{id}").description("Find order by id").outType(BookOrder.class).responseMessage().message("The order returned").endResponseMessage().param().name("id")
-                    .type(RestParamType.path).description("The id of the order to get").dataType("integer").endParam().to("bean:bookService?method=getOrder(${header.id})")
-                    .get("/books/{id}/line/{lineNum}").outType(LineItem.class).to("bean:bookService?method=getOrder(${header.id})");
-            }
-        };
+    protected AbstractApplicationContext createApplicationContext() {
+        return new ClassPathXmlApplicationContext("org/apache/camel/openapi/SpringRestOpenApiReaderModelApiSecurityTest.xml");
     }
 
     @Test
     public void testReaderRead() throws Exception {
+        
         BeanConfig config = new BeanConfig();
         config.setHost("localhost:8080");
-        config.setSchemes(new String[] {"http"});
+        config.setSchemes(new String[]{"http"});
         config.setBasePath("/api");
         config.setTitle("Camel User store");
         config.setLicense("Apache 2.0");
         config.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
-        RestSwaggerReader reader = new RestSwaggerReader();
+        RestOpenApiReader reader = new RestOpenApiReader();
 
         Oas20Document swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
         assertNotNull(swagger);
@@ -75,17 +63,24 @@ public class RestSwaggerReaderModelBookOrderTest extends CamelTestSupport {
 
         log.info(json);
 
+        assertTrue(json.contains("\"securityDefinitions\" : {"));
+        assertTrue(json.contains("\"type\" : \"oauth2\""));
+        assertTrue(json.contains("\"authorizationUrl\" : \"http://petstore.swagger.io/oauth/dialog\""));
+        assertTrue(json.contains("\"flow\" : \"implicit\""));
+        assertTrue(json.contains("\"type\" : \"apiKey\","));
+        assertTrue(json.contains("\"in\" : \"header\""));
         assertTrue(json.contains("\"host\" : \"localhost:8080\""));
-        assertTrue(json.contains("\"description\" : \"The order returned\""));
-        assertTrue(json.contains("\"BookOrder\""));
-        assertTrue(json.contains("\"LineItem\""));
-        assertTrue(json.contains("\"$ref\" : \"#/definitions/BookOrder\""));
-        assertTrue(json.contains("\"$ref\" : \"#/definitions/LineItem\""));
+        assertTrue(json.contains("\"security\" : [ {"));
+        assertTrue(json.contains("\"petstore_auth\" : [ \"write:pets\", \"read:pets\" ]"));
+        assertTrue(json.contains("\"api_key\" : [ ]"));
+        assertTrue(json.contains("\"description\" : \"The user returned\""));
+        assertTrue(json.contains("\"$ref\" : \"#/definitions/User\""));
         assertTrue(json.contains("\"x-className\""));
-        assertTrue(json.contains("\"format\" : \"org.apache.camel.openapi.BookOrder\""));
-        assertTrue(json.contains("\"format\" : \"org.apache.camel.openapi.LineItem\""));
-
+        assertTrue(json.contains("\"format\" : \"org.apache.camel.openapi.User\""));
+        assertTrue(json.contains("\"type\" : \"string\""));
+        assertTrue(json.contains("\"format\" : \"date\""));
+        assertFalse(json.contains("\"enum\""));
         context.stop();
+        
     }
-
 }
