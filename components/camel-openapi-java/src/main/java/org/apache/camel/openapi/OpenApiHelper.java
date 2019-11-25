@@ -45,24 +45,24 @@ public final class OpenApiHelper {
     }
 
     /**
-     * Clears all the vendor extension on the swagger model. This may be needed as some API tooling does not support this.
+     * Clears all the vendor extension on the openApi model. This may be needed as some API tooling does not support this.
      */
-    public static void clearVendorExtensions(Oas20Document swagger) {
+    public static void clearVendorExtensions(Oas20Document openApi) {
         
-        if (swagger.getExtensions() != null) {
-            swagger.getExtensions().clear();
+        if (openApi.getExtensions() != null) {
+            openApi.getExtensions().clear();
         }
 
-        if (swagger.definitions.getDefinitions() != null) {
-            for (Oas20SchemaDefinition schemaDefinition : swagger.definitions.getDefinitions()) {
+        if (openApi.definitions.getDefinitions() != null) {
+            for (Oas20SchemaDefinition schemaDefinition : openApi.definitions.getDefinitions()) {
                 if (schemaDefinition.getExtensions() != null) {
                     schemaDefinition.getExtensions().clear();
                 }
             }
         }
         
-        if (swagger.paths != null) {
-            for (OasPathItem path : swagger.paths.getPathItems()) {
+        if (openApi.paths != null) {
+            for (OasPathItem path : openApi.paths.getPathItems()) {
                 if (path.getExtensions() != null) {
                     path.getExtensions().clear();
                 }

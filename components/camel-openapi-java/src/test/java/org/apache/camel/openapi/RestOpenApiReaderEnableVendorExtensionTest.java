@@ -72,13 +72,13 @@ public class RestOpenApiReaderEnableVendorExtensionTest extends CamelTestSupport
         config.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
         RestOpenApiReader reader = new RestOpenApiReader();
 
-        Oas20Document swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
-        assertNotNull(swagger);
+        Oas20Document openApi = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
+        assertNotNull(openApi);
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        Object dump = Library.writeNode(swagger);
+        Object dump = Library.writeNode(openApi);
         String json = mapper.writeValueAsString(dump);
         System.out.println("the json is =====>" + json);
 

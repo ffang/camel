@@ -54,7 +54,7 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
         String apiDoc = (String) parameters.get("apiDoc");
         // load json model
         if (apiDoc == null) {
-            throw new IllegalArgumentException("Swagger api-doc must be configured using the apiDoc option");
+            throw new IllegalArgumentException("OpenApi api-doc must be configured using the apiDoc option");
         }
 
         String path = uriTemplate != null ? uriTemplate : basePath;
@@ -63,10 +63,10 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
             path = "/" + path;
         }
 
-        Document swagger = loadSwaggerModel(camelContext, apiDoc);
-        OasOperation operation = getSwaggerOperation((Oas20Document)swagger, verb, path);
+        Document openApi = loadSwaggerModel(camelContext, apiDoc);
+        OasOperation operation = getSwaggerOperation((Oas20Document)openApi, verb, path);
         if (operation == null) {
-            throw new IllegalArgumentException("Swagger api-doc does not contain operation for " + verb + ":" + path);
+            throw new IllegalArgumentException("OpenApi api-doc does not contain operation for " + verb + ":" + path);
         }
 
         // validate if we have the query parameters also
@@ -78,7 +78,7 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
                     String token = key + "=";
                     boolean hasQuery = queryParameters.contains(token);
                     if (!hasQuery) {
-                        throw new IllegalArgumentException("Swagger api-doc does not contain query parameter " + key + " for " + verb + ":" + path);
+                        throw new IllegalArgumentException("OpenApi api-doc does not contain query parameter " + key + " for " + verb + ":" + path);
                     }
                 }
             }
@@ -86,7 +86,7 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
 
         String componentName = (String) parameters.get("componentName");
 
-        Producer producer = createHttpProducer(camelContext, (Oas20Document)swagger, (Oas20Operation)operation, host, verb, path, queryParameters,
+        Producer producer = createHttpProducer(camelContext, (Oas20Document)openApi, (Oas20Operation)operation, host, verb, path, queryParameters,
                 produces, consumes, componentName, parameters);
         return producer;
     }
@@ -96,7 +96,7 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
         final ObjectMapper mapper = new ObjectMapper();
         try {
             final JsonNode node = mapper.readTree(is);
-            LOG.debug("Loaded swagger api-doc:\n{}", node.toPrettyString());
+            LOG.debug("Loaded openApi api-doc:\n{}", node.toPrettyString());
             return Library.readDocument(node);
             
             
@@ -107,14 +107,14 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
         
     }
 
-    private OasOperation getSwaggerOperation(Oas20Document swagger, String verb, String path) {
+    private OasOperation getSwaggerOperation(Oas20Document openApi, String verb, String path) {
         // path may include base path so skip that
-        String basePath = swagger.basePath;
+        String basePath = openApi.basePath;
         if (basePath != null && path.startsWith(basePath)) {
             path = path.substring(basePath.length());
         }
 
-        OasPathItem modelPath = swagger.paths.getItem(path);
+        OasPathItem modelPath = openApi.paths.getItem(path);
         if (modelPath == null) {
             return null;
         }
@@ -139,12 +139,12 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
         return op;
     }
 
-    private Producer createHttpProducer(CamelContext camelContext, Oas20Document swagger, Oas20Operation operation,
+    private Producer createHttpProducer(CamelContext camelContext, Oas20Document openApi, Oas20Operation operation,
                                         String host, String verb, String path, String queryParameters,
                                         String consumes, String produces,
                                         String componentName, Map<String, Object> parameters) throws Exception {
 
-        LOG.debug("Using Swagger operation: {} with {} {}", operation, verb, path);
+        LOG.debug("Using OpenApi operation: {} with {} {}", operation, verb, path);
 
         RestProducerFactory factory = (RestProducerFactory) parameters.remove("restProducerFactory");
 
@@ -155,7 +155,7 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
                 CollectionStringBuffer csb = new CollectionStringBuffer(",");
                 List<String> list = operation.produces;
                 if (list == null) {
-                    list = swagger.produces;
+                    list = openApi.produces;
                 }
                 if (list != null) {
                     for (String s : list) {
@@ -168,7 +168,7 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
                 CollectionStringBuffer csb = new CollectionStringBuffer(",");
                 List<String> list = operation.consumes;
                 if (list == null) {
-                    list = swagger.consumes;
+                    list = openApi.consumes;
                 }
                 if (list != null) {
                     for (String s : list) {
@@ -181,9 +181,9 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
             String basePath;
             String uriTemplate;
             if (host == null) {
-                // if no explicit host has been configured then use host and base path from the swagger api-doc
-                host = swagger.host;
-                basePath = swagger.basePath;
+                // if no explicit host has been configured then use host and base path from the openApi api-doc
+                host = openApi.host;
+                basePath = openApi.basePath;
                 uriTemplate = path;
             } else {
                 // path includes also uri template

@@ -191,19 +191,19 @@ public class BeanConfig {
         }
     }
     
-    public Oas20Document configure(Oas20Document swagger) {
+    public Oas20Document configure(Oas20Document openApi) {
         if (schemes != null) {
-            if (swagger.schemes == null) {
-                swagger.schemes = new ArrayList<String>();
+            if (openApi.schemes == null) {
+                openApi.schemes = new ArrayList<String>();
             }
             for (String scheme : schemes) {
-                swagger.schemes.add(scheme);
+                openApi.schemes.add(scheme);
             }
         }
-        swagger.info = info;
-        swagger.host = host;
-        swagger.basePath = basePath;
-        return swagger;
+        openApi.info = info;
+        openApi.host = host;
+        openApi.basePath = basePath;
+        return openApi;
     }
 
 }

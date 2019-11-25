@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 public class RestOpenApiProcessor implements Processor {
 
     private static final Logger LOG = LoggerFactory.getLogger(RestOpenApiProcessor.class);
-    private final BeanConfig swaggerConfig;
+    private final BeanConfig openApiConfig;
     private final RestOpenApiSupport support;
     private final String contextIdPattern;
     private final boolean contextIdListing;
@@ -44,12 +44,12 @@ public class RestOpenApiProcessor implements Processor {
         this.contextIdListing = contextIdListing;
         this.configuration = configuration;
         this.support = new RestOpenApiSupport();
-        this.swaggerConfig = new BeanConfig();
+        this.openApiConfig = new BeanConfig();
 
         if (parameters == null) {
             parameters = Collections.EMPTY_MAP;
         }
-        support.initSwagger(swaggerConfig, parameters);
+        support.initSwagger(openApiConfig, parameters);
     }
 
     @Override
@@ -64,10 +64,10 @@ public class RestOpenApiProcessor implements Processor {
         // whether to use json or yaml
         boolean json = false;
         boolean yaml = false;
-        if (route != null && route.endsWith("/swagger.json")) {
+        if (route != null && route.endsWith("/openapi.json")) {
             json = true;
             route = route.substring(0, route.length() - 13);
-        } else if (route != null && route.endsWith("/swagger.yaml")) {
+        } else if (route != null && route.endsWith("/openapi.yaml")) {
             yaml = true;
             route = route.substring(0, route.length() - 13);
         }
@@ -116,7 +116,7 @@ public class RestOpenApiProcessor implements Processor {
                 if (!match) {
                     adapter.noContent();
                 } else {
-                    support.renderResourceListing(exchange.getContext(), adapter, swaggerConfig, name, route, json, yaml,
+                    support.renderResourceListing(exchange.getContext(), adapter, openApiConfig, name, route, json, yaml,
                         exchange.getIn().getHeaders(), exchange.getContext().getClassResolver(), configuration);
                 }
             }

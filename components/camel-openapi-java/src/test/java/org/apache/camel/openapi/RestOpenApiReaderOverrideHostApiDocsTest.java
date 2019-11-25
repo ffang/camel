@@ -41,13 +41,13 @@ public class RestOpenApiReaderOverrideHostApiDocsTest extends RestOpenApiReaderA
         config.setHost("http:mycoolserver:8888/myapi");
         RestOpenApiReader reader = new RestOpenApiReader();
 
-        Oas20Document swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
-        assertNotNull(swagger);
+        Oas20Document openApi = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
+        assertNotNull(openApi);
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        Object dump = Library.writeNode(swagger);
+        Object dump = Library.writeNode(openApi);
         String json = mapper.writeValueAsString(dump);
         System.out.println("the json is =====>" + json);
 

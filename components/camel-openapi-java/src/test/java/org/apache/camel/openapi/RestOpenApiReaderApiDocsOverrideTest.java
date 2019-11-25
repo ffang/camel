@@ -59,16 +59,16 @@ public class RestOpenApiReaderApiDocsOverrideTest extends CamelTestSupport {
         config.setSchemes(new String[] {"http"});
         config.setBasePath("/api");
         RestOpenApiReader reader = new RestOpenApiReader();
-        Oas20Document swagger = null;
+        Oas20Document openApi = null;
         try {
-            swagger = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
+            openApi = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
         
-        assertNotNull(swagger);
+        assertNotNull(openApi);
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        Object dump = Library.writeNode(swagger);
+        Object dump = Library.writeNode(openApi);
         String json = mapper.writeValueAsString(dump);
         System.out.println("the json is =====>" + json);
         log.info(json);

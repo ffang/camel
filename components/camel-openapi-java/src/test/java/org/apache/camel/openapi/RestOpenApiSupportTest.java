@@ -43,19 +43,19 @@ public class RestOpenApiSupportTest {
     public void shouldAdaptFromXForwardHeaders() {
         Oas20Document doc = new Oas20Document();
         doc.basePath = "/base";
-        final Oas20Document swagger = spy(doc);
+        final Oas20Document openApi = spy(doc);
 
         final Map<String, Object> headers = new HashMap<>();
         headers.put(RestOpenApiSupport.HEADER_X_FORWARDED_PREFIX, "/prefix");
         headers.put(RestOpenApiSupport.HEADER_X_FORWARDED_HOST, "host");
         headers.put(RestOpenApiSupport.HEADER_X_FORWARDED_PROTO, "http, HTTPS ");
-        RestOpenApiSupport.setupXForwardedHeaders(swagger, headers);
+        RestOpenApiSupport.setupXForwardedHeaders(openApi, headers);
 
         
-        assertEquals(swagger.basePath, "/prefix/base");
-        assertEquals(swagger.host, "host");
-        assertTrue(swagger.schemes.contains("http"));
-        assertTrue(swagger.schemes.contains("https"));
+        assertEquals(openApi.basePath, "/prefix/base");
+        assertEquals(openApi.host, "host");
+        assertTrue(openApi.schemes.contains("http"));
+        assertTrue(openApi.schemes.contains("https"));
             
     }
 
@@ -65,36 +65,36 @@ public class RestOpenApiSupportTest {
         final String expected) {
         Oas20Document doc = new Oas20Document();
         doc.basePath = basePath;
-        final Oas20Document swagger = spy(doc);
+        final Oas20Document openApi = spy(doc);
 
         final Map<String, Object> headers = new HashMap<>();
         headers.put(RestOpenApiSupport.HEADER_X_FORWARDED_PREFIX, prefix);
-        RestOpenApiSupport.setupXForwardedHeaders(swagger, headers);
+        RestOpenApiSupport.setupXForwardedHeaders(openApi, headers);
 
-        assertEquals(swagger.basePath, expected);
+        assertEquals(openApi.basePath, expected);
     }
 
     @ParameterizedTest
     @MethodSource("schemeVariations")
     public void shouldAdaptWithVaryingSchemes(final String xForwardedScheme, final String[] expected) {
-        final Oas20Document swagger = spy(new Oas20Document());
+        final Oas20Document openApi = spy(new Oas20Document());
 
-        RestOpenApiSupport.setupXForwardedHeaders(swagger,
+        RestOpenApiSupport.setupXForwardedHeaders(openApi,
             Collections.singletonMap(RestOpenApiSupport.HEADER_X_FORWARDED_PROTO, xForwardedScheme));
 
         for (final String scheme : expected) {
-            assertTrue(swagger.schemes.contains(scheme));
+            assertTrue(openApi.schemes.contains(scheme));
         }
 
     }
 
     @Test
     public void shouldNotAdaptFromXForwardHeadersWhenNoHeadersSpecified() {
-        final Oas20Document swagger = spy(new Oas20Document());
+        final Oas20Document openApi = spy(new Oas20Document());
 
-        RestOpenApiSupport.setupXForwardedHeaders(swagger, Collections.emptyMap());
+        RestOpenApiSupport.setupXForwardedHeaders(openApi, Collections.emptyMap());
 
-        verifyZeroInteractions(swagger);
+        verifyZeroInteractions(openApi);
     }
 
     static Stream<Arguments> basePathAndPrefixVariations() {

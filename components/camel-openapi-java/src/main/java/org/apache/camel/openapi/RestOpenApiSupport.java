@@ -66,8 +66,8 @@ import io.apicurio.datamodels.openapi.v2.models.Oas20License;
 
 /**
  * A support class for that allows SPI to plugin
- * and offer Swagger API service listings as part of the Camel component. This allows rest-dsl components
- * such as servlet/jetty/netty-http to offer Swagger API listings with minimal effort.
+ * and offer OpenApi API service listings as part of the Camel component. This allows rest-dsl components
+ * such as servlet/jetty/netty-http to offer OpenApi API listings with minimal effort.
  */
 public class RestOpenApiSupport {
 
@@ -80,19 +80,19 @@ public class RestOpenApiSupport {
     private RestOpenApiReader reader = new RestOpenApiReader();
     private boolean cors;
 
-    public void initSwagger(BeanConfig swaggerConfig, Map<String, Object> config) {
-        // configure swagger options
-        String s = (String) config.get("swagger.version");
+    public void initSwagger(BeanConfig openApiConfig, Map<String, Object> config) {
+        // configure openApi options
+        String s = (String) config.get("openApi.version");
         if (s != null) {
-            swaggerConfig.setVersion(s);
+            openApiConfig.setVersion(s);
         }
         s = (String) config.get("base.path");
         if (s != null) {
-            swaggerConfig.setBasePath(s);
+            openApiConfig.setBasePath(s);
         }
         s = (String) config.get("host");
         if (s != null) {
-            swaggerConfig.setHost(s);
+            openApiConfig.setHost(s);
         }
         s = (String) config.get("cors");
         if (s != null) {
@@ -105,10 +105,10 @@ public class RestOpenApiSupport {
         }
         if (s != null) {
             String[] schemes = s.split(",");
-            swaggerConfig.setSchemes(schemes);
+            openApiConfig.setSchemes(schemes);
         } else {
             // assume http by default
-            swaggerConfig.setSchemes(new String[]{"http"});
+            openApiConfig.setSchemes(new String[]{"http"});
         }
 
         String version = (String) config.get("api.version");
@@ -142,7 +142,7 @@ public class RestOpenApiSupport {
             info.contact = contact;
         }
 
-        swaggerConfig.setInfo(info);
+        openApiConfig.setInfo(info);
     }
 
     public List<RestDefinition> getRestDefinitions(CamelContext camelContext) throws Exception {
@@ -254,7 +254,7 @@ public class RestOpenApiSupport {
         return answer;
     }
 
-    public void renderResourceListing(CamelContext camelContext, RestApiResponseAdapter response, BeanConfig swaggerConfig, String contextId, String route, boolean json, boolean yaml,
+    public void renderResourceListing(CamelContext camelContext, RestApiResponseAdapter response, BeanConfig openApiConfig, String contextId, String route, boolean json, boolean yaml,
                                       Map<String, Object> headers, ClassResolver classResolver, RestConfiguration configuration) throws Exception {
         LOG.trace("renderResourceListing");
         
@@ -278,17 +278,17 @@ public class RestOpenApiSupport {
             if (json) {
                 response.setHeader(Exchange.CONTENT_TYPE, (String) apiProperties.getOrDefault("api.specification.contentType.json", "application/json"));
 
-                // read the rest-dsl into swagger model
-                Oas20Document swagger = reader.read(rests, route, swaggerConfig, contextId, classResolver);
+                // read the rest-dsl into openApi model
+                Oas20Document openApi = reader.read(rests, route, openApiConfig, contextId, classResolver);
                 if (configuration.isUseXForwardHeaders()) {
-                    setupXForwardedHeaders(swagger, headers);
+                    setupXForwardedHeaders(openApi, headers);
                 }
 
                 if (!configuration.isApiVendorExtension()) {
-                    clearVendorExtensions(swagger);
+                    clearVendorExtensions(openApi);
                 }
                 
-                byte[] bytes = mapper.writeValueAsBytes(swagger);
+                byte[] bytes = mapper.writeValueAsBytes(openApi);
 
                 int len = bytes.length;
                 response.setHeader(Exchange.CONTENT_LENGTH, "" + len);
@@ -297,17 +297,17 @@ public class RestOpenApiSupport {
             } else {
                 response.setHeader(Exchange.CONTENT_TYPE, (String) apiProperties.getOrDefault("api.specification.contentType.yaml", "text/yaml"));
 
-                // read the rest-dsl into swagger model
-                Oas20Document swagger = reader.read(rests, route, swaggerConfig, contextId, classResolver);
+                // read the rest-dsl into openApi model
+                Oas20Document openApi = reader.read(rests, route, openApiConfig, contextId, classResolver);
                 if (configuration.isUseXForwardHeaders()) {
-                    setupXForwardedHeaders(swagger, headers);
+                    setupXForwardedHeaders(openApi, headers);
                 }
 
                 if (!configuration.isApiVendorExtension()) {
-                    clearVendorExtensions(swagger);
+                    clearVendorExtensions(openApi);
                 }
 
-                byte[] jsonData = mapper.writeValueAsBytes(swagger);
+                byte[] jsonData = mapper.writeValueAsBytes(openApi);
 
                 // json to yaml
                 JsonNode node = mapper.readTree(jsonData);
@@ -416,21 +416,21 @@ public class RestOpenApiSupport {
         response.setHeader("Access-Control-Max-Age", maxAge);
     }
 
-    static void setupXForwardedHeaders(Oas20Document swagger, Map<String, Object> headers) {
+    static void setupXForwardedHeaders(Oas20Document openApi, Map<String, Object> headers) {
 
         String host = (String) headers.get(HEADER_HOST);
         if (ObjectHelper.isNotEmpty(host)) {
-            swagger.host = host;
+            openApi.host = host;
         }
 
         String forwardedPrefix = (String) headers.get(HEADER_X_FORWARDED_PREFIX);
         if (ObjectHelper.isNotEmpty(forwardedPrefix)) {
-            swagger.basePath = URISupport.joinPaths(forwardedPrefix, swagger.basePath);
+            openApi.basePath = URISupport.joinPaths(forwardedPrefix, openApi.basePath);
         }
 
         String forwardedHost = (String) headers.get(HEADER_X_FORWARDED_HOST);
         if (ObjectHelper.isNotEmpty(forwardedHost)) {
-            swagger.host = forwardedHost;
+            openApi.host = forwardedHost;
         }
 
         String proto = (String) headers.get(HEADER_X_FORWARDED_PROTO);
@@ -439,10 +439,10 @@ public class RestOpenApiSupport {
             for (String scheme : schemes) {
                 String trimmedScheme = scheme.trim();
                 if (ObjectHelper.isNotEmpty(trimmedScheme)) {
-                    if (swagger.schemes == null) {
-                        swagger.schemes = new ArrayList();
+                    if (openApi.schemes == null) {
+                        openApi.schemes = new ArrayList();
                     }
-                    swagger.schemes.add(trimmedScheme.toLowerCase()) ;
+                    openApi.schemes.add(trimmedScheme.toLowerCase()) ;
                 }
             }
         }

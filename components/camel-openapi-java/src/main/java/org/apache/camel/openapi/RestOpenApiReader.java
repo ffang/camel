@@ -66,24 +66,24 @@ import org.apache.camel.support.ObjectHelper;
 import org.apache.camel.util.FileUtil;
 
 /**
- * A Camel REST-DSL swagger reader that parse the rest-dsl into a swagger model representation.
+ * A Camel REST-DSL openApi reader that parse the rest-dsl into a openApi model representation.
  * <p/>
- * This reader supports the <a href="http://swagger.io/specification/">Swagger Specification 2.0</a>
+ * This reader supports the <a href="http://swagger.io/specification/">OpenApi Specification 2.0</a>
  */
 public class RestOpenApiReader {
 
     /**
-     * Read the REST-DSL definition's and parse that as a Swagger model representation
+     * Read the REST-DSL definition's and parse that as a OpenApi model representation
      *
      * @param rests             the rest-dsl
      * @param route             optional route path to filter the rest-dsl to only include from the chose route
-     * @param config            the swagger configuration
+     * @param config            the openApi configuration
      * @param classResolver     class resolver to use
-     * @return the swagger model
+     * @return the openApi model
      * @throws ClassNotFoundException 
      */
     public Oas20Document read(List<RestDefinition> rests, String route, BeanConfig config, String camelContextId, ClassResolver classResolver) throws ClassNotFoundException {
-        Oas20Document swagger = new Oas20Document();
+        Oas20Document openApi = new Oas20Document();
 
         for (RestDefinition rest : rests) {
 
@@ -94,15 +94,15 @@ public class RestOpenApiReader {
                 }
             }
 
-            parse(swagger, rest, camelContextId, classResolver);
+            parse(openApi, rest, camelContextId, classResolver);
         }
 
         // configure before returning
-        swagger = config.configure(swagger);
-        return swagger;
+        openApi = config.configure(openApi);
+        return openApi;
     }
 
-    private void parse(Oas20Document swagger, RestDefinition rest, String camelContextId, ClassResolver classResolver) throws ClassNotFoundException {
+    private void parse(Oas20Document openApi, RestDefinition rest, String camelContextId, ClassResolver classResolver) throws ClassNotFoundException {
         List<VerbDefinition> verbs = new ArrayList<>(rest.getVerbs());
         // must sort the verbs by uri so we group them together when an uri has multiple operations
         Collections.sort(verbs, new VerbOrdering());
@@ -113,24 +113,24 @@ public class RestOpenApiReader {
 
         if (org.apache.camel.util.ObjectHelper.isNotEmpty(pathAsTag)) {
             // add rest as tag
-            swagger.addTag(pathAsTag, summary);
+            openApi.addTag(pathAsTag, summary);
         }
 
         // setup security definitions
         RestSecuritiesDefinition sd = rest.getSecurityDefinitions();
-        if (swagger.securityDefinitions == null) {
-            swagger.securityDefinitions = swagger.createSecurityDefinitions();
+        if (openApi.securityDefinitions == null) {
+            openApi.securityDefinitions = openApi.createSecurityDefinitions();
         }
         if (sd != null) {
             for (RestSecurityDefinition def : sd.getSecurityDefinitions()) {
                 if (def instanceof RestSecurityBasicAuth) {
-                    Oas20SecurityScheme auth = swagger.securityDefinitions.createSecurityScheme(def.getKey());
+                    Oas20SecurityScheme auth = openApi.securityDefinitions.createSecurityScheme(def.getKey());
                     auth.type = "basicAuth";
                     auth.description = def.getDescription();
-                    swagger.securityDefinitions.addSecurityScheme("BasicAuth", auth);
+                    openApi.securityDefinitions.addSecurityScheme("BasicAuth", auth);
                 } else if (def instanceof RestSecurityApiKey) {
                     RestSecurityApiKey rs = (RestSecurityApiKey) def;
-                    Oas20SecurityScheme auth = swagger.securityDefinitions.createSecurityScheme(def.getKey());
+                    Oas20SecurityScheme auth = openApi.securityDefinitions.createSecurityScheme(def.getKey());
                     auth.type = "apiKey";
                     auth.description = rs.getDescription();
                     auth.name = rs.getName();
@@ -139,11 +139,11 @@ public class RestOpenApiReader {
                     } else {
                         auth.in = "query";
                     }
-                    swagger.securityDefinitions.addSecurityScheme(def.getKey(), auth);
+                    openApi.securityDefinitions.addSecurityScheme(def.getKey(), auth);
                 } else if (def instanceof RestSecurityOAuth2) {
                     RestSecurityOAuth2 rs = (RestSecurityOAuth2) def;
                     
-                    Oas20SecurityScheme auth = swagger.securityDefinitions.createSecurityScheme(def.getKey());
+                    Oas20SecurityScheme auth = openApi.securityDefinitions.createSecurityScheme(def.getKey());
                     auth.type = "oauth2";
                     auth.description = rs.getDescription();
                     String flow = rs.getFlow();
@@ -160,10 +160,10 @@ public class RestOpenApiReader {
                     for (RestPropertyDefinition scope : rs.getScopes()) {
                         auth.scopes.addScope(scope.getKey(), scope.getValue());
                     }
-                    if (swagger.securityDefinitions == null) {
-                        swagger.securityDefinitions = swagger.createSecurityDefinitions();
+                    if (openApi.securityDefinitions == null) {
+                        openApi.securityDefinitions = openApi.createSecurityDefinitions();
                     }
-                    swagger.securityDefinitions.addSecurityScheme(def.getKey(), auth);
+                    openApi.securityDefinitions.addSecurityScheme(def.getKey(), auth);
                 }
             }
         }
@@ -215,13 +215,13 @@ public class RestOpenApiReader {
         // use annotation scanner to find models (annotated classes)
         for (String type : types) {
             Class<?> clazz = classResolver.resolveMandatoryClass(type);
-            appendModels(clazz, swagger);
+            appendModels(clazz, openApi);
         }
 
-        doParseVerbs(swagger, rest, camelContextId, verbs, pathAsTag);
+        doParseVerbs(openApi, rest, camelContextId, verbs, pathAsTag);
     }
 
-    private void doParseVerbs(Oas20Document swagger, RestDefinition rest, String camelContextId, List<VerbDefinition> verbs, String pathAsTag) {
+    private void doParseVerbs(Oas20Document openApi, RestDefinition rest, String camelContextId, List<VerbDefinition> verbs, String pathAsTag) {
         // used during gathering of apis
         
         String basePath = rest.getPath();
@@ -244,12 +244,12 @@ public class RestOpenApiReader {
             String opPath = OpenApiHelper.buildUrl(basePath, verb.getUri());
 
             
-            if (swagger.paths == null) {
-                swagger.paths = swagger.createPaths();
+            if (openApi.paths == null) {
+                openApi.paths = openApi.createPaths();
             }
-            OasPathItem path = swagger.paths.getPathItem(opPath);
+            OasPathItem path = openApi.paths.getPathItem(opPath);
             if (path == null) {
-                path = swagger.paths.createPathItem(opPath);
+                path = openApi.paths.createPathItem(opPath);
             }
             
             Oas20Operation op = (Oas20Operation)path.createOperation(method);
@@ -422,18 +422,18 @@ public class RestOpenApiReader {
                                 type = type.substring(0, type.length() - 2);
                                     
                                     Oas20Schema arrayModel = (Oas20Schema)bp.createSchema();
-                                    arrayModel = modelTypeAsProperty(type, swagger, arrayModel);
+                                    arrayModel = modelTypeAsProperty(type, openApi, arrayModel);
                                     bp.schema = arrayModel;
                                 
                             } else {
-                                String ref = modelTypeAsRef(type, swagger);
+                                String ref = modelTypeAsRef(type, openApi);
                                 if (ref != null) {
                                     Oas20Schema refModel = (Oas20Schema)bp.createSchema();
                                     refModel.$ref = "#/definitions/" + ref;
                                     bp.schema = refModel;
                                 } else {
                                     Oas20Schema model = (Oas20Schema)bp.createSchema();
-                                    model = modelTypeAsProperty(type, swagger, model);
+                                    model = modelTypeAsProperty(type, openApi, model);
                                        
                                     bp.schema = model;
                                     
@@ -476,7 +476,7 @@ public class RestOpenApiReader {
                 }
                 Oas20Response response = (Oas20Response)op.responses.createResponse("200");
                 Oas20Schema model = response.createSchema();
-                model = modelTypeAsProperty(verb.getOutType(), swagger, model);
+                model = modelTypeAsProperty(verb.getOutType(), openApi, model);
                 
                 response.schema = model;
                 response.description = "Output type";
@@ -484,10 +484,10 @@ public class RestOpenApiReader {
             }
 
             // enrich with configured response messages from the rest-dsl
-            doParseResponseMessages(swagger, verb, op);
+            doParseResponseMessages(openApi, verb, op);
 
             // add path
-            swagger.paths.addPathItem(opPath, path);
+            openApi.paths.addPathItem(opPath, path);
             
         }
     }
@@ -549,7 +549,7 @@ public class RestOpenApiReader {
         }
     }
 
-    private void doParseResponseMessages(Oas20Document swagger, VerbDefinition verb, Oas20Operation op) {
+    private void doParseResponseMessages(Oas20Document openApi, VerbDefinition verb, Oas20Operation op) {
         if (op.responses == null) {
             op.responses = op.createResponses();
         }
@@ -565,7 +565,7 @@ public class RestOpenApiReader {
             }
             if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getResponseModel())) {
                 Oas20Schema model = response.createSchema();
-                model = modelTypeAsProperty(msg.getResponseModel(), swagger, model);
+                model = modelTypeAsProperty(msg.getResponseModel(), openApi, model);
                 
                 response.schema = model;
             }
@@ -784,14 +784,14 @@ public class RestOpenApiReader {
         }
     }
 
-    private Oas20SchemaDefinition asModel(String typeName, Oas20Document swagger) {
+    private Oas20SchemaDefinition asModel(String typeName, Oas20Document openApi) {
         boolean array = typeName.endsWith("[]");
         if (array) {
             typeName = typeName.substring(0, typeName.length() - 2);
         }
 
-        if (swagger.definitions != null) {
-            for (Oas20SchemaDefinition model : swagger.definitions.getDefinitions()) {
+        if (openApi.definitions != null) {
+            for (Oas20SchemaDefinition model : openApi.definitions.getDefinitions()) {
                 @SuppressWarnings("rawtypes")
                 Map modelType = (Map)model.getExtension("x-className").value;
                 
@@ -805,13 +805,13 @@ public class RestOpenApiReader {
     
 
 
-    private String modelTypeAsRef(String typeName, Oas20Document swagger) {
+    private String modelTypeAsRef(String typeName, Oas20Document openApi) {
         boolean array = typeName.endsWith("[]");
         if (array) {
             typeName = typeName.substring(0, typeName.length() - 2);
         }
 
-        Oas20SchemaDefinition model = asModel(typeName, swagger);
+        Oas20SchemaDefinition model = asModel(typeName, openApi);
         if (model != null) {
             typeName = model.type;
             return typeName;
@@ -820,13 +820,13 @@ public class RestOpenApiReader {
         return null;
     }
 
-    private Oas20Schema modelTypeAsProperty(String typeName, Oas20Document swagger, Oas20Schema prop) {
+    private Oas20Schema modelTypeAsProperty(String typeName, Oas20Document openApi, Oas20Schema prop) {
         boolean array = typeName.endsWith("[]");
         if (array) {
             typeName = typeName.substring(0, typeName.length() - 2);
         }
 
-        String ref = modelTypeAsRef(typeName, swagger);
+        String ref = modelTypeAsRef(typeName, openApi);
 
             
         if (ref != null) {
@@ -871,15 +871,15 @@ public class RestOpenApiReader {
     }
 
     /**
-     * If the class is annotated with swagger annotations its parsed into a Swagger model representation
-     * which is added to swagger
+     * If the class is annotated with openApi annotations its parsed into a OpenApi model representation
+     * which is added to openApi
      *
-     * @param clazz   the class such as pojo with swagger annotation
-     * @param swagger the swagger model
+     * @param clazz   the class such as pojo with openApi annotation
+     * @param openApi the openApi model
      */
-    private void appendModels(Class clazz, Oas20Document swagger) {
+    private void appendModels(Class clazz, Oas20Document openApi) {
         RestModelConverters converters = new RestModelConverters();
-        Oas20Definitions models = converters.readClass(swagger, clazz);
+        Oas20Definitions models = converters.readClass(openApi, clazz);
         if (models == null) {
             return;
         }
@@ -887,15 +887,15 @@ public class RestOpenApiReader {
 
             // favor keeping any existing model that has the vendor extension in the model
             boolean oldExt = false;
-            if (swagger.definitions != null && swagger.definitions.getDefinition(entry.getName()) != null) {
-                Oas20SchemaDefinition oldModel = swagger.definitions.getDefinition(entry.getName());
+            if (openApi.definitions != null && openApi.definitions.getDefinition(entry.getName()) != null) {
+                Oas20SchemaDefinition oldModel = openApi.definitions.getDefinition(entry.getName());
                 if (oldModel.getExtensions() != null && !oldModel.getExtensions().isEmpty()) {
                     oldExt = oldModel.getExtensions().contains("x-className");
                 }
             }
 
             if (!oldExt) {
-                swagger.definitions.addDefinition(entry.getName(), entry);
+                openApi.definitions.addDefinition(entry.getName(), entry);
             }
         }
     }
