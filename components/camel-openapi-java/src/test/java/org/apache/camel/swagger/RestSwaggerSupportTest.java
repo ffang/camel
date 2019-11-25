@@ -28,13 +28,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class RestSwaggerSupportTest {
@@ -52,11 +52,11 @@ public class RestSwaggerSupportTest {
         RestSwaggerSupport.setupXForwardedHeaders(swagger, headers);
 
         
-        verify(swagger).basePath = "/prefix/base";
-        verify(swagger).host = "host";
-        verify(swagger).schemes.add("http");
-        verify(swagger).schemes.add("https");
-        verifyNoMoreInteractions(swagger);
+        assertEquals(swagger.basePath, "/prefix/base");
+        assertEquals(swagger.host, "host");
+        assertTrue(swagger.schemes.contains("http"));
+        assertTrue(swagger.schemes.contains("https"));
+            
     }
 
     @ParameterizedTest
@@ -71,9 +71,7 @@ public class RestSwaggerSupportTest {
         headers.put(RestSwaggerSupport.HEADER_X_FORWARDED_PREFIX, prefix);
         RestSwaggerSupport.setupXForwardedHeaders(swagger, headers);
 
-        //verify(swagger).getBasePath();
-        verify(swagger).basePath = expected;
-        verifyNoMoreInteractions(swagger);
+        assertEquals(swagger.basePath, expected);
     }
 
     @ParameterizedTest
@@ -85,10 +83,9 @@ public class RestSwaggerSupportTest {
             Collections.singletonMap(RestSwaggerSupport.HEADER_X_FORWARDED_PROTO, xForwardedScheme));
 
         for (final String scheme : expected) {
-            verify(swagger).schemes.add(scheme);
+            assertTrue(swagger.schemes.contains(scheme));
         }
 
-        verifyNoMoreInteractions(swagger);
     }
 
     @Test

@@ -430,7 +430,7 @@ public class RestSwaggerSupport {
 
         String forwardedHost = (String) headers.get(HEADER_X_FORWARDED_HOST);
         if (ObjectHelper.isNotEmpty(forwardedHost)) {
-            swagger.host = host;
+            swagger.host = forwardedHost;
         }
 
         String proto = (String) headers.get(HEADER_X_FORWARDED_PROTO);
@@ -442,7 +442,7 @@ public class RestSwaggerSupport {
                     if (swagger.schemes == null) {
                         swagger.schemes = new ArrayList();
                     }
-                    swagger.schemes.add(trimmedScheme) ;
+                    swagger.schemes.add(trimmedScheme.toLowerCase()) ;
                 }
             }
         }
