@@ -16,54 +16,31 @@
  */
 package org.apache.camel.openapi;
 
-
 import java.util.HashMap;
 import java.util.Map;
 
 import io.apicurio.datamodels.core.models.Extension;
+import io.apicurio.datamodels.openapi.models.OasDocument;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Definitions;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SchemaDefinition;
 
-
 /**
- * A Camel extended {@link ModelConverters} where we appending vendor extensions
- * to include the java class name of the model classes.
+ * A Camel extended {@link ModelConverters} where we appending vendor extensions to include the java class
+ * name of the model classes.
  */
 public class RestModelConverters {
 
-    public Oas20Definitions readClass(Oas20Document oas20Document, Class clazz) {
-        String name = clazz.getName();
-        if (!name.contains(".")) {
-            return null;
-        }
-        if (oas20Document.definitions == null) {
-            oas20Document.definitions = oas20Document.createDefinitions();
-        }
-        Oas20Definitions resolved = oas20Document.definitions;
-        Oas20SchemaDefinition model = resolved.createSchemaDefinition(clazz.getSimpleName());
-        resolved.addDefinition(clazz.getSimpleName(), model);
-        model.type = clazz.getSimpleName();
-        Extension extension = model.createExtension();
-        extension.name = "x-className";
-        Map<String, String> value = new HashMap<String, String>();
-        value.put("type", "string");
-        value.put("format", name);
-        extension.value = value;
-        model.addExtension("x-className", extension);
-        /*Oas20Definitions resolved = oas20Document.definitions;
-        if (resolved != null) {
-            for (Oas20SchemaDefinition model : resolved.getDefinitions()) {
-                // enrich with the class name of the model
-                Extension extension = new Extension();
-                extension.name = "x-className";
-                extension.value = name;
-                model.getExtensions().add(extension);
+    public Oas20Definitions readClass(OasDocument oasDocument, Class clazz) {
+        if (oasDocument instanceof Oas20Document) {
+            String name = clazz.getName();
+            if (!name.contains(".")) {
+                return null;
             }
-
-        } else {
-            resolved = oas20Document.createDefinitions();
-            oas20Document.definitions = resolved;
+            if (((Oas20Document)oasDocument).definitions == null) {
+                ((Oas20Document)oasDocument).definitions = ((Oas20Document)oasDocument).createDefinitions();
+            }
+            Oas20Definitions resolved = ((Oas20Document)oasDocument).definitions;
             Oas20SchemaDefinition model = resolved.createSchemaDefinition(clazz.getSimpleName());
             resolved.addDefinition(clazz.getSimpleName(), model);
             model.type = clazz.getSimpleName();
@@ -74,7 +51,9 @@ public class RestModelConverters {
             value.put("format", name);
             extension.value = value;
             model.addExtension("x-className", extension);
-        }*/
-        return resolved;
+            return resolved;
+        } else {
+            return null;
+        }
     }
 }

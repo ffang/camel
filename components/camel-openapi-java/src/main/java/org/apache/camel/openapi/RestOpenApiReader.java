@@ -38,6 +38,7 @@ import io.apicurio.datamodels.openapi.models.OasDocument;
 import io.apicurio.datamodels.openapi.models.OasOperation;
 import io.apicurio.datamodels.openapi.models.OasParameter;
 import io.apicurio.datamodels.openapi.models.OasPathItem;
+import io.apicurio.datamodels.openapi.models.OasSchema;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Definitions;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Header;
@@ -48,6 +49,7 @@ import io.apicurio.datamodels.openapi.v2.models.Oas20Response;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Schema;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SchemaDefinition;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SecurityScheme;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Document;
 
 import org.apache.camel.model.rest.RestDefinition;
 import org.apache.camel.model.rest.RestOperationParamDefinition;
@@ -84,7 +86,12 @@ public class RestOpenApiReader {
      * @throws ClassNotFoundException 
      */
     public OasDocument read(List<RestDefinition> rests, String route, BeanConfig config, String camelContextId, ClassResolver classResolver) throws ClassNotFoundException {
-        Oas20Document openApi = new Oas20Document();
+        OasDocument openApi = null;
+        if (config.isOpenApi3()) {
+            openApi = new Oas30Document();
+        }  else {
+            openApi = new Oas20Document();
+        }
         for (RestDefinition rest : rests) {
 
             if (org.apache.camel.util.ObjectHelper.isNotEmpty(route) && !route.equals("/")) {
@@ -102,7 +109,8 @@ public class RestOpenApiReader {
         return openApi;
     }
 
-    private void parse(Oas20Document openApi, RestDefinition rest, String camelContextId, ClassResolver classResolver) throws ClassNotFoundException {
+    private void parse(OasDocument openApi, RestDefinition rest, String camelContextId, ClassResolver classResolver) throws ClassNotFoundException {
+        if (openApi instanceof Oas20Document) {
         List<VerbDefinition> verbs = new ArrayList<>(rest.getVerbs());
         // must sort the verbs by uri so we group them together when an uri has multiple operations
         Collections.sort(verbs, new VerbOrdering());
@@ -118,19 +126,19 @@ public class RestOpenApiReader {
 
         // setup security definitions
         RestSecuritiesDefinition sd = rest.getSecurityDefinitions();
-        if (openApi.securityDefinitions == null) {
-            openApi.securityDefinitions = openApi.createSecurityDefinitions();
+        if (((Oas20Document)openApi).securityDefinitions == null) {
+            ((Oas20Document)openApi).securityDefinitions = ((Oas20Document)openApi).createSecurityDefinitions();
         }
         if (sd != null) {
             for (RestSecurityDefinition def : sd.getSecurityDefinitions()) {
                 if (def instanceof RestSecurityBasicAuth) {
-                    Oas20SecurityScheme auth = openApi.securityDefinitions.createSecurityScheme(def.getKey());
+                    Oas20SecurityScheme auth = ((Oas20Document)openApi).securityDefinitions.createSecurityScheme(def.getKey());
                     auth.type = "basicAuth";
                     auth.description = def.getDescription();
-                    openApi.securityDefinitions.addSecurityScheme("BasicAuth", auth);
+                    ((Oas20Document)openApi).securityDefinitions.addSecurityScheme("BasicAuth", auth);
                 } else if (def instanceof RestSecurityApiKey) {
                     RestSecurityApiKey rs = (RestSecurityApiKey) def;
-                    Oas20SecurityScheme auth = openApi.securityDefinitions.createSecurityScheme(def.getKey());
+                    Oas20SecurityScheme auth = ((Oas20Document)openApi).securityDefinitions.createSecurityScheme(def.getKey());
                     auth.type = "apiKey";
                     auth.description = rs.getDescription();
                     auth.name = rs.getName();
@@ -139,11 +147,11 @@ public class RestOpenApiReader {
                     } else {
                         auth.in = "query";
                     }
-                    openApi.securityDefinitions.addSecurityScheme(def.getKey(), auth);
+                    ((Oas20Document)openApi).securityDefinitions.addSecurityScheme(def.getKey(), auth);
                 } else if (def instanceof RestSecurityOAuth2) {
                     RestSecurityOAuth2 rs = (RestSecurityOAuth2) def;
                     
-                    Oas20SecurityScheme auth = openApi.securityDefinitions.createSecurityScheme(def.getKey());
+                    Oas20SecurityScheme auth = ((Oas20Document)openApi).securityDefinitions.createSecurityScheme(def.getKey());
                     auth.type = "oauth2";
                     auth.description = rs.getDescription();
                     String flow = rs.getFlow();
@@ -160,10 +168,10 @@ public class RestOpenApiReader {
                     for (RestPropertyDefinition scope : rs.getScopes()) {
                         auth.scopes.addScope(scope.getKey(), scope.getValue());
                     }
-                    if (openApi.securityDefinitions == null) {
-                        openApi.securityDefinitions = openApi.createSecurityDefinitions();
+                    if (((Oas20Document)openApi).securityDefinitions == null) {
+                        ((Oas20Document)openApi).securityDefinitions = ((Oas20Document)openApi).createSecurityDefinitions();
                     }
-                    openApi.securityDefinitions.addSecurityScheme(def.getKey(), auth);
+                    ((Oas20Document)openApi).securityDefinitions.addSecurityScheme(def.getKey(), auth);
                 }
             }
         }
@@ -219,9 +227,10 @@ public class RestOpenApiReader {
         }
 
         doParseVerbs(openApi, rest, camelContextId, verbs, pathAsTag);
+        }
     }
 
-    private void doParseVerbs(Oas20Document openApi, RestDefinition rest, String camelContextId, List<VerbDefinition> verbs, String pathAsTag) {
+    private void doParseVerbs(OasDocument openApi, RestDefinition rest, String camelContextId, List<VerbDefinition> verbs, String pathAsTag) {
         // used during gathering of apis
         
         String basePath = rest.getPath();
@@ -421,7 +430,7 @@ public class RestOpenApiReader {
                             if (type.endsWith("[]")) {
                                 type = type.substring(0, type.length() - 2);
                                     
-                                    Oas20Schema arrayModel = (Oas20Schema)bp.createSchema();
+                                    OasSchema arrayModel = (Oas20Schema)bp.createSchema();
                                     arrayModel = modelTypeAsProperty(type, openApi, arrayModel);
                                     bp.schema = arrayModel;
                                 
@@ -432,7 +441,7 @@ public class RestOpenApiReader {
                                     refModel.$ref = "#/definitions/" + ref;
                                     bp.schema = refModel;
                                 } else {
-                                    Oas20Schema model = (Oas20Schema)bp.createSchema();
+                                    OasSchema model = (Oas20Schema)bp.createSchema();
                                     model = modelTypeAsProperty(type, openApi, model);
                                        
                                     bp.schema = model;
@@ -475,10 +484,10 @@ public class RestOpenApiReader {
                     op.responses = op.createResponses();
                 }
                 Oas20Response response = (Oas20Response)op.responses.createResponse("200");
-                Oas20Schema model = response.createSchema();
+                OasSchema model = response.createSchema();
                 model = modelTypeAsProperty(verb.getOutType(), openApi, model);
                 
-                response.schema = model;
+                response.schema = (Oas20Schema)model;
                 response.description = "Output type";
                 op.responses.addResponse("200", response);
             }
@@ -549,7 +558,7 @@ public class RestOpenApiReader {
         }
     }
 
-    private void doParseResponseMessages(Oas20Document openApi, VerbDefinition verb, Oas20Operation op) {
+    private void doParseResponseMessages(OasDocument openApi, VerbDefinition verb, OasOperation op) {
         if (op.responses == null) {
             op.responses = op.createResponses();
         }
@@ -564,10 +573,10 @@ public class RestOpenApiReader {
                 op.responses.addResponse(msg.getCode(), response);
             }
             if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getResponseModel())) {
-                Oas20Schema model = response.createSchema();
+                OasSchema model = response.createSchema();
                 model = modelTypeAsProperty(msg.getResponseModel(), openApi, model);
                 
-                response.schema = model;
+                response.schema = (Oas20Schema)model;
             }
             if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getMessage())) {
                 response.description = msg.getMessage();
@@ -784,14 +793,15 @@ public class RestOpenApiReader {
         }
     }
 
-    private Oas20SchemaDefinition asModel(String typeName, Oas20Document openApi) {
+    private Oas20SchemaDefinition asModel(String typeName, OasDocument openApi) {
+        if (openApi instanceof Oas20Document) {
         boolean array = typeName.endsWith("[]");
         if (array) {
             typeName = typeName.substring(0, typeName.length() - 2);
         }
 
-        if (openApi.definitions != null) {
-            for (Oas20SchemaDefinition model : openApi.definitions.getDefinitions()) {
+        if (((Oas20Document)openApi).definitions != null) {
+            for (Oas20SchemaDefinition model : ((Oas20Document)openApi).definitions.getDefinitions()) {
                 @SuppressWarnings("rawtypes")
                 Map modelType = (Map)model.getExtension("x-className").value;
                 
@@ -800,12 +810,13 @@ public class RestOpenApiReader {
                 }
             }
         }
+        }
         return null;
     }
     
 
 
-    private String modelTypeAsRef(String typeName, Oas20Document openApi) {
+    private String modelTypeAsRef(String typeName, OasDocument openApi) {
         boolean array = typeName.endsWith("[]");
         if (array) {
             typeName = typeName.substring(0, typeName.length() - 2);
@@ -820,7 +831,7 @@ public class RestOpenApiReader {
         return null;
     }
 
-    private Oas20Schema modelTypeAsProperty(String typeName, Oas20Document openApi, Oas20Schema prop) {
+    private OasSchema modelTypeAsProperty(String typeName, OasDocument openApi, OasSchema prop) {
         boolean array = typeName.endsWith("[]");
         if (array) {
             typeName = typeName.substring(0, typeName.length() - 2);
@@ -877,25 +888,28 @@ public class RestOpenApiReader {
      * @param clazz   the class such as pojo with openApi annotation
      * @param openApi the openApi model
      */
-    private void appendModels(Class clazz, Oas20Document openApi) {
-        RestModelConverters converters = new RestModelConverters();
-        Oas20Definitions models = converters.readClass(openApi, clazz);
-        if (models == null) {
-            return;
-        }
-        for (Oas20SchemaDefinition entry : models.getDefinitions()) {
-
-            // favor keeping any existing model that has the vendor extension in the model
-            boolean oldExt = false;
-            if (openApi.definitions != null && openApi.definitions.getDefinition(entry.getName()) != null) {
-                Oas20SchemaDefinition oldModel = openApi.definitions.getDefinition(entry.getName());
-                if (oldModel.getExtensions() != null && !oldModel.getExtensions().isEmpty()) {
-                    oldExt = oldModel.getExtensions().contains("x-className");
-                }
+    private void appendModels(Class clazz, OasDocument openApi) {
+        if (openApi instanceof Oas20Document) {
+            RestModelConverters converters = new RestModelConverters();
+            Oas20Definitions models = converters.readClass(openApi, clazz);
+            if (models == null) {
+                return;
             }
+            for (Oas20SchemaDefinition entry : models.getDefinitions()) {
 
-            if (!oldExt) {
-                openApi.definitions.addDefinition(entry.getName(), entry);
+                // favor keeping any existing model that has the vendor extension in the model
+                boolean oldExt = false;
+                if (((Oas20Document)openApi).definitions != null
+                    && ((Oas20Document)openApi).definitions.getDefinition(entry.getName()) != null) {
+                    Oas20SchemaDefinition oldModel = ((Oas20Document)openApi).definitions.getDefinition(entry.getName());
+                    if (oldModel.getExtensions() != null && !oldModel.getExtensions().isEmpty()) {
+                        oldExt = oldModel.getExtensions().contains("x-className");
+                    }
+                }
+
+                if (!oldExt) {
+                    ((Oas20Document)openApi).definitions.addDefinition(entry.getName(), entry);
+                }
             }
         }
     }

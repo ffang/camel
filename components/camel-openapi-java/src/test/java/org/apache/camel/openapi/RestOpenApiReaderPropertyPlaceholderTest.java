@@ -38,7 +38,7 @@ import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
 import io.apicurio.datamodels.openapi.models.OasDocument;
-
+    
 
 @Ignore("Does not run well on CI due test uses JMX mbeans")
 public class RestOpenApiReaderPropertyPlaceholderTest extends CamelTestSupport {

@@ -19,6 +19,7 @@ package org.apache.camel.openapi;
 import java.util.ArrayList;
 
 import io.apicurio.datamodels.core.models.common.Info;
+import io.apicurio.datamodels.openapi.models.OasDocument;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
 
@@ -191,23 +192,25 @@ public class BeanConfig {
         }
     }
     
-    public Oas20Document configure(Oas20Document openApi) {
-        if (schemes != null) {
-            if (openApi.schemes == null) {
-                openApi.schemes = new ArrayList<String>();
+    public OasDocument configure(OasDocument openApi) {
+        if (openApi instanceof Oas20Document) {
+            if (schemes != null) {
+                if (((Oas20Document)openApi).schemes == null) {
+                    ((Oas20Document)openApi).schemes = new ArrayList<String>();
+                }
+                for (String scheme : schemes) {
+                    ((Oas20Document)openApi).schemes.add(scheme);
+                }
             }
-            for (String scheme : schemes) {
-                openApi.schemes.add(scheme);
-            }
+            openApi.info = info;
+            ((Oas20Document)openApi).host = host;
+            ((Oas20Document)openApi).basePath = basePath;
         }
-        openApi.info = info;
-        openApi.host = host;
-        openApi.basePath = basePath;
         return openApi;
     }
     
     public boolean isOpenApi3() {
-        return this.version == null || this.version.startsWith("3");
+        return this.version != null && this.version.startsWith("3");
     }
 
 }
