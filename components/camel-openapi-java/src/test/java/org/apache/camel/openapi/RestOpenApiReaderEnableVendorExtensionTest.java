@@ -69,6 +69,7 @@ public class RestOpenApiReaderEnableVendorExtensionTest extends CamelTestSupport
         config.setBasePath("/api");
         config.setTitle("Camel User store");
         config.setLicense("Apache 2.0");
+        config.setVersion("2.0");
         config.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
         RestOpenApiReader reader = new RestOpenApiReader();
 

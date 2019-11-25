@@ -59,6 +59,7 @@ public class RestOpenApiReaderApiDocsOverrideTest extends CamelTestSupport {
         config.setHost("localhost:8080");
         config.setSchemes(new String[] {"http"});
         config.setBasePath("/api");
+        config.setVersion("2.0");
         RestOpenApiReader reader = new RestOpenApiReader();
         OasDocument openApi = null;
         try {

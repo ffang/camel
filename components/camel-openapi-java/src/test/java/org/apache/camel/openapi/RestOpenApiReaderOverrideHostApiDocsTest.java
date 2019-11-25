@@ -39,6 +39,7 @@ public class RestOpenApiReaderOverrideHostApiDocsTest extends RestOpenApiReaderA
         config.setHost("localhost:8080");
         config.setSchemes(new String[]{"http"});
         config.setBasePath("/api");
+        config.setVersion("2.0");
         config.setHost("http:mycoolserver:8888/myapi");
         RestOpenApiReader reader = new RestOpenApiReader();
 

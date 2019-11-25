@@ -210,7 +210,7 @@ public class BeanConfig {
     }
     
     public boolean isOpenApi3() {
-        return this.version != null && this.version.startsWith("3");
+        return this.version == null || this.version.startsWith("3");
     }
 
 }
