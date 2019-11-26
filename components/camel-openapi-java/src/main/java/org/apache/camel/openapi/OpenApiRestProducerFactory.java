@@ -17,6 +17,7 @@
 package org.apache.camel.openapi;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,12 +34,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.apicurio.datamodels.Library;
-import io.apicurio.datamodels.core.models.Document;
+import io.apicurio.datamodels.openapi.models.OasDocument;
 import io.apicurio.datamodels.openapi.models.OasOperation;
 import io.apicurio.datamodels.openapi.models.OasParameter;
 import io.apicurio.datamodels.openapi.models.OasPathItem;
+import io.apicurio.datamodels.openapi.models.OasResponse;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Operation;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Operation;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Response;
 
 import static org.apache.camel.support.ResourceHelper.resolveMandatoryResourceAsInputStream;
 
@@ -63,8 +67,8 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
             path = "/" + path;
         }
 
-        Document openApi = loadOpenApiModel(camelContext, apiDoc);
-        OasOperation operation = getOpenApiOperation((Oas20Document)openApi, verb, path);
+        OasDocument openApi = loadOpenApiModel(camelContext, apiDoc);
+        OasOperation operation = getOpenApiOperation(openApi, verb, path);
         if (operation == null) {
             throw new IllegalArgumentException("OpenApi api-doc does not contain operation for " + verb + ":" + path);
         }
@@ -86,18 +90,18 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
 
         String componentName = (String) parameters.get("componentName");
 
-        Producer producer = createHttpProducer(camelContext, (Oas20Document)openApi, (Oas20Operation)operation, host, verb, path, queryParameters,
+        Producer producer = createHttpProducer(camelContext, openApi, operation, host, verb, path, queryParameters,
                 produces, consumes, componentName, parameters);
         return producer;
     }
 
-    Document loadOpenApiModel(CamelContext camelContext, String apiDoc) throws Exception {
+    OasDocument loadOpenApiModel(CamelContext camelContext, String apiDoc) throws Exception {
         InputStream is = resolveMandatoryResourceAsInputStream(camelContext, apiDoc);
         final ObjectMapper mapper = new ObjectMapper();
         try {
             final JsonNode node = mapper.readTree(is);
             LOG.debug("Loaded openApi api-doc:\n{}", node.toPrettyString());
-            return Library.readDocument(node);
+            return (OasDocument)Library.readDocument(node);
             
             
         } finally {
@@ -107,9 +111,12 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
         
     }
 
-    private OasOperation getOpenApiOperation(Oas20Document openApi, String verb, String path) {
+    private OasOperation getOpenApiOperation(OasDocument openApi, String verb, String path) {
         // path may include base path so skip that
-        String basePath = openApi.basePath;
+        String basePath = null;
+        if (openApi instanceof Oas20Document) {
+            basePath = ((Oas20Document)openApi).basePath;
+        }
         if (basePath != null && path.startsWith(basePath)) {
             path = path.substring(basePath.length());
         }
@@ -139,7 +146,7 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
         return op;
     }
 
-    private Producer createHttpProducer(CamelContext camelContext, Oas20Document openApi, Oas20Operation operation,
+    private Producer createHttpProducer(CamelContext camelContext, OasDocument openApi, OasOperation operation,
                                         String host, String verb, String path, String queryParameters,
                                         String consumes, String produces,
                                         String componentName, Map<String, Object> parameters) throws Exception {
@@ -153,9 +160,23 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
 
             if (produces == null) {
                 CollectionStringBuffer csb = new CollectionStringBuffer(",");
-                List<String> list = operation.produces;
-                if (list == null) {
-                    list = openApi.produces;
+                List<String> list = new ArrayList<String>();
+                if (operation instanceof Oas20Operation) {
+                    list = ((Oas20Operation)operation).produces;
+                } else if (operation instanceof Oas30Operation) {
+                    Oas30Operation oas30Operation = (Oas30Operation)operation;
+                    for (OasResponse response : oas30Operation.responses.getResponses()) {
+                        Oas30Response oas30Response = (Oas30Response)response;
+                        for (String ct : oas30Response.content.keySet()) {
+                            list.add(ct);
+                        }
+                    }
+                    
+                }
+                if (list == null || list.isEmpty()) {
+                    if (openApi instanceof Oas20Document) {
+                        list = ((Oas20Document)openApi).produces;
+                    }
                 }
                 if (list != null) {
                     for (String s : list) {
@@ -166,9 +187,23 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
             }
             if (consumes == null) {
                 CollectionStringBuffer csb = new CollectionStringBuffer(",");
-                List<String> list = operation.consumes;
-                if (list == null) {
-                    list = openApi.consumes;
+                List<String> list = new ArrayList<String>();
+                if (operation instanceof Oas20Operation) {
+                    list = ((Oas20Operation)operation).consumes;
+                } else if (operation instanceof Oas30Operation) {
+                    Oas30Operation oas30Operation = (Oas30Operation)operation;
+                    if (oas30Operation.requestBody != null 
+                        && oas30Operation.requestBody.content != null) { 
+                        for (String ct : oas30Operation.requestBody.content.keySet()) {
+                            list.add(ct);
+                        }
+                    }
+                        
+                }
+                if (list == null || list.isEmpty()) {
+                    if (openApi instanceof Oas20Document) {
+                        list = ((Oas20Document)openApi).consumes;
+                    }
                 }
                 if (list != null) {
                     for (String s : list) {
@@ -178,13 +213,15 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
                 consumes = csb.isEmpty() ? null : csb.toString();
             }
 
-            String basePath;
-            String uriTemplate;
+            String basePath = null;
+            String uriTemplate = null;
             if (host == null) {
-                // if no explicit host has been configured then use host and base path from the openApi api-doc
-                host = openApi.host;
-                basePath = openApi.basePath;
-                uriTemplate = path;
+                if (openApi instanceof Oas20Document) {
+                    //if no explicit host has been configured then use host and base path from the openApi api-doc
+                    host = ((Oas20Document)openApi).host;
+                    basePath = ((Oas20Document)openApi).basePath;
+                    uriTemplate = path;
+                }
             } else {
                 // path includes also uri template
                 basePath = path;
