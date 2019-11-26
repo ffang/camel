@@ -27,6 +27,6 @@ public class OpenApiRestProducerFactoryTest {
     public void shouldLoadSwaggerPetStoreModel() throws Exception {
         OpenApiRestProducerFactory factory = new OpenApiRestProducerFactory();
 
-        factory.loadSwaggerModel(new DefaultCamelContext(), "petstore.json");
+        factory.loadOpenApiModel(new DefaultCamelContext(), "petstore.json");
     }
 }

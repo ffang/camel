@@ -19,8 +19,10 @@ package org.apache.camel.openapi;
 import java.util.ArrayList;
 
 import io.apicurio.datamodels.core.models.common.Info;
+import io.apicurio.datamodels.core.models.common.Server;
 import io.apicurio.datamodels.openapi.models.OasDocument;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Document;
 
 
 public class BeanConfig {
@@ -205,6 +207,13 @@ public class BeanConfig {
             openApi.info = info;
             ((Oas20Document)openApi).host = host;
             ((Oas20Document)openApi).basePath = basePath;
+        } else {
+            openApi.info = info;
+            Oas30Document openApi3 = (Oas30Document)openApi;
+            Server server = openApi3.createServer();
+            String serverUrl = this.schemes[0] + "://" + this.host + this.basePath;
+            server.url = serverUrl;
+            openApi3.addServer(server);
         }
         return openApi;
     }

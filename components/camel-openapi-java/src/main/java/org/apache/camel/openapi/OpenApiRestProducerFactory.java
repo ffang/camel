@@ -63,8 +63,8 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
             path = "/" + path;
         }
 
-        Document openApi = loadSwaggerModel(camelContext, apiDoc);
-        OasOperation operation = getSwaggerOperation((Oas20Document)openApi, verb, path);
+        Document openApi = loadOpenApiModel(camelContext, apiDoc);
+        OasOperation operation = getOpenApiOperation((Oas20Document)openApi, verb, path);
         if (operation == null) {
             throw new IllegalArgumentException("OpenApi api-doc does not contain operation for " + verb + ":" + path);
         }
@@ -91,7 +91,7 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
         return producer;
     }
 
-    Document loadSwaggerModel(CamelContext camelContext, String apiDoc) throws Exception {
+    Document loadOpenApiModel(CamelContext camelContext, String apiDoc) throws Exception {
         InputStream is = resolveMandatoryResourceAsInputStream(camelContext, apiDoc);
         final ObjectMapper mapper = new ObjectMapper();
         try {
@@ -107,7 +107,7 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
         
     }
 
-    private OasOperation getSwaggerOperation(Oas20Document openApi, String verb, String path) {
+    private OasOperation getOpenApiOperation(Oas20Document openApi, String verb, String path) {
         // path may include base path so skip that
         String basePath = openApi.basePath;
         if (basePath != null && path.startsWith(basePath)) {

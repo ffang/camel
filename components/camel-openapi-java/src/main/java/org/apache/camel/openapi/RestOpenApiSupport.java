@@ -62,6 +62,9 @@ import io.apicurio.datamodels.openapi.v2.models.Oas20Contact;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Info;
 import io.apicurio.datamodels.openapi.v2.models.Oas20License;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Contact;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Info;
+import io.apicurio.datamodels.openapi.v3.models.Oas30License;
 
 /**
  * A support class for that allows SPI to plugin and offer OpenApi API service listings as part of the Camel
@@ -121,29 +124,55 @@ public class RestOpenApiSupport {
         String contactName = (String)config.get("api.contact.name");
         String contactUrl = (String)config.get("api.contact.url");
         String contactEmail = (String)config.get("api.contact.email");
+        
+        if (!openApiConfig.isOpenApi3()) {
 
-        Oas20Info info = new Oas20Info();
-        info.version = version;
-        info.title = title;
-        info.description = description;
-        info.termsOfService = termsOfService;
+            Oas20Info info = new Oas20Info();
+            info.version = version;
+            info.title = title;
+            info.description = description;
+            info.termsOfService = termsOfService;
 
-        if (licenseName != null || licenseUrl != null) {
-            Oas20License license = new Oas20License();
-            license.name = licenseName;
-            license.url = licenseUrl;
-            info.license = license;
+            if (licenseName != null || licenseUrl != null) {
+                Oas20License license = new Oas20License();
+                license.name = licenseName;
+                license.url = licenseUrl;
+                info.license = license;
+            }
+
+            if (contactName != null || contactUrl != null || contactEmail != null) {
+                Oas20Contact contact = new Oas20Contact();
+                contact.name = contactName;
+                contact.url = contactUrl;
+                contact.email = contactEmail;
+                info.contact = contact;
+            }
+            openApiConfig.setInfo(info);
+        } else {
+            Oas30Info info = new Oas30Info();
+            info.version = version;
+            info.title = title;
+            info.description = description;
+            info.termsOfService = termsOfService;
+
+            if (licenseName != null || licenseUrl != null) {
+                Oas30License license = new Oas30License();
+                license.name = licenseName;
+                license.url = licenseUrl;
+                info.license = license;
+            }
+
+            if (contactName != null || contactUrl != null || contactEmail != null) {
+                Oas30Contact contact = new Oas30Contact();
+                contact.name = contactName;
+                contact.url = contactUrl;
+                contact.email = contactEmail;
+                info.contact = contact;
+            }
+            openApiConfig.setInfo(info);
         }
 
-        if (contactName != null || contactUrl != null || contactEmail != null) {
-            Oas20Contact contact = new Oas20Contact();
-            contact.name = contactName;
-            contact.url = contactUrl;
-            contact.email = contactEmail;
-            info.contact = contact;
-        }
-
-        openApiConfig.setInfo(info);
+        
     }
 
     public List<RestDefinition> getRestDefinitions(CamelContext camelContext) throws Exception {
