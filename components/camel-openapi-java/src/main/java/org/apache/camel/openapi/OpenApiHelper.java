@@ -27,6 +27,8 @@ import io.apicurio.datamodels.openapi.models.OasOperation;
 import io.apicurio.datamodels.openapi.models.OasPathItem;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SchemaDefinition;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Document;
+import io.apicurio.datamodels.openapi.v3.models.Oas30SchemaDefinition;
 
 public final class OpenApiHelper {
 
@@ -58,6 +60,32 @@ public final class OpenApiHelper {
 
             if (((Oas20Document)openApi).definitions.getDefinitions() != null) {
                 for (Oas20SchemaDefinition schemaDefinition : ((Oas20Document)openApi).definitions.getDefinitions()) {
+                    if (schemaDefinition.getExtensions() != null) {
+                        schemaDefinition.getExtensions().clear();
+                    }
+                }
+            }
+
+            if (openApi.paths != null) {
+                for (OasPathItem path : openApi.paths.getPathItems()) {
+                    if (path.getExtensions() != null) {
+                        path.getExtensions().clear();
+                    }
+                    for (OasOperation op : getOperationMap(path).values()) {
+                        if (op.getExtensions() != null) {
+                            op.getExtensions().clear();
+                        }
+                    }
+                }
+            }
+        } else if (openApi instanceof Oas30Document) {
+            if (openApi.getExtensions() != null) {
+                openApi.getExtensions().clear();
+            }
+
+            if (((Oas30Document)openApi).components != null 
+                && ((Oas30Document)openApi).components.schemas != null) {
+                for (Oas30SchemaDefinition schemaDefinition : ((Oas30Document)openApi).components.schemas.values()) {
                     if (schemaDefinition.getExtensions() != null) {
                         schemaDefinition.getExtensions().clear();
                     }

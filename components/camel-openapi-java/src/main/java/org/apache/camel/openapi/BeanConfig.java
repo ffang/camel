@@ -211,7 +211,7 @@ public class BeanConfig {
             openApi.info = info;
             Oas30Document openApi3 = (Oas30Document)openApi;
             Server server = openApi3.createServer();
-            String serverUrl = this.schemes[0] + "://" + this.host + this.basePath;
+            String serverUrl = new StringBuilder().append(this.schemes[0]).append("://").append(this.host).append(this.basePath).toString();
             server.url = serverUrl;
             openApi3.addServer(server);
         }
