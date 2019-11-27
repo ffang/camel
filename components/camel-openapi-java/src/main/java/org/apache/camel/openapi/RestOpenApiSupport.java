@@ -63,6 +63,7 @@ import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Info;
 import io.apicurio.datamodels.openapi.v2.models.Oas20License;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Contact;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Document;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Info;
 import io.apicurio.datamodels.openapi.v3.models.Oas30License;
 
@@ -489,6 +490,29 @@ public class RestOpenApiSupport {
                     }
                 }
             }
+        } else if (openApi instanceof Oas30Document) {
+            
+            String host = (String)headers.get(HEADER_HOST);
+            
+
+            String forwardedPrefix = (String)headers.get(HEADER_X_FORWARDED_PREFIX);
+            String basePath = null;
+            if (ObjectHelper.isNotEmpty(forwardedPrefix)) {
+                basePath = URISupport.joinPaths(forwardedPrefix, basePath);
+            }
+
+            String forwardedHost = (String)headers.get(HEADER_X_FORWARDED_HOST);
+            if (ObjectHelper.isNotEmpty(forwardedHost)) {
+                host = forwardedHost;
+            }
+
+            String proto = (String)headers.get(HEADER_X_FORWARDED_PROTO);
+            if (ObjectHelper.isNotEmpty(proto)) {
+                String[] schemes = proto.split(",");
+                String serverUrl = new StringBuilder().append(schemes[0]).append("://").append(host).append(basePath).toString();
+                ((Oas30Document)openApi).servers.get(0).url = serverUrl; 
+            }
+            
         }
     }
 
