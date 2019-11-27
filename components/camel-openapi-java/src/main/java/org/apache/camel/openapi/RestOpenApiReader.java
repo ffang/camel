@@ -50,6 +50,7 @@ import io.apicurio.datamodels.openapi.v2.models.Oas20Schema;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SchemaDefinition;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SecurityScheme;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Document;
+import io.apicurio.datamodels.openapi.v3.models.Oas30SchemaDefinition;
 
 import org.apache.camel.model.rest.RestDefinition;
 import org.apache.camel.model.rest.RestOperationParamDefinition;
@@ -891,24 +892,40 @@ public class RestOpenApiReader {
     private void appendModels(Class clazz, OasDocument openApi) {
         if (openApi instanceof Oas20Document) {
             RestModelConverters converters = new RestModelConverters();
-            Oas20Definitions models = converters.readClass(openApi, clazz);
+            List<? extends OasSchema> models = converters.readClass(openApi, clazz);
             if (models == null) {
                 return;
             }
-            for (Oas20SchemaDefinition entry : models.getDefinitions()) {
-
+            for (OasSchema entry : models) {
                 // favor keeping any existing model that has the vendor extension in the model
-                boolean oldExt = false;
-                if (((Oas20Document)openApi).definitions != null
-                    && ((Oas20Document)openApi).definitions.getDefinition(entry.getName()) != null) {
-                    Oas20SchemaDefinition oldModel = ((Oas20Document)openApi).definitions.getDefinition(entry.getName());
-                    if (oldModel.getExtensions() != null && !oldModel.getExtensions().isEmpty()) {
-                        oldExt = oldModel.getExtensions().contains("x-className");
+                if (openApi instanceof Oas20Document) {
+                    boolean oldExt = false;
+                    if (((Oas20Document)openApi).definitions != null
+                        && ((Oas20Document)openApi).definitions.getDefinition(((Oas20SchemaDefinition)entry).getName()) != null) {
+                        Oas20SchemaDefinition oldModel = ((Oas20Document)openApi).definitions
+                            .getDefinition(((Oas20SchemaDefinition)entry).getName());
+                        if (oldModel.getExtensions() != null && !oldModel.getExtensions().isEmpty()) {
+                            oldExt = oldModel.getExtension("x-className") != null;
+                        }
                     }
-                }
 
-                if (!oldExt) {
-                    ((Oas20Document)openApi).definitions.addDefinition(entry.getName(), entry);
+                    if (!oldExt) {
+                        ((Oas20Document)openApi).definitions.addDefinition(((Oas20SchemaDefinition)entry).getName(), (Oas20SchemaDefinition)entry);
+                    }
+                } else if (openApi instanceof Oas30Document) {
+                    boolean oldExt = false;
+                    if (((Oas30Document)openApi).components != null
+                        && ((Oas30Document)openApi).components.getSchemaDefinition(((Oas30SchemaDefinition)entry).getName()) != null) {
+                        Oas30SchemaDefinition oldModel = ((Oas30Document)openApi).components
+                            .getSchemaDefinition(((Oas30SchemaDefinition)entry).getName());
+                        if (oldModel.getExtensions() != null && !oldModel.getExtensions().isEmpty()) {
+                            oldExt = oldModel.getExtension("x-className") != null;
+                        }
+                    }
+
+                    if (!oldExt) {
+                        ((Oas20Document)openApi).definitions.addDefinition(((Oas20SchemaDefinition)entry).getName(), (Oas20SchemaDefinition)entry);
+                    }
                 }
             }
         }
