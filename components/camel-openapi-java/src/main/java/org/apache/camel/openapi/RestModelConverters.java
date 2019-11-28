@@ -25,7 +25,6 @@ import io.apicurio.datamodels.openapi.models.OasDocument;
 import io.apicurio.datamodels.openapi.models.OasSchema;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Definitions;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
-import io.apicurio.datamodels.openapi.v2.models.Oas20Schema;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SchemaDefinition;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Document;
 import io.apicurio.datamodels.openapi.v3.models.Oas30SchemaDefinition;
@@ -36,7 +35,7 @@ import io.apicurio.datamodels.openapi.v3.models.Oas30SchemaDefinition;
  */
 public class RestModelConverters {
 
-    public List<? extends OasSchema> readClass(OasDocument oasDocument, Class clazz) {
+    public List<? extends OasSchema> readClass(OasDocument oasDocument, Class<?> clazz) {
         if (oasDocument instanceof Oas20Document) {
             String name = clazz.getName();
             if (!name.contains(".")) {
