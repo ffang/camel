@@ -28,6 +28,8 @@ import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.openapi.BeanConfig;
 import org.apache.camel.openapi.RestOpenApiReader;
 import org.apache.camel.test.junit4.CamelTestSupport;
+
+import org.junit.Ignore;
 import org.junit.Test;
 
 import io.apicurio.datamodels.Library;
@@ -90,5 +92,45 @@ public class RestOpenApiReaderDayOfWeekTest extends CamelTestSupport {
         context.stop();
         
     }
+    
+    @Ignore
+    public void testReaderReadV3() throws Exception {
+        try {
+        BeanConfig config = new BeanConfig();
+        config.setHost("localhost:8080");
+        config.setSchemes(new String[] {"http"});
+        config.setBasePath("/api");
+        config.setTitle("Day");
+        config.setLicense("Apache 2.0");
+        config.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
+        //config.setVersion("2.0");
+        RestOpenApiReader reader = new RestOpenApiReader();
+
+        OasDocument openApi = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
+        assertNotNull(openApi);
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        Object dump = Library.writeNode(openApi);
+        String json = mapper.writeValueAsString(dump);
+        System.out.println("the json is =====>" + json);
+
+        log.info(json);
+
+        assertTrue(json.contains("\"host\" : \"localhost:8080\""));
+        assertTrue(json.contains("\"default\" : \"friday\""));
+        assertTrue(json.contains("\"enum\" : [ \"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\" ]"));
+        assertTrue(json.contains("\"$ref\" : \"#/definitions/DayResponse\""));
+        assertTrue(json.contains("\"format\" : \"org.apache.camel.openapi.DayResponse\""));
+        assertTrue(json.contains("\"X-Rate-Limit-Limit\" : {"));
+        assertTrue(json.contains("\"description\" : \"The number of allowed requests in the current period\""));
+
+        context.stop();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
 
 }

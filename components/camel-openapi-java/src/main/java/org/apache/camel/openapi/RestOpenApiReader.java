@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.invoke.MethodHandles.publicLookup;
 
+import io.apicurio.datamodels.core.models.ExtensibleNode;
 import io.apicurio.datamodels.core.models.Extension;
 import io.apicurio.datamodels.core.models.common.AuthorizationCodeOAuthFlow;
 import io.apicurio.datamodels.core.models.common.ImplicitOAuthFlow;
@@ -54,6 +55,8 @@ import io.apicurio.datamodels.openapi.v2.models.Oas20SecurityScheme;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Document;
 import io.apicurio.datamodels.openapi.v3.models.Oas30MediaType;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Operation;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Parameter;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Schema;
 import io.apicurio.datamodels.openapi.v3.models.Oas30SchemaDefinition;
 import io.apicurio.datamodels.openapi.v3.models.Oas30SecurityScheme;
 
@@ -469,52 +472,104 @@ public class RestOpenApiReader {
 
                     // set type on parameter
                     if (!parameter.in.equals("body")) {
-                        Oas20Parameter serializableParameter = (Oas20Parameter)parameter;
+                        if (parameter instanceof Oas20Parameter) {
+                            Oas20Parameter serializableParameter = (Oas20Parameter)parameter;
 
-                        final boolean isArray = param.getDataType().equalsIgnoreCase("array");
-                        final List<String> allowableValues = param.getAllowableValues();
-                        final boolean hasAllowableValues = allowableValues != null
-                                                           && !allowableValues.isEmpty();
-                        if (param.getDataType() != null) {
-                            serializableParameter.type = param.getDataType();
-                            if (param.getDataFormat() != null) {
-                                serializableParameter.format = param.getDataFormat();
-                            }
-                            if (isArray) {
-                                if (param.getArrayType() != null) {
-                                    if (param.getArrayType().equalsIgnoreCase("string")) {
-                                        defineItems(serializableParameter, allowableValues, new Oas20Items(),
-                                                    String.class);
-                                    }
-                                    if (param.getArrayType().equalsIgnoreCase("int")
-                                        || param.getArrayType().equalsIgnoreCase("integer")) {
-                                        defineItems(serializableParameter, allowableValues, new Oas20Items(),
-                                                    Integer.class);
-                                    }
-                                    if (param.getArrayType().equalsIgnoreCase("long")) {
-                                        defineItems(serializableParameter, allowableValues, new Oas20Items(),
-                                                    Long.class);
-                                    }
-                                    if (param.getArrayType().equalsIgnoreCase("float")) {
-                                        defineItems(serializableParameter, allowableValues, new Oas20Items(),
-                                                    Float.class);
-                                    }
-                                    if (param.getArrayType().equalsIgnoreCase("double")) {
-                                        defineItems(serializableParameter, allowableValues, new Oas20Items(),
-                                                    Double.class);
-                                    }
-                                    if (param.getArrayType().equalsIgnoreCase("boolean")) {
-                                        defineItems(serializableParameter, allowableValues, new Oas20Items(),
-                                                    Boolean.class);
+                            final boolean isArray = param.getDataType().equalsIgnoreCase("array");
+                            final List<String> allowableValues = param.getAllowableValues();
+                            final boolean hasAllowableValues = allowableValues != null
+                                                               && !allowableValues.isEmpty();
+                            if (param.getDataType() != null) {
+                                serializableParameter.type = param.getDataType();
+                                if (param.getDataFormat() != null) {
+                                    serializableParameter.format = param.getDataFormat();
+                                }
+                                if (isArray) {
+                                    if (param.getArrayType() != null) {
+                                        if (param.getArrayType().equalsIgnoreCase("string")) {
+                                            defineItems(serializableParameter, allowableValues,
+                                                        new Oas20Items(), String.class);
+                                        }
+                                        if (param.getArrayType().equalsIgnoreCase("int")
+                                            || param.getArrayType().equalsIgnoreCase("integer")) {
+                                            defineItems(serializableParameter, allowableValues,
+                                                        new Oas20Items(), Integer.class);
+                                        }
+                                        if (param.getArrayType().equalsIgnoreCase("long")) {
+                                            defineItems(serializableParameter, allowableValues,
+                                                        new Oas20Items(), Long.class);
+                                        }
+                                        if (param.getArrayType().equalsIgnoreCase("float")) {
+                                            defineItems(serializableParameter, allowableValues,
+                                                        new Oas20Items(), Float.class);
+                                        }
+                                        if (param.getArrayType().equalsIgnoreCase("double")) {
+                                            defineItems(serializableParameter, allowableValues,
+                                                        new Oas20Items(), Double.class);
+                                        }
+                                        if (param.getArrayType().equalsIgnoreCase("boolean")) {
+                                            defineItems(serializableParameter, allowableValues,
+                                                        new Oas20Items(), Boolean.class);
+                                        }
                                     }
                                 }
                             }
-                        }
-                        if (param.getCollectionFormat() != null) {
-                            serializableParameter.collectionFormat = param.getCollectionFormat().name();
-                        }
-                        if (hasAllowableValues && !isArray) {
-                            serializableParameter.enum_ = allowableValues;
+                            if (param.getCollectionFormat() != null) {
+                                serializableParameter.collectionFormat = param.getCollectionFormat().name();
+                            }
+                            if (hasAllowableValues && !isArray) {
+                                serializableParameter.enum_ = allowableValues;
+                            }
+                        } else if (parameter instanceof Oas30Parameter) {
+                            Oas30Parameter parameter30 = (Oas30Parameter)parameter;
+                          
+                            
+                            final boolean isArray = param.getDataType().equalsIgnoreCase("array");
+                            final List<String> allowableValues = param.getAllowableValues();
+                            final boolean hasAllowableValues = allowableValues != null
+                                                               && !allowableValues.isEmpty();
+                            if (param.getDataType() != null) {
+                                parameter30.schema = parameter30.createSchema();
+                                ((Oas30Schema)parameter30.schema).type = param.getDataType();
+                                if (param.getDataFormat() != null) {
+                                    ((Oas30Schema)parameter30.schema).format = param.getDataFormat();
+                                }
+                                if (isArray) {
+                                    if (param.getArrayType() != null) {
+                                        if (param.getArrayType().equalsIgnoreCase("string")) {
+                                            defineSchemas(parameter30, allowableValues,
+                                                         String.class);
+                                        }
+                                        if (param.getArrayType().equalsIgnoreCase("int")
+                                            || param.getArrayType().equalsIgnoreCase("integer")) {
+                                            defineSchemas(parameter30, allowableValues,
+                                                         Integer.class);
+                                        }
+                                        if (param.getArrayType().equalsIgnoreCase("long")) {
+                                            defineSchemas(parameter30, allowableValues,
+                                                         Long.class);
+                                        }
+                                        if (param.getArrayType().equalsIgnoreCase("float")) {
+                                            defineSchemas(parameter30, allowableValues,
+                                                         Float.class);
+                                        }
+                                        if (param.getArrayType().equalsIgnoreCase("double")) {
+                                            defineSchemas(parameter30, allowableValues,
+                                                         Double.class);
+                                        }
+                                        if (param.getArrayType().equalsIgnoreCase("boolean")) {
+                                            defineSchemas(parameter30, allowableValues,
+                                                         Boolean.class);
+                                        }
+                                    }
+                                }
+                            }
+                            if (param.getCollectionFormat() != null) {
+                                parameter30.style = param.getCollectionFormat().name();
+                            }
+                            if (hasAllowableValues && !isArray) {
+                                ((Oas30Schema)parameter30.schema).enum_ = allowableValues;
+                            }
                         }
                     }
 
@@ -654,8 +709,21 @@ public class RestOpenApiReader {
             }
         }
     }
+    
+    private static void defineSchemas(final Oas30Parameter serializableParameter,
+                                    final List<String> allowableValues, 
+                                    final Class<?> type) {
+        
+        if (allowableValues != null && !allowableValues.isEmpty()) {
+            if (String.class.equals(type)) {
+                ((Oas30Schema)serializableParameter.schema).enum_ = allowableValues;
+            } else {
+                convertAndSetItemsEnum(serializableParameter.schema, allowableValues, type);
+            }
+        }
+    }
 
-    private static void convertAndSetItemsEnum(final Oas20Items items, final List<String> allowableValues,
+    private static void convertAndSetItemsEnum(final ExtensibleNode items, final List<String> allowableValues,
                                                final Class<?> type) {
         try {
             final MethodHandle valueOf = publicLookup().findStatic(type, "valueOf",
@@ -936,6 +1004,8 @@ public class RestOpenApiReader {
                     }
                 }
             }
+        } else if (openApi instanceof Oas30Document) {
+            return null;
         }
         return null;
     }
