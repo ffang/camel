@@ -93,7 +93,7 @@ public class RestOpenApiReaderDayOfWeekTest extends CamelTestSupport {
         
     }
     
-    @Ignore
+    @Test
     public void testReaderReadV3() throws Exception {
         try {
         BeanConfig config = new BeanConfig();
@@ -118,7 +118,7 @@ public class RestOpenApiReaderDayOfWeekTest extends CamelTestSupport {
 
         log.info(json);
 
-        assertTrue(json.contains("\"host\" : \"localhost:8080\""));
+        assertTrue(json.contains("\"url\" : \"http://localhost:8080/api\""));
         assertTrue(json.contains("\"default\" : \"friday\""));
         assertTrue(json.contains("\"enum\" : [ \"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\" ]"));
         assertTrue(json.contains("\"$ref\" : \"#/definitions/DayResponse\""));
