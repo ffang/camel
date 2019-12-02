@@ -121,7 +121,7 @@ public class RestOpenApiReaderDayOfWeekTest extends CamelTestSupport {
         assertTrue(json.contains("\"url\" : \"http://localhost:8080/api\""));
         assertTrue(json.contains("\"default\" : \"friday\""));
         assertTrue(json.contains("\"enum\" : [ \"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\" ]"));
-        assertTrue(json.contains("\"$ref\" : \"#/definitions/DayResponse\""));
+        assertTrue(json.contains("\"$ref\" : \"#/components/schemas/DayResponse\""));
         assertTrue(json.contains("\"format\" : \"org.apache.camel.openapi.DayResponse\""));
         assertTrue(json.contains("\"X-Rate-Limit-Limit\" : {"));
         assertTrue(json.contains("\"description\" : \"The number of allowed requests in the current period\""));

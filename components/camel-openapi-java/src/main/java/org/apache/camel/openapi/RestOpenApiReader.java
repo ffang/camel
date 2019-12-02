@@ -1324,7 +1324,7 @@ public class RestOpenApiReader {
         }
     }
 
-    private Oas20SchemaDefinition asModel(String typeName, OasDocument openApi) {
+    private OasSchema asModel(String typeName, OasDocument openApi) {
         if (openApi instanceof Oas20Document) {
             boolean array = typeName.endsWith("[]");
             if (array) {
@@ -1342,7 +1342,21 @@ public class RestOpenApiReader {
                 }
             }
         } else if (openApi instanceof Oas30Document) {
-            return null;
+            boolean array = typeName.endsWith("[]");
+            if (array) {
+                typeName = typeName.substring(0, typeName.length() - 2);
+            }
+
+            if (((Oas30Document)openApi).components.schemas != null) {
+                for (Oas30SchemaDefinition model : ((Oas30Document)openApi).components.schemas.values()) {
+                    @SuppressWarnings("rawtypes")
+                    Map modelType = (Map)model.getExtension("x-className").value;
+
+                    if (modelType != null && typeName.equals(modelType.get("format"))) {
+                        return model;
+                    }
+                }
+            }
         }
         return null;
     }
@@ -1353,7 +1367,7 @@ public class RestOpenApiReader {
             typeName = typeName.substring(0, typeName.length() - 2);
         }
 
-        Oas20SchemaDefinition model = asModel(typeName, openApi);
+        OasSchema model = asModel(typeName, openApi);
         if (model != null) {
             typeName = model.type;
             return typeName;
@@ -1423,49 +1437,49 @@ public class RestOpenApiReader {
      * @param openApi the openApi model
      */
     private void appendModels(Class<?> clazz, OasDocument openApi) {
-        if (openApi instanceof Oas20Document) {
-            RestModelConverters converters = new RestModelConverters();
-            List<? extends OasSchema> models = converters.readClass(openApi, clazz);
-            if (models == null) {
-                return;
-            }
-            for (OasSchema entry : models) {
-                // favor keeping any existing model that has the vendor extension in the model
-                if (openApi instanceof Oas20Document) {
-                    boolean oldExt = false;
-                    if (((Oas20Document)openApi).definitions != null && ((Oas20Document)openApi).definitions
-                        .getDefinition(((Oas20SchemaDefinition)entry).getName()) != null) {
-                        Oas20SchemaDefinition oldModel = ((Oas20Document)openApi).definitions
-                            .getDefinition(((Oas20SchemaDefinition)entry).getName());
-                        if (oldModel.getExtensions() != null && !oldModel.getExtensions().isEmpty()) {
-                            oldExt = oldModel.getExtension("x-className") != null;
-                        }
-                    }
 
-                    if (!oldExt) {
-                        ((Oas20Document)openApi).definitions
-                            .addDefinition(((Oas20SchemaDefinition)entry).getName(),
-                                           (Oas20SchemaDefinition)entry);
+        RestModelConverters converters = new RestModelConverters();
+        List<? extends OasSchema> models = converters.readClass(openApi, clazz);
+        if (models == null) {
+            return;
+        }
+        for (OasSchema entry : models) {
+            // favor keeping any existing model that has the vendor extension in the model
+            if (openApi instanceof Oas20Document) {
+                boolean oldExt = false;
+                if (((Oas20Document)openApi).definitions != null && ((Oas20Document)openApi).definitions
+                    .getDefinition(((Oas20SchemaDefinition)entry).getName()) != null) {
+                    Oas20SchemaDefinition oldModel = ((Oas20Document)openApi).definitions
+                        .getDefinition(((Oas20SchemaDefinition)entry).getName());
+                    if (oldModel.getExtensions() != null && !oldModel.getExtensions().isEmpty()) {
+                        oldExt = oldModel.getExtension("x-className") != null;
                     }
-                } else if (openApi instanceof Oas30Document) {
-                    boolean oldExt = false;
-                    if (((Oas30Document)openApi).components != null && ((Oas30Document)openApi).components
-                        .getSchemaDefinition(((Oas30SchemaDefinition)entry).getName()) != null) {
-                        Oas30SchemaDefinition oldModel = ((Oas30Document)openApi).components
-                            .getSchemaDefinition(((Oas30SchemaDefinition)entry).getName());
-                        if (oldModel.getExtensions() != null && !oldModel.getExtensions().isEmpty()) {
-                            oldExt = oldModel.getExtension("x-className") != null;
-                        }
-                    }
+                }
 
-                    if (!oldExt) {
-                        ((Oas20Document)openApi).definitions
-                            .addDefinition(((Oas20SchemaDefinition)entry).getName(),
-                                           (Oas20SchemaDefinition)entry);
+                if (!oldExt) {
+                    ((Oas20Document)openApi).definitions
+                        .addDefinition(((Oas20SchemaDefinition)entry).getName(),
+                                       (Oas20SchemaDefinition)entry);
+                }
+            } else if (openApi instanceof Oas30Document) {
+                boolean oldExt = false;
+                if (((Oas30Document)openApi).components != null && ((Oas30Document)openApi).components
+                    .getSchemaDefinition(((Oas30SchemaDefinition)entry).getName()) != null) {
+                    Oas30SchemaDefinition oldModel = ((Oas30Document)openApi).components
+                        .getSchemaDefinition(((Oas30SchemaDefinition)entry).getName());
+                    if (oldModel.getExtensions() != null && !oldModel.getExtensions().isEmpty()) {
+                        oldExt = oldModel.getExtension("x-className") != null;
                     }
+                }
+
+                if (!oldExt) {
+                    ((Oas30Document)openApi).components
+                        .addSchemaDefinition(((Oas30SchemaDefinition)entry).getName(),
+                                             (Oas30SchemaDefinition)entry);
                 }
             }
         }
+
     }
 
     /**
