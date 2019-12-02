@@ -668,57 +668,58 @@ public class RestOpenApiReader {
                                     bp.addExtension("x-examples", exampleExtension);
                                 }
                             }
-                        }
+                        } else if (parameter instanceof Oas30Parameter) {
+                            Oas30Parameter bp = (Oas30Parameter)parameter;
 
-                        op.addParameter(parameter);
-                    }
-                } else if (parameter instanceof Oas30Parameter) {
-                    Oas30Parameter bp = (Oas30Parameter)parameter;
+                            String type = param.getDataType() != null ? param.getDataType() : verb.getType();
+                            if (type != null) {
+                                if (type.endsWith("[]")) {
+                                    type = type.substring(0, type.length() - 2);
 
-                    String type = param.getDataType() != null ? param.getDataType() : verb.getType();
-                    if (type != null) {
-                        if (type.endsWith("[]")) {
-                            type = type.substring(0, type.length() - 2);
+                                    OasSchema arrayModel = (Oas30Schema)bp.createSchema();
+                                    arrayModel = modelTypeAsProperty(type, openApi, arrayModel);
+                                    bp.schema = arrayModel;
 
-                            OasSchema arrayModel = (Oas30Schema)bp.createSchema();
-                            arrayModel = modelTypeAsProperty(type, openApi, arrayModel);
-                            bp.schema = arrayModel;
+                                } else {
+                                    String ref = modelTypeAsRef(type, openApi);
+                                    if (ref != null) {
+                                        Oas30Schema refModel = (Oas30Schema)bp.createSchema();
+                                        refModel.$ref = "#/components/schemas/" + ref;
+                                        bp.schema = refModel;
+                                    } else {
+                                        OasSchema model = (Oas30Schema)bp.createSchema();
+                                        model = modelTypeAsProperty(type, openApi, model);
 
-                        } else {
-                            String ref = modelTypeAsRef(type, openApi);
-                            if (ref != null) {
-                                Oas30Schema refModel = (Oas30Schema)bp.createSchema();
-                                refModel.$ref = "#/components/schemas/" + ref;
-                                bp.schema = refModel;
-                            } else {
-                                OasSchema model = (Oas30Schema)bp.createSchema();
-                                model = modelTypeAsProperty(type, openApi, model);
+                                        bp.schema = model;
 
-                                bp.schema = model;
-
+                                    }
+                                }
+                            }
+                            // add examples
+                            if (param.getExamples() != null) {
+                                Extension exampleExtension = bp.createExtension();
+                                boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
+                                if (emptyKey) {
+                                    exampleExtension.name = "x-example";
+                                    exampleExtension.value = param.getExamples().get(0).getValue();
+                                    bp.addExtension("x-example", exampleExtension);
+                                } else {
+                                    Map<String, String> exampleValue = new HashMap<String, String>();
+                                    exampleValue.put(param.getExamples().get(0).getKey(),
+                                                     param.getExamples().get(0).getValue());
+                                    exampleExtension.name = "x-examples";
+                                    exampleExtension.value = exampleValue;
+                                    bp.addExtension("x-examples", exampleExtension);
+                                }
                             }
                         }
-                    }
-                    // add examples
-                    if (param.getExamples() != null) {
-                        Extension exampleExtension = bp.createExtension();
-                        boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
-                        if (emptyKey) {
-                            exampleExtension.name = "x-example";
-                            exampleExtension.value = param.getExamples().get(0).getValue();
-                            bp.addExtension("x-example", exampleExtension);
-                        } else {
-                            Map<String, String> exampleValue = new HashMap<String, String>();
-                            exampleValue.put(param.getExamples().get(0).getKey(),
-                                             param.getExamples().get(0).getValue());
-                            exampleExtension.name = "x-examples";
-                            exampleExtension.value = exampleValue;
-                            bp.addExtension("x-examples", exampleExtension);
-                        }
-                    }
-                }
 
-                op.addParameter(parameter);
+
+                        
+                    }
+                    op.addParameter(parameter);
+                } 
+                
             }
                 
             
@@ -1370,7 +1371,11 @@ public class RestOpenApiReader {
         String ref = modelTypeAsRef(typeName, openApi);
 
         if (ref != null) {
-            prop.$ref = "#/definitions/" + ref;
+            if (openApi instanceof Oas20Document) {
+                prop.$ref = "#/definitions/" + ref;
+            } else if (openApi instanceof Oas30Document) {
+                prop.$ref = "#/components/schemas/" + ref;
+            }
         } else {
             // special for byte arrays
             if (array && ("byte".equals(typeName) || "java.lang.Byte".equals(typeName))) {
@@ -1401,7 +1406,7 @@ public class RestOpenApiReader {
         }
 
         if (array) {
-            Oas20Schema ret = (Oas20Schema)prop.createItemsSchema();
+            OasSchema ret = prop.createItemsSchema();
             ret.items = prop;
             ret.type = "array";
             return ret;
