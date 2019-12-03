@@ -36,8 +36,6 @@ import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -90,8 +88,8 @@ import static org.apache.camel.util.StringHelper.notEmpty;
 /**
  * An awesome REST endpoint backed by OpenApi specifications.
  */
-@UriEndpoint(firstVersion = "2.19.0", scheme = "rest-openapi", title = "REST OpenApi",
-    syntax = "rest-openapi:specificationUri#operationId", label = "rest,swagger,http", producerOnly = true)
+@UriEndpoint(firstVersion = "3.1.0", scheme = "rest-openapi", title = "REST OpenApi",
+    syntax = "rest-openapi:specificationUri#operationId", label = "rest,openapi,http", producerOnly = true)
 public final class RestOpenApiEndpoint extends DefaultEndpoint {
 
     /**
@@ -141,7 +139,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
 
     @UriPath(description = "Path to the OpenApi specification file. The scheme, host base path are taken from this"
         + " specification, but these can be overridden with properties on the component or endpoint level. If not"
-        + " given the component tries to load `swagger.json` resource from the classpath. Note that the `host` defined on the"
+        + " given the component tries to load `openapi.json` resource from the classpath. Note that the `host` defined on the"
         + " component and endpoint of this Component should contain the scheme, hostname and optionally the"
         + " port in the URI syntax (i.e. `http://api.example.com:8080`). Overrides component configuration."
         + " The OpenApi specification can be loaded from different sources by prefixing with file: classpath: http: https:."
@@ -149,7 +147,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         + " TLS/SSL certificates for https (such as setting a number of javax.net.ssl JVM system properties)."
         + " How to do that consult the JDK documentation for UrlHandler.",
         defaultValue = RestOpenApiComponent.DEFAULT_SPECIFICATION_URI_STR,
-        defaultValueNote = "By default loads `swagger.json` file", label = "producer")
+        defaultValueNote = "By default loads `openapi.json` file", label = "producer")
     private URI specificationUri = RestOpenApiComponent.DEFAULT_SPECIFICATION_URI;
 
     public RestOpenApiEndpoint() {
@@ -212,18 +210,15 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         }
 
         
-        String supportedOperations = getSupportedOperations(paths);
-
+     
+        String supportedOperations = paths.getItems().stream().flatMap(p -> getOperationMap(p).values().stream())
+            .map(p -> p.operationId).collect(Collectors.joining(", "));
         throw new IllegalArgumentException("The specified operation with ID: `" + operationId
             + "` cannot be found in the OpenApi specification loaded from `" + specificationUri
             + "`. Operations defined in the specification are: " + supportedOperations);
     }
 
-    private String getSupportedOperations(OasPaths paths) {
-        //TODO    
-        return "";
-    }
-
+    
     private Map<HttpMethod, OasOperation> getOperationMap(OasPathItem path) {
         Map<HttpMethod, OasOperation> result = new LinkedHashMap<HttpMethod, OasOperation>();
 
@@ -406,13 +401,14 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
             operationLevelConsumers = ((Oas20Operation)operation).produces;
         } else if (operation instanceof Oas30Operation) {
             Oas30Operation oas30Operation = (Oas30Operation)operation;
-            for (OasResponse response : oas30Operation.responses.getResponses()) {
-                Oas30Response oas30Response = (Oas30Response)response;
-                for (String ct : oas30Response.content.keySet()) {
-                    operationLevelConsumers.add(ct);
+            if (oas30Operation.responses != null) {
+                for (OasResponse response : oas30Operation.responses.getResponses()) {
+                    Oas30Response oas30Response = (Oas30Response)response;
+                    for (String ct : oas30Response.content.keySet()) {
+                        operationLevelConsumers.add(ct);
+                    }
                 }
             }
-            
         }
         final String determinedConsumes = determineOption(specificationLevelConsumers, operationLevelConsumers,
             component.getConsumes(), consumes);
@@ -503,7 +499,8 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
             //But there could be many servers url(like one for production and one for test)
             //Use first one here
             Oas30Document oas30Document = (Oas30Document)openapi;
-            if (oas30Document.getServers().get(0) != null) {
+            if (oas30Document.getServers() != null 
+                && oas30Document.getServers().get(0) != null) {
                 try {
                     URL serverUrl = new URL(oas30Document.getServers().get(0).url);
                     final String openapiScheme = serverUrl.getProtocol();
@@ -553,7 +550,7 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         throw new IllegalStateException("Unable to determine destination host for requests. The OpenApi specification"
             + " does not specify `scheme` and `host` parameters, the specification URI is not absolute with `http` or"
             + " `https` scheme, and no RestConfigurations configured with `scheme`, `host` and `port` were found for `"
-            + (areTheSame ? "rest-openapi` component" : assignedComponentName + "` or `rest-swagger` components")
+            + (areTheSame ? "rest-openapi` component" : assignedComponentName + "` or `rest-openapi` components")
             + " and there is no global RestConfiguration with those properties");
     }
 
