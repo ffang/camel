@@ -18,8 +18,10 @@ package org.apache.camel.component.rest.openapi;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -73,6 +75,7 @@ import io.apicurio.datamodels.openapi.v2.models.Oas20SecurityDefinitions;
 import io.apicurio.datamodels.openapi.v2.models.Oas20SecurityScheme;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Document;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Operation;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Parameter;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Response;
 import io.apicurio.datamodels.openapi.v3.models.Oas30SecurityScheme;
 
@@ -487,22 +490,30 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
         }
 
         
-        //TODO
-        //In OpenApi 3.0, scheme/host are in servers url section
-        //But there could be many servers url(like one for production and one for test)
-        //So which one could be used become uncertain.
-        /*final String openapiScheme = pickBestScheme(specificationUri.getScheme(), swagger.getSchemes());
-        final String openapiHost = swagger.getHost();
-
-        if (isNotEmpty(openapiScheme) && isNotEmpty(swaggerHost)) {
-            return openapiScheme + "://" + swaggerHost;
-        }*/
+        
         if (openapi instanceof Oas20Document) {
             final String openapiScheme = pickBestScheme(specificationUri.getScheme(), ((Oas20Document)openapi).schemes);
             final String openapiHost = ((Oas20Document)openapi).host;
 
             if (isNotEmpty(openapiScheme) && isNotEmpty(openapiHost)) {
                 return openapiScheme + "://" + openapiHost;
+            }
+        } else if (openapi instanceof Oas30Document) {
+            //In OpenApi 3.0, scheme/host are in servers url section
+            //But there could be many servers url(like one for production and one for test)
+            //Use first one here
+            Oas30Document oas30Document = (Oas30Document)openapi;
+            if (oas30Document.getServers().get(0) != null) {
+                try {
+                    URL serverUrl = new URL(oas30Document.getServers().get(0).url);
+                    final String openapiScheme = serverUrl.getProtocol();
+                    final String openapiHost = serverUrl.getHost();
+                    if (isNotEmpty(openapiScheme) && isNotEmpty(openapiHost)) {
+                        return openapiScheme + "://" + openapiHost;
+                    }
+                } catch (MalformedURLException e) {
+                    throw new IllegalStateException(e);
+                }
             }
         }
 
@@ -667,9 +678,8 @@ public final class RestOpenApiEndpoint extends DefaultEndpoint {
                         final Oas30SecurityScheme securitySchemeDefinition = oas30Document.components
                             .getSecurityScheme(securityRequirementName);
                         if (securitySchemeDefinition.in != null && securitySchemeDefinition.in.equals("query")) {
-                            Oas20Parameter securityParameter = new Oas20Parameter(securitySchemeDefinition.name);
+                            Oas30Parameter securityParameter = new Oas30Parameter(securitySchemeDefinition.name);
                             securityParameter.required = true;
-                            securityParameter.type = "string";
                             securityParameter.description = securitySchemeDefinition.description;
                             apiKeyQueryParameters.add(securityParameter);
                         }
