@@ -103,7 +103,7 @@ public abstract class HttpsV3Test extends CamelTestSupport {
         final RestOpenApiComponent component = new RestOpenApiComponent();
         component.setComponentName(componentName);
         component.setHost("https://localhost:" + petstore.httpsPort());
-        component.setSpecificationUri(RestOpenApiComponentV3Test.class.getResource("/openapi.json").toURI());
+        component.setSpecificationUri(RestOpenApiComponentV3Test.class.getResource("/openapi-v3.json").toURI());
         camelContext.addComponent("petStore", component);
 
         return camelContext;
@@ -139,8 +139,8 @@ public abstract class HttpsV3Test extends CamelTestSupport {
 
     @BeforeClass
     public static void setupStubs() throws IOException, URISyntaxException {
-        petstore.stubFor(get(urlEqualTo("/swagger.json")).willReturn(aResponse().withBody(
-            Files.readAllBytes(Paths.get(RestOpenApiGlobalHttpsTest.class.getResource("/swagger.json").toURI())))));
+        petstore.stubFor(get(urlEqualTo("/openapi.json")).willReturn(aResponse().withBody(
+            Files.readAllBytes(Paths.get(RestOpenApiGlobalHttpsTest.class.getResource("/openapi.json").toURI())))));
 
         petstore.stubFor(
             get(urlEqualTo("/pet/14")).willReturn(aResponse().withStatus(HttpURLConnection.HTTP_OK).withBody(

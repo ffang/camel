@@ -139,8 +139,8 @@ public abstract class HttpsTest extends CamelTestSupport {
 
     @BeforeClass
     public static void setupStubs() throws IOException, URISyntaxException {
-        petstore.stubFor(get(urlEqualTo("/swagger.json")).willReturn(aResponse().withBody(
-            Files.readAllBytes(Paths.get(RestOpenApiGlobalHttpsTest.class.getResource("/swagger.json").toURI())))));
+        petstore.stubFor(get(urlEqualTo("/openapi.json")).willReturn(aResponse().withBody(
+            Files.readAllBytes(Paths.get(RestOpenApiGlobalHttpsTest.class.getResource("/openapi.json").toURI())))));
 
         petstore.stubFor(
             get(urlEqualTo("/v2/pet/14")).willReturn(aResponse().withStatus(HttpURLConnection.HTTP_OK).withBody(

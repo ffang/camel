@@ -83,7 +83,7 @@ public final class RestOpenApiComponent extends DefaultComponent implements SSLC
 
     static final URI DEFAULT_SPECIFICATION_URI = URI.create(RestOpenApiComponent.DEFAULT_SPECIFICATION_URI_STR);
 
-    static final String DEFAULT_SPECIFICATION_URI_STR = "swagger.json";
+    static final String DEFAULT_SPECIFICATION_URI_STR = "openapi.json";
 
     @Metadata(
         description = "API basePath, for example \"`/v2`\". Default is unset, if set overrides the value present in OpenApi specification.",

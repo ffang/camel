@@ -58,7 +58,7 @@ public class RestOpenApiEndpointUriParsingTest {
 
     @Parameters(name = "uri={0}, remaining={1}")
     public static Iterable<Object[]> parameters() {
-        return Arrays.asList(params("rest-openapi:operation", "operation", "swagger.json", "operation"),
+        return Arrays.asList(params("rest-openapi:operation", "operation", "openapi.json", "operation"),
             params("rest-openapi:my-api.json#operation", "my-api.json#operation", "my-api.json", "operation"),
             params("rest-openapi:http://api.example.com/swagger.json#operation",
                 "http://api.example.com/swagger.json#operation", "http://api.example.com/swagger.json", "operation"));

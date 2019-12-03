@@ -211,8 +211,8 @@ public class RestOpenApiComponentTest extends CamelTestSupport {
 
     @BeforeClass
     public static void setupStubs() throws IOException, URISyntaxException {
-        petstore.stubFor(get(urlEqualTo("/swagger.json")).willReturn(aResponse().withBody(
-            Files.readAllBytes(Paths.get(RestOpenApiComponentTest.class.getResource("/swagger.json").toURI())))));
+        petstore.stubFor(get(urlEqualTo("/openapi.json")).willReturn(aResponse().withBody(
+            Files.readAllBytes(Paths.get(RestOpenApiComponentTest.class.getResource("/openapi.json").toURI())))));
 
         petstore.stubFor(post(urlEqualTo("/v2/pet"))
             .withRequestBody(equalTo(
