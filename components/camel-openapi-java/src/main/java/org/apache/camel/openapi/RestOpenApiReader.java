@@ -673,6 +673,7 @@ public class RestOpenApiReader {
                             }
                         } else if (parameter instanceof Oas30Parameter) {
                             Oas30Parameter bp = (Oas30Parameter)parameter;
+                            
 
                             String type = param.getDataType() != null ? param.getDataType() : verb.getType();
                             if (type != null) {
@@ -682,6 +683,7 @@ public class RestOpenApiReader {
                                     OasSchema arrayModel = (Oas30Schema)bp.createSchema();
                                     arrayModel = modelTypeAsProperty(type, openApi, arrayModel);
                                     bp.schema = arrayModel;
+                                    
 
                                 } else {
                                     String ref = modelTypeAsRef(type, openApi);
@@ -696,6 +698,22 @@ public class RestOpenApiReader {
                                         bp.schema = model;
 
                                     }
+                                }
+                            }
+                            Oas30Operation op30 = (Oas30Operation)op;
+                            if (consumes != null) {
+                                String[] parts = consumes.split(",");
+                                if (op30.requestBody == null) {
+                                    op30.requestBody = op30.createRequestBody();
+                                    op30.requestBody.required = param.getRequired();
+                                    op30.requestBody.description = param.getDescription();
+                                }
+                                for (String part : parts) {
+                                    Oas30MediaType mediaType = op30.requestBody.createMediaType(part);
+                                    mediaType.schema = mediaType.createSchema();
+                                    mediaType.schema.$ref = bp.schema.$ref;
+                                    op30.requestBody.addMediaType(part, mediaType);
+                                    
                                 }
                             }
                             // add examples
@@ -715,6 +733,7 @@ public class RestOpenApiReader {
                                     bp.addExtension("x-examples", exampleExtension);
                                 }
                             }
+                            parameter = null;
                         }
 
 
@@ -1424,9 +1443,11 @@ public class RestOpenApiReader {
 
         if (array) {
             OasSchema ret = prop.createItemsSchema();
-            ret.items = prop;
-            ret.type = "array";
-            return ret;
+            ret.$ref = prop.$ref;
+            prop.$ref = null;
+            prop.items = ret;
+            prop.type = "array";
+            return prop;
         } else {
             return prop;
         }
