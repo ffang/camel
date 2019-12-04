@@ -217,7 +217,8 @@ public class RestOpenApiReader {
 
             // setup security definitions
             RestSecuritiesDefinition sd = rest.getSecurityDefinitions();
-            if (((Oas30Document)openApi).components == null) {
+            if (sd != null && sd.getSecurityDefinitions().size() != 0 
+                && ((Oas30Document)openApi).components == null) {
                 ((Oas30Document)openApi).components = ((Oas30Document)openApi)
                     .createComponents();
             }
