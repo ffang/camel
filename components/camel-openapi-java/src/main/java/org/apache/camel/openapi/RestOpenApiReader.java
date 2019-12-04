@@ -188,7 +188,7 @@ public class RestOpenApiReader {
                         auth.flow = flow;
                         auth.authorizationUrl = rs.getAuthorizationUrl();
                         auth.tokenUrl = rs.getTokenUrl();
-                        if (auth.scopes == null) {
+                        if (rs.getScopes().size() != 0 && auth.scopes == null) {
                             auth.scopes = auth.createScopes();
                         }
                         for (RestPropertyDefinition scope : rs.getScopes()) {
