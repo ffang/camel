@@ -144,7 +144,8 @@ public class RestOpenApiReader {
 
             // setup security definitions
             RestSecuritiesDefinition sd = rest.getSecurityDefinitions();
-            if (((Oas20Document)openApi).securityDefinitions == null) {
+            if (sd != null && sd.getSecurityDefinitions().size() != 0 
+                && ((Oas20Document)openApi).securityDefinitions == null) {
                 ((Oas20Document)openApi).securityDefinitions = ((Oas20Document)openApi)
                     .createSecurityDefinitions();
             }
@@ -413,7 +414,8 @@ public class RestOpenApiReader {
                     }
                 }
             } else if (op instanceof Oas30Operation) {
-                Oas30Operation op30 = (Oas30Operation)op;
+                //TODO:not sure we need this or not
+                /*Oas30Operation op30 = (Oas30Operation)op;
                 if (consumes != null) {
                     String[] parts = consumes.split(",");
                     if (op30.requestBody == null) {
@@ -423,7 +425,7 @@ public class RestOpenApiReader {
                         Oas30MediaType mediaType = op30.requestBody.createMediaType(part);
                         op30.requestBody.addMediaType(part, mediaType);
                     }
-                }
+                }*/
 
                 
                 //wait for doParseResponseMessages to enrich the response MediaType for V3
@@ -1118,7 +1120,7 @@ public class RestOpenApiReader {
                             if (format != null) {
                                 schema.format = format;
                             }
-                            schema.description = header.getDescription();
+                            sp.description = header.getDescription();
                             if (header.getAllowableValues() != null) {
                                 schema.enum_ = header.getAllowableValues();
                             }
@@ -1139,7 +1141,7 @@ public class RestOpenApiReader {
                             if (format != null) {
                                 schema.format = format;
                             }
-                            schema.description = header.getDescription();
+                            ip.description = header.getDescription();
 
                             List<String> values;
                             if (!header.getAllowableValues().isEmpty()) {
@@ -1165,7 +1167,7 @@ public class RestOpenApiReader {
                             if (format != null) {
                                 schema.format = format;
                             }
-                            schema.description = header.getDescription();
+                            lp.description = header.getDescription();
 
                             List<String> values;
                             if (!header.getAllowableValues().isEmpty()) {
@@ -1192,7 +1194,7 @@ public class RestOpenApiReader {
                             if (format != null) {
                                 schema.format = format;
                             }
-                            schema.description = header.getDescription();
+                            fp.description = header.getDescription();
 
                             List<String> values;
                             if (!header.getAllowableValues().isEmpty()) {
@@ -1218,7 +1220,7 @@ public class RestOpenApiReader {
                             if (format != null) {
                                 schema.format = format;
                             }
-                            schema.description = header.getDescription();
+                            dp.description = header.getDescription();
 
                             List<String> values;
                             if (!header.getAllowableValues().isEmpty()) {
@@ -1244,7 +1246,7 @@ public class RestOpenApiReader {
                             if (format != null) {
                                 schema.format = format;
                             }
-                            schema.description = header.getDescription();
+                            bp.description = header.getDescription();
                             // add example
                             if (header.getExample() != null) {
                                 Extension exampleExtension = bp.createExtension();
