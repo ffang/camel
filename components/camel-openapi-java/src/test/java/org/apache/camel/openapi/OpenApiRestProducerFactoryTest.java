@@ -24,9 +24,16 @@ import org.junit.Test;
 public class OpenApiRestProducerFactoryTest {
 
     @Test
-    public void shouldLoadSwaggerPetStoreModel() throws Exception {
+    public void shouldLoadOpenApiPetStoreModel() throws Exception {
         OpenApiRestProducerFactory factory = new OpenApiRestProducerFactory();
 
         factory.loadOpenApiModel(new DefaultCamelContext(), "petstore.json");
+    }
+    
+    @Test
+    public void shouldLoadOpenApiPetStoreModelV3() throws Exception {
+        OpenApiRestProducerFactory factory = new OpenApiRestProducerFactory();
+
+        factory.loadOpenApiModel(new DefaultCamelContext(), "petstore-v3.json");
     }
 }
