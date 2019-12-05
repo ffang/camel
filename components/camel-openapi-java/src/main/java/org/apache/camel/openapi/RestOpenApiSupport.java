@@ -21,6 +21,8 @@ import static org.apache.camel.openapi.OpenApiHelper.clearVendorExtensions;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -497,6 +499,23 @@ public class RestOpenApiSupport {
 
             String forwardedPrefix = (String)headers.get(HEADER_X_FORWARDED_PREFIX);
             String basePath = null;
+            if (((Oas30Document)openApi).getServers() != null 
+                && ((Oas30Document)openApi).getServers().get(0) != null) {
+                try {
+                    URL serverUrl = new URL(((Oas30Document)openApi).getServers().get(0).url);
+                    basePath = serverUrl.getPath();
+                    if (basePath.indexOf("//") == 0) {
+                        //strip off the first "/" if double "/" exists
+                        basePath = basePath.substring(1);
+                    }
+                    if ("/".equals(basePath)) {
+                        basePath = "";
+                    }
+                } catch (MalformedURLException e) {
+                    LOG.info("error when parsing OpenApi 3.0 doc server url", e);
+                }
+            }
+                
             if (ObjectHelper.isNotEmpty(forwardedPrefix)) {
                 basePath = URISupport.joinPaths(forwardedPrefix, basePath);
             }
@@ -507,10 +526,19 @@ public class RestOpenApiSupport {
             }
 
             String proto = (String)headers.get(HEADER_X_FORWARDED_PROTO);
+            if (((Oas30Document)openApi).getServers() != null) {
+                ((Oas30Document)openApi).getServers().clear();
+            }
             if (ObjectHelper.isNotEmpty(proto)) {
                 String[] schemes = proto.split(",");
-                String serverUrl = new StringBuilder().append(schemes[0]).append("://").append(host).append(basePath).toString();
-                ((Oas30Document)openApi).servers.get(0).url = serverUrl; 
+                for (String schema : schemes) {
+                    String trimmedScheme = schema.trim();
+                    String serverUrl = new StringBuilder().append(trimmedScheme.toLowerCase()).append("://").append(host).append(basePath).toString();
+                    ((Oas30Document)openApi).addServer(serverUrl, null);
+                        
+                }
+            } else {
+                ((Oas30Document)openApi).addServer(basePath, null);
             }
             
         }
