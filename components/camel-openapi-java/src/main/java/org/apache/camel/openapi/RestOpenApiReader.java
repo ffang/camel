@@ -718,19 +718,19 @@ public class RestOpenApiReader {
                             }
                             // add examples
                             if (param.getExamples() != null) {
-                                Extension exampleExtension = bp.createExtension();
+                                Extension exampleExtension = op30.requestBody.createExtension();
                                 boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
                                 if (emptyKey) {
                                     exampleExtension.name = "x-example";
                                     exampleExtension.value = param.getExamples().get(0).getValue();
-                                    bp.addExtension("x-example", exampleExtension);
+                                    op30.requestBody.addExtension("x-example", exampleExtension);
                                 } else {
                                     Map<String, String> exampleValue = new HashMap<String, String>();
                                     exampleValue.put(param.getExamples().get(0).getKey(),
                                                      param.getExamples().get(0).getValue());
                                     exampleExtension.name = "x-examples";
                                     exampleExtension.value = exampleValue;
-                                    bp.addExtension("x-examples", exampleExtension);
+                                    op30.requestBody.addExtension("x-examples", exampleExtension);
                                 }
                             }
                             parameter = null;
@@ -1328,7 +1328,7 @@ public class RestOpenApiReader {
                 // add examples
                 if (msg.getExamples() != null) {
                     Extension exampleExtension = response.createExtension();
-                    exampleExtension.name = "examples";
+                    exampleExtension.name = "x-examples";
                     Map<String, String> examplesValue = new HashMap<String, String>();
                     for (RestPropertyDefinition prop : msg.getExamples()) {
                         examplesValue.put(prop.getKey(), prop.getValue());
@@ -1369,7 +1369,8 @@ public class RestOpenApiReader {
                 typeName = typeName.substring(0, typeName.length() - 2);
             }
 
-            if (((Oas30Document)openApi).components.schemas != null) {
+            if (((Oas30Document)openApi).components != null
+                && ((Oas30Document)openApi).components.schemas != null) {
                 for (Oas30SchemaDefinition model : ((Oas30Document)openApi).components.schemas.values()) {
                     @SuppressWarnings("rawtypes")
                     Map modelType = (Map)model.getExtension("x-className").value;

@@ -96,4 +96,44 @@ public class RestOpenApiReaderTest extends CamelTestSupport {
         }
     }
 
+    @Test
+    public void testReaderReadV3() throws Exception {
+        try {
+        BeanConfig config = new BeanConfig();
+        config.setHost("localhost:8080");
+        config.setSchemes(new String[] {"http"});
+        config.setBasePath("/api");
+        RestOpenApiReader reader = new RestOpenApiReader();
+
+        OasDocument openApi = reader.read(context.getRestDefinitions(), null, config, context.getName(), new DefaultClassResolver());
+        assertNotNull(openApi);
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        Object dump = Library.writeNode(openApi);
+        String json = mapper.writeValueAsString(dump);
+        System.out.println("the json is =====>" + json);
+
+        log.info(json);
+
+        assertTrue(json.contains("\"url\" : \"http://localhost:8080/api\""));
+        assertTrue(json.contains("\"/hello/bye\""));
+        assertTrue(json.contains("\"summary\" : \"To update the greeting message\""));
+        assertTrue(json.contains("\"/hello/bye/{name}\""));
+        assertTrue(json.contains("\"/hello/hi/{name}\""));
+        assertTrue(json.contains("\"type\" : \"number\""));
+        assertTrue(json.contains("\"format\" : \"float\""));
+        assertTrue(json.contains("\"application/xml\" : \"<hello>Hi</hello>\""));
+        assertTrue(json.contains("\"x-example\" : \"Donald Duck\""));
+        assertTrue(json.contains("\"success\" : \"123\""));
+        assertTrue(json.contains("\"error\" : \"-1\""));
+        assertTrue(json.contains("\"type\" : \"string\""));
+
+        context.stop();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
 }
