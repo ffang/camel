@@ -18,16 +18,11 @@ package org.apache.camel.openapi;
 
 import java.util.List;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
-@ApiModel(description = "Represents a book order")
 public class BookOrder {
 
     private String id;
     private List<LineItem> items;
 
-    @ApiModelProperty(value = "The id of the order", required = true)
     public String getId() {
         return id;
     }
@@ -36,7 +31,6 @@ public class BookOrder {
         this.id = id;
     }
 
-    @ApiModelProperty(value = "The books ordered", required = true)
     public List<LineItem> getItems() {
         return items;
     }

@@ -16,10 +16,7 @@
  */
 package org.apache.camel.openapi;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
-@ApiModel(description = "Represents an user of the system")
 public class User {
 
     private int id;
@@ -33,7 +30,6 @@ public class User {
         this.name = name;
     }
 
-    @ApiModelProperty(value = "The id of the user", required = true)
     public int getId() {
         return id;
     }
@@ -42,7 +38,6 @@ public class User {
         this.id = id;
     }
 
-    @ApiModelProperty(value = "The name of the user", required = true)
     public String getName() {
         return name;
     }

@@ -16,16 +16,11 @@
  */
 package org.apache.camel.openapi;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
-@ApiModel(description = "Order line")
 public class LineItem {
 
     private String isbn;
     private String name;
 
-    @ApiModelProperty(value = "ISBN of the book", required = true)
     public String getIsbn() {
         return isbn;
     }
@@ -34,7 +29,6 @@ public class LineItem {
         this.isbn = isbn;
     }
 
-    @ApiModelProperty(value = "Name of the book", required = true)
     public String getName() {
         return name;
     }

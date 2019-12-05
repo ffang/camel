@@ -76,11 +76,6 @@
             <artifactId>jackson-jaxrs-json-provider</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${swagger-java-guava-version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${commons-lang3-version}</version>
@@ -92,12 +87,6 @@
             <version>1.0.16.Final</version>
         </dependency>
 
-        <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-annotations</artifactId>
-            <version>${swagger-java-version}</version>
-            <scope>test</scope>
-        </dependency>
 
         <!-- servlet api -->
         <dependency>

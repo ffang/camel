@@ -16,15 +16,12 @@
  */
 package org.apache.camel.openapi;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
-@ApiModel(description = "Represents a day")
 public class DayResponse {
 
     private String day;
 
-    @ApiModelProperty(value = "The day", required = true)
+
     public String getDay() {
         return day;
     }
