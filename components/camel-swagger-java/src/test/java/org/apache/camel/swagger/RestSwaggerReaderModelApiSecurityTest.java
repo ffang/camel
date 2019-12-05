@@ -80,6 +80,7 @@ public class RestSwaggerReaderModelApiSecurityTest extends CamelTestSupport {
         String json = mapper.writeValueAsString(swagger);
 
         log.info(json);
+        System.out.println(json);
 
         assertTrue(json.contains("\"securityDefinitions\" : {"));
         assertTrue(json.contains("\"type\" : \"oauth2\","));

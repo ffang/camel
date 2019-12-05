@@ -65,6 +65,7 @@ public class RestSwaggerReaderApiDocsOverrideTest extends CamelTestSupport {
         String json = mapper.writeValueAsString(swagger);
 
         log.info(json);
+        System.out.println(json);
 
         assertFalse(json.contains("\"/hello/bye\""));
         assertFalse(json.contains("\"summary\" : \"To update the greeting message\""));

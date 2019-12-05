@@ -77,6 +77,7 @@ public class RestSwaggerReaderEnableVendorExtensionTest extends CamelTestSupport
         String json = mapper.writeValueAsString(swagger);
 
         log.info(json);
+        System.out.println(json);
 
         String camelId = context.getName();
         String routeId = context.getRouteDefinitions().get(0).getId();
