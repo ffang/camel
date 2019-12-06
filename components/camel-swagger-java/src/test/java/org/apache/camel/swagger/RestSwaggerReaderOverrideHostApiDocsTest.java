@@ -45,6 +45,7 @@ public class RestSwaggerReaderOverrideHostApiDocsTest extends RestSwaggerReaderA
         String json = mapper.writeValueAsString(swagger);
 
         log.info(json);
+        System.out.println(json);
 
         assertTrue(json.contains("\"host\" : \"http:mycoolserver:8888/myapi\""));
         assertTrue(json.contains("\"basePath\" : \"/api\""));

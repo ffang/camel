@@ -53,7 +53,7 @@ public class SpringRestSwaggerReaderModelApiSecurityTest extends CamelSpringTest
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         String json = mapper.writeValueAsString(swagger);
 
-        log.info(json);
+        System.out.println(json);
 
         assertTrue(json.contains("\"securityDefinitions\" : {"));
         assertTrue(json.contains("\"type\" : \"oauth2\","));

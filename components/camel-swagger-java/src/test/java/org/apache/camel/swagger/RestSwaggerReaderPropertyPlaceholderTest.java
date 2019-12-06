@@ -35,7 +35,7 @@ import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore("Does not run well on CI due test uses JMX mbeans")
+//@Ignore("Does not run well on CI due test uses JMX mbeans")
 public class RestSwaggerReaderPropertyPlaceholderTest extends CamelTestSupport {
 
     @BindToRegistry("dummy-rest")
