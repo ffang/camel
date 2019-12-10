@@ -98,7 +98,7 @@ abstract class AbstractGenerateMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.basedir}/src/spec/swagger.json", required = true)
     String specificationUri;
 
-    @Parameter(defaultValue = "2.3.1")
+    @Parameter(defaultValue = "3.0.14")
     String swaggerCodegenMavenPluginVersion;
 
     @Parameter(defaultValue = "${project}", readonly = true)
@@ -183,7 +183,7 @@ abstract class AbstractGenerateMojo extends AbstractMojo {
 
         executeMojo(
             plugin(
-                groupId("io.swagger"),
+                groupId("io.swagger.codegen.v3"),
                 artifactId("swagger-codegen-maven-plugin"),
                 version(swaggerCodegenMavenPluginVersion)),
             goal("generate"),
@@ -269,7 +269,14 @@ abstract class AbstractGenerateMojo extends AbstractMojo {
 
     OasDocument readOpenApiDoc(String specificationUri) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode node = mapper.readTree(this.getClass().getClassLoader().getResourceAsStream(specificationUri));
+        InputStream is = null;
+        try {
+            is = new FileInputStream(new File(specificationUri));
+        } catch (Exception ex) {
+            //use classloader resource stream as fallback
+            is = this.getClass().getClassLoader().getResourceAsStream(specificationUri);
+        }
+        JsonNode node = mapper.readTree(is);
         return (OasDocument)Library.readDocument(node);
     }
 }

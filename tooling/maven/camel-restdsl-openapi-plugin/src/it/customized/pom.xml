@@ -21,7 +21,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.apache.camel.maven.generator.swagger.it</groupId>
+  <groupId>org.apache.camel.maven.generator.openapi.it</groupId>
   <artifactId>customized</artifactId>
   <version>1-SNAPSHOT</version>
 
@@ -64,7 +64,7 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.camel</groupId>
-      <artifactId>camel-swagger-rest-dsl-generator</artifactId>
+      <artifactId>camel-openapi-rest-dsl-generator</artifactId>
       <version>@project.version@</version>
     </dependency>
     <dependency>
@@ -74,7 +74,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.camel</groupId>
-      <artifactId>camel-swagger-java</artifactId>
+      <artifactId>camel-openapi-java</artifactId>
       <version>@project.version@</version>
     </dependency>
     <dependency>

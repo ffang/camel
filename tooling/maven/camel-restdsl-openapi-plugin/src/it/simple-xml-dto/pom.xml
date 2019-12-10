@@ -21,7 +21,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.apache.camel.maven.generator.swagger.it</groupId>
+  <groupId>org.apache.camel.maven.generator.openapi.it</groupId>
   <artifactId>simple-xml-dto</artifactId>
   <version>1-SNAPSHOT</version>
 
@@ -41,7 +41,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.camel</groupId>
-      <artifactId>camel-swagger-java</artifactId>
+      <artifactId>camel-openapi-java</artifactId>
       <version>@project.version@</version>
     </dependency>
     <dependency>
@@ -63,6 +63,11 @@
       <groupId>javax.annotation</groupId>
       <artifactId>javax.annotation-api</artifactId>
       <version>1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>2.1.0</version>
     </dependency>
   </dependencies>
 

@@ -16,15 +16,16 @@
  */
 package com.example;
 
-import io.swagger.models.Operation;
 
-import org.apache.camel.generator.swagger.DestinationGenerator;
+import io.apicurio.datamodels.openapi.models.OasOperation;
+import org.apache.camel.generator.openapi.DestinationGenerator;
+
 
 public class MyDestinationGenerator implements DestinationGenerator {
 
     @Override
-    public String generateDestinationFor(final Operation operation) {
-        return "rest-" + operation.getOperationId();
+    public String generateDestinationFor(final OasOperation operation) {
+        return "rest-" + operation.operationId;
     }
 
 }
