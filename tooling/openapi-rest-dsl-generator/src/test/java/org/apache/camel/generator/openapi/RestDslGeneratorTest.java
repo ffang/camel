@@ -18,7 +18,6 @@ package org.apache.camel.generator.openapi;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -47,10 +46,10 @@ public class RestDslGeneratorTest {
 
     final Instant generated = Instant.parse("2017-10-17T00:00:00.000Z");
 
-    OasDocument openapi = null;
+    static OasDocument openapi = null;
     
     @BeforeClass
-    public void readOpenApiDoc() throws Exception {
+    public static void readOpenApiDoc() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         FileInputStream fis = new FileInputStream(new File("petstore.json"));
         JsonNode node = mapper.readTree(fis);
@@ -62,10 +61,11 @@ public class RestDslGeneratorTest {
         final CamelContext context = new DefaultCamelContext();
 
         final RestsDefinition definition = RestDslGenerator.toDefinition(openapi).generate(context);
-
         assertThat(definition).isNotNull();
         assertThat(definition.getRests()).hasSize(1);
         assertThat(definition.getRests().get(0).getPath()).isEqualTo("/v2");
+               
+       
     }
 
     @Test

@@ -84,7 +84,11 @@ class OperationVisitor<T> {
                 emit("arrayType", items.type);
             }
         }
-        emit("required", parameter.required);
+        if (parameter.required != null) {
+            emit("required", parameter.required);
+        } else {
+            emit("required", Boolean.FALSE);
+        }
         emit("description", parameter.description);
         emitter.emit("endParam");
 
@@ -113,13 +117,14 @@ class OperationVisitor<T> {
             emitter.emit(methodName, path);
 
             emit("id", operation.operationId);
-            emit("description", operation.operationId);
+            emit("description", operation.description);
             emit("consumes", ((Oas20Operation)operation).consumes);
             emit("produces", ((Oas20Operation)operation).produces);
-
-            operation.getParameters().forEach(parameter -> {
-                emit((Oas20Parameter)parameter);
-            });
+            if (operation.getParameters() != null) {
+                operation.getParameters().forEach(parameter -> {
+                    emit((Oas20Parameter)parameter);
+                });
+            }
 
             emitter.emit("to", destinationGenerator.generateDestinationFor(operation));
         }

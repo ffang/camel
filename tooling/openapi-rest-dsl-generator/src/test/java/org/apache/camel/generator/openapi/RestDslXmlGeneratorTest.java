@@ -47,10 +47,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class RestDslXmlGeneratorTest {
 
-OasDocument openapi = null;
+static OasDocument openapi = null;
     
     @BeforeClass
-    public void readOpenApiDoc() throws Exception {
+    public static void readOpenApiDoc() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         FileInputStream fis = new FileInputStream(new File("petstore.json"));
         JsonNode node = mapper.readTree(fis);
