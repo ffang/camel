@@ -19,17 +19,23 @@ package org.apache.camel.generator.openapi;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import io.apicurio.datamodels.openapi.models.OasOperation;
 import io.apicurio.datamodels.openapi.models.OasParameter;
 import io.apicurio.datamodels.openapi.models.OasResponse;
+import io.apicurio.datamodels.openapi.models.OasSchema;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Items;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Operation;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Parameter;
+import io.apicurio.datamodels.openapi.v3.models.Oas30MediaType;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Operation;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Parameter;
+import io.apicurio.datamodels.openapi.v3.models.Oas30RequestBody;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Response;
 import io.apicurio.datamodels.openapi.v3.models.Oas30Schema;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Schema.Oas30ItemsSchema;
 
 import org.apache.camel.model.rest.CollectionFormat;
 import org.apache.camel.model.rest.RestParamType;
@@ -101,15 +107,22 @@ class OperationVisitor<T> {
                     emit("allowableValues", asStringList(schema.enum_));
                     final String collectionFormat = serializableParameter.style;
                     if (ObjectHelper.isNotEmpty(collectionFormat)) {
-                        emit("collectionFormat", CollectionFormat.valueOf(collectionFormat));
+                        if (collectionFormat.equals("form")) {
+                            if (serializableParameter.explode) {
+                                emit("collectionFormat", CollectionFormat.multi);
+                            } else {
+                                emit("collectionFormat", CollectionFormat.csv);
+                            }
+                        }
                     }
                     if (ObjectHelper.isNotEmpty(schema.default_)) {
                         String value = schema.default_.toString();
                         emit("defaultValue", value);
                     }
 
-                    if ("array".equals(dataType)) {
-                        emit("arrayType", schema.type);
+                    if ("array".equals(dataType) && schema.items != null
+                        && schema.items instanceof Oas30ItemsSchema) {
+                        emit("arrayType", ((Oas30ItemsSchema)schema.items).type);
                     }
                 }
             }
@@ -177,13 +190,52 @@ class OperationVisitor<T> {
                 }
             }
             emit("produces", operationLevelProduces);
+            
             if (operation.getParameters() != null) {
                 operation.getParameters().forEach(parameter -> {
-                    emit((Oas20Parameter)parameter);
+                    emit(parameter);
                 });
+            }
+            if (operation instanceof Oas30Operation) {
+                emitOas30Operation((Oas30Operation)operation);
             }
 
             emitter.emit("to", destinationGenerator.generateDestinationFor(operation));
         }
+    }
+
+    private CodeEmitter<T> emitOas30Operation(Oas30Operation operation) {
+        
+        if (operation.requestBody != null) {
+            boolean foundForm = false;
+            Oas30RequestBody requestBody = operation.requestBody;
+            for (Entry<String, Oas30MediaType> entry : requestBody.content.entrySet()) {
+                String ct = entry.getKey();
+                Oas30MediaType mediaType = entry.getValue();
+                if (ct.contains("form") && mediaType.schema.properties != null) {
+                    for (Entry<String, OasSchema> entrySchema :  mediaType.schema.properties.entrySet()) {
+                        foundForm = true;
+                        emitter.emit("param");
+                        emit("name", entrySchema.getKey());
+                        emit("type", RestParamType.formData);
+                        emit("dataType", entrySchema.getValue().type);
+                        emit("required", requestBody.required);
+                        emit("description", entrySchema.getValue().description);
+                        emitter.emit("endParam");
+                    }
+                }
+            }
+            if (!foundForm) {
+                emitter.emit("param");
+                emit("name", "body");
+                emit("type", RestParamType.valueOf("body"));
+                emit("required", Boolean.TRUE);
+                emit("description", requestBody.description);
+                emitter.emit("endParam");
+            }
+        }
+        
+        return emitter;
+        
     }
 }

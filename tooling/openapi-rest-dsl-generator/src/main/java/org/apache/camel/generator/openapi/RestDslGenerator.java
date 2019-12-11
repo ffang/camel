@@ -188,7 +188,8 @@ public abstract class RestDslGenerator<G> {
                     }
                                     
                 } catch (MalformedURLException e) {
-                    LOG.info("error when parsing OpenApi 3.0 doc server url", e);
+                    //not a valid whole url, just the basePath
+                    basePath = ((Oas30Document)openapi).getServers().get(0).url;
                 }
             }
             
