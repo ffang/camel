@@ -35,7 +35,6 @@ import org.apache.camel.util.ObjectHelper;
 
 import io.apicurio.datamodels.openapi.models.OasDocument;
 import io.apicurio.datamodels.openapi.models.OasInfo;
-import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
 import static org.apache.camel.util.StringHelper.notEmpty;
 
@@ -46,7 +45,7 @@ public abstract class RestDslSourceCodeGenerator<T> extends RestDslGenerator<Res
     static final String DEFAULT_CLASS_NAME = "RestDslRoute";
 
     static final String DEFAULT_PACKAGE_NAME = "rest.dsl.generated";
-
+    
     private static final String DEFAULT_INDENT = "    ";
 
     private Function<OasDocument, String> classNameGenerator = RestDslSourceCodeGenerator::generateClassName;
@@ -115,9 +114,10 @@ public abstract class RestDslSourceCodeGenerator<T> extends RestDslGenerator<Res
             configure.addCode(";\n\n");
         }
 
-        final PathVisitor<MethodSpec> restDslStatement = new PathVisitor<>(((Oas20Document)openapi).basePath, emitter, filter, destinationGenerator());
+        String basePath = RestDslGenerator.getBasePathFromOasDocument(openapi); 
+            
+        final PathVisitor<MethodSpec> restDslStatement = new PathVisitor<>(basePath, emitter, filter, destinationGenerator());
         openapi.paths.getItems().forEach(restDslStatement::visit);
-
         return emitter.result();
     }
 
@@ -180,7 +180,8 @@ public abstract class RestDslSourceCodeGenerator<T> extends RestDslGenerator<Res
     }
 
     static String generatePackageName(final OasDocument openapi) {
-        final String host = ((Oas20Document)openapi).host;
+        String host = RestDslGenerator.getHostFromOasDocument(openapi);
+        
 
         if (ObjectHelper.isNotEmpty(host)) {
             final StringBuilder packageName = new StringBuilder();

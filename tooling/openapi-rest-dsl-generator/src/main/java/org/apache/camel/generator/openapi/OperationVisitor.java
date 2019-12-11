@@ -21,9 +21,15 @@ import java.util.Collections;
 import java.util.List;
 
 import io.apicurio.datamodels.openapi.models.OasOperation;
+import io.apicurio.datamodels.openapi.models.OasParameter;
+import io.apicurio.datamodels.openapi.models.OasResponse;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Items;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Operation;
 import io.apicurio.datamodels.openapi.v2.models.Oas20Parameter;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Operation;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Parameter;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Response;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Schema;
 
 import org.apache.camel.model.rest.CollectionFormat;
 import org.apache.camel.model.rest.RestParamType;
@@ -57,7 +63,7 @@ class OperationVisitor<T> {
         return stringList;
     }
 
-    CodeEmitter<T> emit(final Oas20Parameter parameter) {
+    CodeEmitter<T> emit(final OasParameter parameter) {
         emitter.emit("param");
         emit("name", parameter.getName());
         final String parameterType = parameter.in;
@@ -65,23 +71,47 @@ class OperationVisitor<T> {
             emit("type", RestParamType.valueOf(parameterType));
         }
         if (!parameterType.equals("body")) {
-            final Oas20Parameter serializableParameter = parameter;
+            if (parameter instanceof Oas20Parameter) {
+                final Oas20Parameter serializableParameter = (Oas20Parameter)parameter;
 
-            final String dataType = serializableParameter.type;
-            emit("dataType", dataType);
-            emit("allowableValues", asStringList(serializableParameter.enum_));
-            final String collectionFormat = serializableParameter.collectionFormat;
-            if (ObjectHelper.isNotEmpty(collectionFormat)) {
-                emit("collectionFormat", CollectionFormat.valueOf(collectionFormat));
-            }
-            if (ObjectHelper.isNotEmpty(serializableParameter.default_)) {
-                String value = serializableParameter.default_.toString();
-                emit("defaultValue", value);
-            }
+                final String dataType = serializableParameter.type;
+                emit("dataType", dataType);
+                emit("allowableValues", asStringList(serializableParameter.enum_));
+                final String collectionFormat = serializableParameter.collectionFormat;
+                if (ObjectHelper.isNotEmpty(collectionFormat)) {
+                    emit("collectionFormat", CollectionFormat.valueOf(collectionFormat));
+                }
+                if (ObjectHelper.isNotEmpty(serializableParameter.default_)) {
+                    String value = serializableParameter.default_.toString();
+                    emit("defaultValue", value);
+                }
 
-            final Oas20Items items = serializableParameter.items;
-            if ("array".equals(dataType) && items != null) {
-                emit("arrayType", items.type);
+                final Oas20Items items = serializableParameter.items;
+                if ("array".equals(dataType) && items != null) {
+                    emit("arrayType", items.type);
+                }
+            } else if (parameter instanceof Oas30Parameter) {
+                final Oas30Parameter serializableParameter = (Oas30Parameter)parameter;
+                Oas30Schema schema = (Oas30Schema)serializableParameter.schema;
+                if (schema != null) {
+                    final String dataType = schema.type;
+                    if (ObjectHelper.isNotEmpty(dataType)) {
+                        emit("dataType", dataType);
+                    }
+                    emit("allowableValues", asStringList(schema.enum_));
+                    final String collectionFormat = serializableParameter.style;
+                    if (ObjectHelper.isNotEmpty(collectionFormat)) {
+                        emit("collectionFormat", CollectionFormat.valueOf(collectionFormat));
+                    }
+                    if (ObjectHelper.isNotEmpty(schema.default_)) {
+                        String value = schema.default_.toString();
+                        emit("defaultValue", value);
+                    }
+
+                    if ("array".equals(dataType)) {
+                        emit("arrayType", schema.type);
+                    }
+                }
             }
         }
         if (parameter.required != null) {
@@ -118,8 +148,35 @@ class OperationVisitor<T> {
 
             emit("id", operation.operationId);
             emit("description", operation.description);
-            emit("consumes", ((Oas20Operation)operation).consumes);
-            emit("produces", ((Oas20Operation)operation).produces);
+            List<String> operationLevelConsumes = new ArrayList<String>();
+            if (operation instanceof Oas20Operation) {
+                operationLevelConsumes = ((Oas20Operation)operation).consumes;
+            } else if (operation instanceof Oas30Operation) {
+                Oas30Operation oas30Operation = (Oas30Operation)operation;
+                if (oas30Operation.requestBody != null 
+                    && oas30Operation.requestBody.content != null) { 
+                    for (String ct : oas30Operation.requestBody.content.keySet()) {
+                        operationLevelConsumes.add(ct);
+                    }
+                }
+                    
+            }
+            emit("consumes", operationLevelConsumes);
+            List<String> operationLevelProduces = new ArrayList<String>();
+            if (operation instanceof Oas20Operation) {
+                operationLevelProduces = ((Oas20Operation)operation).produces;
+            } else if (operation instanceof Oas30Operation) {
+                Oas30Operation oas30Operation = (Oas30Operation)operation;
+                if (oas30Operation.responses != null) {
+                    for (OasResponse response : oas30Operation.responses.getResponses()) {
+                        Oas30Response oas30Response = (Oas30Response)response;
+                        for (String ct : oas30Response.content.keySet()) {
+                            operationLevelProduces.add(ct);
+                        }
+                    }
+                }
+            }
+            emit("produces", operationLevelProduces);
             if (operation.getParameters() != null) {
                 operation.getParameters().forEach(parameter -> {
                     emit((Oas20Parameter)parameter);

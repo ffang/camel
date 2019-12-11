@@ -16,12 +16,18 @@
  */
 package org.apache.camel.generator.openapi;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 import javax.annotation.processing.Filer;
 
 import org.apache.camel.model.rest.RestsDefinition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.apicurio.datamodels.openapi.models.OasDocument;
+import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
+import io.apicurio.datamodels.openapi.v3.models.Oas30Document;
 
 import static org.apache.camel.util.ObjectHelper.notNull;
 
@@ -33,6 +39,7 @@ public abstract class RestDslGenerator<G> {
 
     final OasDocument openapi;
 
+    private static final Logger LOG = LoggerFactory.getLogger(RestDslGenerator.class);
     DestinationGenerator destinationGenerator = new DirectToOperationId();
     OperationFilter filter = new OperationFilter();
     String restComponent;
@@ -140,5 +147,53 @@ public abstract class RestDslGenerator<G> {
 
     public static RestDslSourceCodeGenerator<Path> toPath(final OasDocument openapi) {
         return new PathGenerator(openapi);
+    }
+    
+    public static String getHostFromOasDocument(final OasDocument openapi) {
+        String host = null;
+        if (openapi instanceof Oas20Document) {
+            host = ((Oas20Document)openapi).host;
+        } else if (openapi instanceof Oas30Document) {
+            if (((Oas30Document)openapi).getServers() != null 
+                && ((Oas30Document)openapi).getServers().get(0) != null) {
+                try {
+                    URL serverUrl = new URL(((Oas30Document)openapi).getServers().get(0).url);
+                    host = serverUrl.getHost();
+                
+                } catch (MalformedURLException e) {
+                    LOG.info("error when parsing OpenApi 3.0 doc server url", e);
+                }
+            }
+        }
+        return host;
+        
+    }
+    
+    public static String getBasePathFromOasDocument(final OasDocument openapi) {
+        String basePath = null;
+        if (openapi instanceof Oas20Document) {
+            basePath = ((Oas20Document)openapi).basePath;
+        } else if (openapi instanceof Oas30Document) {
+            if (((Oas30Document)openapi).getServers() != null 
+                && ((Oas30Document)openapi).getServers().get(0) != null) {
+                try {
+                    URL serverUrl = new URL(((Oas30Document)openapi).getServers().get(0).url);
+                    basePath = serverUrl.getPath();
+                    if (basePath.indexOf("//") == 0) {
+                        //strip off the first "/" if double "/" exists
+                        basePath = basePath.substring(1);
+                    }
+                    if ("/".equals(basePath)) {
+                        basePath = "";
+                    }
+                                    
+                } catch (MalformedURLException e) {
+                    LOG.info("error when parsing OpenApi 3.0 doc server url", e);
+                }
+            }
+            
+        }
+        return basePath;
+        
     }
 }

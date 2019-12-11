@@ -39,7 +39,6 @@ import org.apache.camel.model.rest.RestsDefinition;
 import org.apache.camel.util.ObjectHelper;
 
 import io.apicurio.datamodels.openapi.models.OasDocument;
-import io.apicurio.datamodels.openapi.v2.models.Oas20Document;
 
 public class RestDslXmlGenerator extends RestDslGenerator<RestDslXmlGenerator> {
 
@@ -51,8 +50,8 @@ public class RestDslXmlGenerator extends RestDslGenerator<RestDslXmlGenerator> {
 
     public String generate(final CamelContext context) throws Exception {
         final RestDefinitionEmitter emitter = new RestDefinitionEmitter(context);
-
-        final PathVisitor<RestsDefinition> restDslStatement = new PathVisitor<>(((Oas20Document)openapi).basePath, emitter, filter,
+        String basePath = RestDslGenerator.getBasePathFromOasDocument(openapi);
+        final PathVisitor<RestsDefinition> restDslStatement = new PathVisitor<>(basePath, emitter, filter,
             destinationGenerator());
 
         openapi.paths.getPathItems().forEach(restDslStatement::visit);
