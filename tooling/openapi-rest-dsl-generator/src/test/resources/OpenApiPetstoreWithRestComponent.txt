@@ -1,4 +1,4 @@
-package io.swagger.petstore;
+package io.openapi.petstore;
 
 import javax.annotation.Generated;
 import org.apache.camel.builder.RouteBuilder;
@@ -6,14 +6,17 @@ import org.apache.camel.model.rest.CollectionFormat;
 import org.apache.camel.model.rest.RestParamType;
 
 /**
- * Generated from Swagger specification by Camel REST DSL generator.
+ * Generated from OpenApi specification by Camel REST DSL generator.
  */
 @Generated("org.apache.camel.generator.openapi.AppendableGenerator")
-public final class SwaggerPetstore extends RouteBuilder {
+public final class OpenApiPetstore extends RouteBuilder {
     /**
      * Defines Apache Camel routes using REST DSL fluent API.
      */
     public void configure() {
+
+        restConfiguration().component("servlet").contextPath("/");
+
         rest("/v2")
             .put("/pet")
                 .id("updatePet")

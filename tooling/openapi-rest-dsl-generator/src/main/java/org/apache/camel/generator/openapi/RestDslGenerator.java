@@ -33,7 +33,7 @@ import static org.apache.camel.util.ObjectHelper.notNull;
 
 /**
  * Source code and {@link RestsDefinition} generator that generates Camel REST
- * DSL implementations from Swagger (OpenAPI) specifications.
+ * DSL implementations from OpenAPI specifications.
  */
 public abstract class RestDslGenerator<G> {
 
@@ -48,8 +48,8 @@ public abstract class RestDslGenerator<G> {
     boolean springComponent;
     boolean springBootProject;
 
-    RestDslGenerator(final OasDocument swagger) {
-        this.openapi = notNull(swagger, "swagger");
+    RestDslGenerator(final OasDocument openapi) {
+        this.openapi = notNull(openapi, "openapi");
     }
 
     public G withDestinationGenerator(final DestinationGenerator directRouteGenerator) {

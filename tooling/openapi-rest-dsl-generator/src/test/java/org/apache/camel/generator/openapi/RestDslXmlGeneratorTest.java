@@ -52,7 +52,7 @@ static OasDocument openapi = null;
     @BeforeClass
     public static void readOpenApiDoc() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        FileInputStream fis = new FileInputStream(new File("petstore.json"));
+        FileInputStream fis = new FileInputStream(new File("openapi-v2.json"));
         JsonNode node = mapper.readTree(fis);
         openapi = (OasDocument)Library.readDocument(node);
     }
@@ -97,7 +97,7 @@ static OasDocument openapi = null;
 
         final String xml = RestDslGenerator.toXml(openapi).generate(context);
 
-        final URI file = RestDslGeneratorTest.class.getResource("/SwaggerPetstoreXml.txt").toURI();
+        final URI file = RestDslGeneratorTest.class.getResource("/OpenApiPetstoreXml.txt").toURI();
         final String expectedContent = new String(Files.readAllBytes(Paths.get(file)), StandardCharsets.UTF_8);
 
         assertThat(xml).isXmlEqualTo(expectedContent);
@@ -110,7 +110,7 @@ static OasDocument openapi = null;
         final String xml = RestDslGenerator.toXml(openapi).withRestComponent("servlet").withRestContextPath("/foo")
             .generate(context);
 
-        final URI file = RestDslGeneratorTest.class.getResource("/SwaggerPetstoreWithRestComponentXml.txt").toURI();
+        final URI file = RestDslGeneratorTest.class.getResource("/OpenApiPetstoreWithRestComponentXml.txt").toURI();
         final String expectedContent = new String(Files.readAllBytes(Paths.get(file)), StandardCharsets.UTF_8);
 
         assertThat(xml).isXmlEqualTo(expectedContent);

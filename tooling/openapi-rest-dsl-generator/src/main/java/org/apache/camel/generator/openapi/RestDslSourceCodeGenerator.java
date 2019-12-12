@@ -139,7 +139,7 @@ public abstract class RestDslSourceCodeGenerator<T> extends RestDslGenerator<Res
         TypeSpec.Builder builder = TypeSpec.classBuilder(classNameToUse).superclass(RouteBuilder.class)
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL).addMethod(methodSpec)
             .addAnnotation(generatedAnnotation.build())
-            .addJavadoc("Generated from Swagger specification by Camel REST DSL generator.\n");
+            .addJavadoc("Generated from OpenApi specification by Camel REST DSL generator.\n");
         if (springComponent) {
             final AnnotationSpec.Builder springAnnotation = AnnotationSpec.builder(ClassName.bestGuess("org.springframework.stereotype.Component"));
             builder.addAnnotation(springAnnotation.build());
