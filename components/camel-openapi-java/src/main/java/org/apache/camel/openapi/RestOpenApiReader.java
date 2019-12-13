@@ -82,7 +82,7 @@ import org.apache.camel.util.FileUtil;
 /**
  * A Camel REST-DSL openApi reader that parse the rest-dsl into a openApi model representation.
  * <p/>
- * This reader supports the <a href="http://swagger.io/specification/">OpenApi Specification 2.0 and 3.0</a>
+ * This reader supports the <a href="https://www.openapis.org/">OpenApi Specification 2.0 and 3.0</a>
  */
 public class RestOpenApiReader {
 
@@ -135,151 +135,14 @@ public class RestOpenApiReader {
         if (openApi instanceof Oas20Document) {
             
             
-            String summary = rest.getDescriptionText();
-
-            if (org.apache.camel.util.ObjectHelper.isNotEmpty(pathAsTag)) {
-                // add rest as tag
-                openApi.addTag(pathAsTag, summary);
-            }
-
-            // setup security definitions
-            RestSecuritiesDefinition sd = rest.getSecurityDefinitions();
-            if (sd != null && sd.getSecurityDefinitions().size() != 0 
-                && ((Oas20Document)openApi).securityDefinitions == null) {
-                ((Oas20Document)openApi).securityDefinitions = ((Oas20Document)openApi)
-                    .createSecurityDefinitions();
-            }
-            if (sd != null) {
-                for (RestSecurityDefinition def : sd.getSecurityDefinitions()) {
-                    if (def instanceof RestSecurityBasicAuth) {
-                        Oas20SecurityScheme auth = ((Oas20Document)openApi).securityDefinitions
-                            .createSecurityScheme(def.getKey());
-                        auth.type = "basicAuth";
-                        auth.description = def.getDescription();
-                        ((Oas20Document)openApi).securityDefinitions.addSecurityScheme("BasicAuth", auth);
-                    } else if (def instanceof RestSecurityApiKey) {
-                        RestSecurityApiKey rs = (RestSecurityApiKey)def;
-                        Oas20SecurityScheme auth = ((Oas20Document)openApi).securityDefinitions
-                            .createSecurityScheme(def.getKey());
-                        auth.type = "apiKey";
-                        auth.description = rs.getDescription();
-                        auth.name = rs.getName();
-                        if (rs.getInHeader() != null && rs.getInHeader()) {
-                            auth.in = "header";
-                        } else {
-                            auth.in = "query";
-                        }
-                        ((Oas20Document)openApi).securityDefinitions.addSecurityScheme(def.getKey(), auth);
-                    } else if (def instanceof RestSecurityOAuth2) {
-                        RestSecurityOAuth2 rs = (RestSecurityOAuth2)def;
-
-                        Oas20SecurityScheme auth = ((Oas20Document)openApi).securityDefinitions
-                            .createSecurityScheme(def.getKey());
-                        auth.type = "oauth2";
-                        auth.description = rs.getDescription();
-                        String flow = rs.getFlow();
-                        if (flow == null) {
-                            if (rs.getAuthorizationUrl() != null && rs.getTokenUrl() != null) {
-                                flow = "accessCode";
-                            } else if (rs.getTokenUrl() == null && rs.getAuthorizationUrl() != null) {
-                                flow = "implicit";
-                            }
-                        }
-                        auth.flow = flow;
-                        auth.authorizationUrl = rs.getAuthorizationUrl();
-                        auth.tokenUrl = rs.getTokenUrl();
-                        if (rs.getScopes().size() != 0 && auth.scopes == null) {
-                            auth.scopes = auth.createScopes();
-                        }
-                        for (RestPropertyDefinition scope : rs.getScopes()) {
-                            auth.scopes.addScope(scope.getKey(), scope.getValue());
-                        }
-                        if (((Oas20Document)openApi).securityDefinitions == null) {
-                            ((Oas20Document)openApi).securityDefinitions = ((Oas20Document)openApi)
-                                .createSecurityDefinitions();
-                        }
-                        ((Oas20Document)openApi).securityDefinitions.addSecurityScheme(def.getKey(), auth);
-                    }
-                }
-            }
+            parseOas20((Oas20Document)openApi, rest, pathAsTag);
 
             
         } else if (openApi instanceof Oas30Document) {
             
 
             
-            String summary = rest.getDescriptionText();
-
-            if (org.apache.camel.util.ObjectHelper.isNotEmpty(pathAsTag)) {
-                // add rest as tag
-                openApi.addTag(pathAsTag, summary);
-            }
-
-            // setup security definitions
-            RestSecuritiesDefinition sd = rest.getSecurityDefinitions();
-            if (sd != null && sd.getSecurityDefinitions().size() != 0 
-                && ((Oas30Document)openApi).components == null) {
-                ((Oas30Document)openApi).components = ((Oas30Document)openApi)
-                    .createComponents();
-            }
-            if (sd != null) {
-                for (RestSecurityDefinition def : sd.getSecurityDefinitions()) {
-                    if (def instanceof RestSecurityBasicAuth) {
-                        Oas30SecurityScheme auth = ((Oas30Document)openApi).components
-                            .createSecurityScheme(def.getKey());
-                        auth.type = "http";
-                        auth.scheme = "basic";
-                        auth.description = def.getDescription();
-                        ((Oas30Document)openApi).components.addSecurityScheme("BasicAuth", auth);
-                    } else if (def instanceof RestSecurityApiKey) {
-                        RestSecurityApiKey rs = (RestSecurityApiKey)def;
-                        Oas30SecurityScheme auth = ((Oas30Document)openApi).components
-                            .createSecurityScheme(def.getKey());
-                        auth.type = "apiKey";
-                        auth.description = rs.getDescription();
-                        auth.name = rs.getName();
-                        if (rs.getInHeader() != null && rs.getInHeader()) {
-                            auth.in = "header";
-                        } else {
-                            auth.in = "query";
-                        }
-                        ((Oas30Document)openApi).components.addSecurityScheme(def.getKey(), auth);
-                    } else if (def instanceof RestSecurityOAuth2) {
-                        RestSecurityOAuth2 rs = (RestSecurityOAuth2)def;
-
-                        Oas30SecurityScheme auth = ((Oas30Document)openApi).components
-                            .createSecurityScheme(def.getKey());
-                        auth.type = "oauth2";
-                        auth.description = rs.getDescription();
-                        String flow = rs.getFlow();
-                        if (flow == null) {
-                            if (rs.getAuthorizationUrl() != null && rs.getTokenUrl() != null) {
-                                flow = "accessCode";
-                            } else if (rs.getTokenUrl() == null && rs.getAuthorizationUrl() != null) {
-                                flow = "implicit";
-                            }
-                        }
-                        OAuthFlow oauthFlow = null;
-                        if (auth.flows == null) {
-                            auth.flows = auth.createOAuthFlows();
-                        }
-                        if (flow.equals("accessCode")) {
-                            oauthFlow = auth.flows.createAuthorizationCodeOAuthFlow();
-                            auth.flows.authorizationCode = (AuthorizationCodeOAuthFlow)oauthFlow;
-                        } else if (flow.equals("implicit")) {
-                            oauthFlow = auth.flows.createImplicitOAuthFlow();
-                            auth.flows.implicit = (ImplicitOAuthFlow)oauthFlow;
-                        }
-                        oauthFlow.authorizationUrl = rs.getAuthorizationUrl();
-                        oauthFlow.tokenUrl = rs.getTokenUrl();
-                        for (RestPropertyDefinition scope : rs.getScopes()) {
-                            oauthFlow.addScope(scope.getKey(), scope.getValue());
-                        }
-                        
-                        ((Oas30Document)openApi).components.addSecurityScheme(def.getKey(), auth);
-                    }
-                }
-            }
+            parseOas30((Oas30Document)openApi, rest, pathAsTag);
 
             
         }
@@ -334,6 +197,151 @@ public class RestOpenApiReader {
         }
 
         doParseVerbs(openApi, rest, camelContextId, verbs, pathAsTag);
+    }
+
+    private void parseOas30(Oas30Document openApi, RestDefinition rest, String pathAsTag) {
+        String summary = rest.getDescriptionText();
+
+        if (org.apache.camel.util.ObjectHelper.isNotEmpty(pathAsTag)) {
+            // add rest as tag
+            openApi.addTag(pathAsTag, summary);
+        }
+
+        // setup security definitions
+        RestSecuritiesDefinition sd = rest.getSecurityDefinitions();
+        if (sd != null && sd.getSecurityDefinitions().size() != 0 
+            && openApi.components == null) {
+            openApi.components = openApi
+                .createComponents();
+        }
+        if (sd != null) {
+            for (RestSecurityDefinition def : sd.getSecurityDefinitions()) {
+                if (def instanceof RestSecurityBasicAuth) {
+                    Oas30SecurityScheme auth = openApi.components
+                        .createSecurityScheme(def.getKey());
+                    auth.type = "http";
+                    auth.scheme = "basic";
+                    auth.description = def.getDescription();
+                    openApi.components.addSecurityScheme("BasicAuth", auth);
+                } else if (def instanceof RestSecurityApiKey) {
+                    RestSecurityApiKey rs = (RestSecurityApiKey)def;
+                    Oas30SecurityScheme auth = openApi.components
+                        .createSecurityScheme(def.getKey());
+                    auth.type = "apiKey";
+                    auth.description = rs.getDescription();
+                    auth.name = rs.getName();
+                    if (rs.getInHeader() != null && rs.getInHeader()) {
+                        auth.in = "header";
+                    } else {
+                        auth.in = "query";
+                    }
+                    openApi.components.addSecurityScheme(def.getKey(), auth);
+                } else if (def instanceof RestSecurityOAuth2) {
+                    RestSecurityOAuth2 rs = (RestSecurityOAuth2)def;
+
+                    Oas30SecurityScheme auth = openApi.components
+                        .createSecurityScheme(def.getKey());
+                    auth.type = "oauth2";
+                    auth.description = rs.getDescription();
+                    String flow = rs.getFlow();
+                    if (flow == null) {
+                        if (rs.getAuthorizationUrl() != null && rs.getTokenUrl() != null) {
+                            flow = "accessCode";
+                        } else if (rs.getTokenUrl() == null && rs.getAuthorizationUrl() != null) {
+                            flow = "implicit";
+                        }
+                    }
+                    OAuthFlow oauthFlow = null;
+                    if (auth.flows == null) {
+                        auth.flows = auth.createOAuthFlows();
+                    }
+                    if (flow.equals("accessCode")) {
+                        oauthFlow = auth.flows.createAuthorizationCodeOAuthFlow();
+                        auth.flows.authorizationCode = (AuthorizationCodeOAuthFlow)oauthFlow;
+                    } else if (flow.equals("implicit")) {
+                        oauthFlow = auth.flows.createImplicitOAuthFlow();
+                        auth.flows.implicit = (ImplicitOAuthFlow)oauthFlow;
+                    }
+                    oauthFlow.authorizationUrl = rs.getAuthorizationUrl();
+                    oauthFlow.tokenUrl = rs.getTokenUrl();
+                    for (RestPropertyDefinition scope : rs.getScopes()) {
+                        oauthFlow.addScope(scope.getKey(), scope.getValue());
+                    }
+                    
+                    openApi.components.addSecurityScheme(def.getKey(), auth);
+                }
+            }
+        }
+    }
+
+    private void parseOas20(Oas20Document openApi, RestDefinition rest, String pathAsTag) {
+        String summary = rest.getDescriptionText();
+
+        if (org.apache.camel.util.ObjectHelper.isNotEmpty(pathAsTag)) {
+            // add rest as tag
+            openApi.addTag(pathAsTag, summary);
+        }
+
+        // setup security definitions
+        RestSecuritiesDefinition sd = rest.getSecurityDefinitions();
+        if (sd != null && sd.getSecurityDefinitions().size() != 0 
+            && openApi.securityDefinitions == null) {
+            openApi.securityDefinitions = openApi
+                .createSecurityDefinitions();
+        }
+        if (sd != null) {
+            for (RestSecurityDefinition def : sd.getSecurityDefinitions()) {
+                if (def instanceof RestSecurityBasicAuth) {
+                    Oas20SecurityScheme auth = openApi.securityDefinitions
+                        .createSecurityScheme(def.getKey());
+                    auth.type = "basicAuth";
+                    auth.description = def.getDescription();
+                    openApi.securityDefinitions.addSecurityScheme("BasicAuth", auth);
+                } else if (def instanceof RestSecurityApiKey) {
+                    RestSecurityApiKey rs = (RestSecurityApiKey)def;
+                    Oas20SecurityScheme auth = openApi.securityDefinitions
+                        .createSecurityScheme(def.getKey());
+                    auth.type = "apiKey";
+                    auth.description = rs.getDescription();
+                    auth.name = rs.getName();
+                    if (rs.getInHeader() != null && rs.getInHeader()) {
+                        auth.in = "header";
+                    } else {
+                        auth.in = "query";
+                    }
+                    openApi.securityDefinitions.addSecurityScheme(def.getKey(), auth);
+                } else if (def instanceof RestSecurityOAuth2) {
+                    RestSecurityOAuth2 rs = (RestSecurityOAuth2)def;
+
+                    Oas20SecurityScheme auth = openApi.securityDefinitions
+                        .createSecurityScheme(def.getKey());
+                    auth.type = "oauth2";
+                    auth.description = rs.getDescription();
+                    String flow = rs.getFlow();
+                    if (flow == null) {
+                        if (rs.getAuthorizationUrl() != null && rs.getTokenUrl() != null) {
+                            flow = "accessCode";
+                        } else if (rs.getTokenUrl() == null && rs.getAuthorizationUrl() != null) {
+                            flow = "implicit";
+                        }
+                    }
+                    auth.flow = flow;
+                    auth.authorizationUrl = rs.getAuthorizationUrl();
+                    auth.tokenUrl = rs.getTokenUrl();
+                    if (rs.getScopes().size() != 0 && auth.scopes == null) {
+                        auth.scopes = auth.createScopes();
+                    }
+                    for (RestPropertyDefinition scope : rs.getScopes()) {
+                        auth.scopes.addScope(scope.getKey(), scope.getValue());
+                    }
+                    if (openApi.securityDefinitions == null) {
+                        openApi.securityDefinitions = openApi
+                            .createSecurityDefinitions();
+                    }
+                    openApi.securityDefinitions.addSecurityScheme(def.getKey(), auth);
+                }
+            }
+        }
     }
 
     private void doParseVerbs(OasDocument openApi, RestDefinition rest, String camelContextId,
@@ -393,405 +401,438 @@ public class RestOpenApiReader {
 
             String consumes = verb.getConsumes() != null ? verb.getConsumes() : rest.getConsumes();
             String produces = verb.getProduces() != null ? verb.getProduces() : rest.getProduces();
-            if (op instanceof Oas20Operation) {
-                if (consumes != null) {
-                    String[] parts = consumes.split(",");
-                    if (((Oas20Operation)op).consumes == null) {
-                        ((Oas20Operation)op).consumes = new ArrayList<String>();
-                    }
-                    for (String part : parts) {
-                        ((Oas20Operation)op).consumes.add(part);
-                    }
-                }
-
-                
-                if (produces != null) {
-                    String[] parts = produces.split(",");
-                    if (((Oas20Operation)op).produces == null) {
-                        ((Oas20Operation)op).produces = new ArrayList<String>();
-                    }
-                    for (String part : parts) {
-                        ((Oas20Operation)op).produces.add(part);
-                    }
-                }
-            } else if (op instanceof Oas30Operation) {
-                //TODO:not sure we need this or not
-                /*Oas30Operation op30 = (Oas30Operation)op;
-                if (consumes != null) {
-                    String[] parts = consumes.split(",");
-                    if (op30.requestBody == null) {
-                        op30.requestBody = op30.createRequestBody();
-                    }
-                    for (String part : parts) {
-                        Oas30MediaType mediaType = op30.requestBody.createMediaType(part);
-                        op30.requestBody.addMediaType(part, mediaType);
-                    }
-                }*/
-
-                
-                //wait for doParseResponseMessages to enrich the response MediaType for V3
+            if (openApi instanceof Oas20Document) {
+                doParseVerbOas20((Oas20Document)openApi, verb, (Oas20Operation)op, consumes, produces);
+            } else if(openApi instanceof Oas30Document) {
+                doParseVerbOas30((Oas30Document)openApi, verb, (Oas30Operation)op, consumes, produces);
             }
-
-            if (verb.getDescriptionText() != null) {
-                op.summary = verb.getDescriptionText();
-            }
-
-            // security
-            for (SecurityDefinition sd : verb.getSecurity()) {
-                List<String> scopes = new ArrayList<>();
-                if (sd.getScopes() != null) {
-                    for (String scope : ObjectHelper.createIterable(sd.getScopes())) {
-                        scopes.add(scope);
-                    }
-                }
-                SecurityRequirement securityRequirement = op.createSecurityRequirement();
-                securityRequirement.addSecurityRequirementItem(sd.getKey(), scopes);
-                op.addSecurityRequirement(securityRequirement);
-            }
-
-            for (RestOperationParamDefinition param : verb.getParams()) {
-                OasParameter parameter = null;
-                if (param.getType().equals(RestParamType.body)) {
-                    parameter = op.createParameter();
-                    parameter.in = "body";
-                } else if (param.getType().equals(RestParamType.formData)) {
-                    parameter = op.createParameter();
-                    parameter.in = "formData";
-                } else if (param.getType().equals(RestParamType.header)) {
-                    parameter = op.createParameter();
-                    parameter.in = "header";
-                } else if (param.getType().equals(RestParamType.path)) {
-                    parameter = op.createParameter();
-                    parameter.in = "path";
-                } else if (param.getType().equals(RestParamType.query)) {
-                    parameter = op.createParameter();
-                    parameter.in = "query";
-                }
-
-                if (parameter != null) {
-                    parameter.name = param.getName();
-                    if (org.apache.camel.util.ObjectHelper.isNotEmpty(param.getDescription())) {
-                        parameter.description = param.getDescription();
-                    }
-                    parameter.required = param.getRequired();
-
-                    // set type on parameter
-                    if (!parameter.in.equals("body")) {
-                        if (parameter instanceof Oas20Parameter) {
-                            Oas20Parameter serializableParameter = (Oas20Parameter)parameter;
-
-                            final boolean isArray = param.getDataType().equalsIgnoreCase("array");
-                            final List<String> allowableValues = param.getAllowableValues();
-                            final boolean hasAllowableValues = allowableValues != null
-                                                               && !allowableValues.isEmpty();
-                            if (param.getDataType() != null) {
-                                serializableParameter.type = param.getDataType();
-                                if (param.getDataFormat() != null) {
-                                    serializableParameter.format = param.getDataFormat();
-                                }
-                                if (isArray) {
-                                    if (param.getArrayType() != null) {
-                                        if (param.getArrayType().equalsIgnoreCase("string")) {
-                                            defineItems(serializableParameter, allowableValues,
-                                                        new Oas20Items(), String.class);
-                                        }
-                                        if (param.getArrayType().equalsIgnoreCase("int")
-                                            || param.getArrayType().equalsIgnoreCase("integer")) {
-                                            defineItems(serializableParameter, allowableValues,
-                                                        new Oas20Items(), Integer.class);
-                                        }
-                                        if (param.getArrayType().equalsIgnoreCase("long")) {
-                                            defineItems(serializableParameter, allowableValues,
-                                                        new Oas20Items(), Long.class);
-                                        }
-                                        if (param.getArrayType().equalsIgnoreCase("float")) {
-                                            defineItems(serializableParameter, allowableValues,
-                                                        new Oas20Items(), Float.class);
-                                        }
-                                        if (param.getArrayType().equalsIgnoreCase("double")) {
-                                            defineItems(serializableParameter, allowableValues,
-                                                        new Oas20Items(), Double.class);
-                                        }
-                                        if (param.getArrayType().equalsIgnoreCase("boolean")) {
-                                            defineItems(serializableParameter, allowableValues,
-                                                        new Oas20Items(), Boolean.class);
-                                        }
-                                    }
-                                }
-                            }
-                            if (param.getCollectionFormat() != null) {
-                                serializableParameter.collectionFormat = param.getCollectionFormat().name();
-                            }
-                            if (hasAllowableValues && !isArray) {
-                                serializableParameter.enum_ = allowableValues;
-                            }
-                            // set default value on parameter
-                            if (org.apache.camel.util.ObjectHelper.isNotEmpty(param.getDefaultValue())) {
-                                serializableParameter.default_ = param.getDefaultValue();
-                            }
-                            // add examples
-                            if (param.getExamples() != null && param.getExamples().size() >= 1) {
-                                // we can only set one example on the parameter
-                                Extension exampleExtension = serializableParameter.createExtension();
-                                boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
-                                if (emptyKey) {
-                                    exampleExtension.name = "x-example";
-                                    exampleExtension.value = param.getExamples().get(0).getValue();
-                                    serializableParameter.addExtension("x-example", exampleExtension);
-                                } else {
-                                    Map<String, String> exampleValue = new HashMap<String, String>();
-                                    exampleValue.put(param.getExamples().get(0).getKey(),
-                                                     param.getExamples().get(0).getValue());
-                                    exampleExtension.name = "x-examples";
-                                    exampleExtension.value = exampleValue;
-                                    serializableParameter.addExtension("x-examples", exampleExtension);
-                                }
-                            }
-                        } else if (parameter instanceof Oas30Parameter) {
-                            Oas30Parameter parameter30 = (Oas30Parameter)parameter;
-                          
-                            
-                            final boolean isArray = param.getDataType().equalsIgnoreCase("array");
-                            final List<String> allowableValues = param.getAllowableValues();
-                            final boolean hasAllowableValues = allowableValues != null
-                                                               && !allowableValues.isEmpty();
-                            if (param.getDataType() != null) {
-                                parameter30.schema = parameter30.createSchema();
-                                ((Oas30Schema)parameter30.schema).type = param.getDataType();
-                                if (param.getDataFormat() != null) {
-                                    ((Oas30Schema)parameter30.schema).format = param.getDataFormat();
-                                }
-                                if (isArray) {
-                                    if (param.getArrayType() != null) {
-                                        if (param.getArrayType().equalsIgnoreCase("string")) {
-                                            defineSchemas(parameter30, allowableValues,
-                                                         String.class);
-                                        }
-                                        if (param.getArrayType().equalsIgnoreCase("int")
-                                            || param.getArrayType().equalsIgnoreCase("integer")) {
-                                            defineSchemas(parameter30, allowableValues,
-                                                         Integer.class);
-                                        }
-                                        if (param.getArrayType().equalsIgnoreCase("long")) {
-                                            defineSchemas(parameter30, allowableValues,
-                                                         Long.class);
-                                        }
-                                        if (param.getArrayType().equalsIgnoreCase("float")) {
-                                            defineSchemas(parameter30, allowableValues,
-                                                         Float.class);
-                                        }
-                                        if (param.getArrayType().equalsIgnoreCase("double")) {
-                                            defineSchemas(parameter30, allowableValues,
-                                                         Double.class);
-                                        }
-                                        if (param.getArrayType().equalsIgnoreCase("boolean")) {
-                                            defineSchemas(parameter30, allowableValues,
-                                                         Boolean.class);
-                                        }
-                                    }
-                                }
-                            }
-                            if (param.getCollectionFormat() != null) {
-                                parameter30.style = param.getCollectionFormat().name();
-                            }
-                            if (hasAllowableValues && !isArray) {
-                                ((Oas30Schema)parameter30.schema).enum_ = allowableValues;
-                            }
-                          
-                            // set default value on parameter
-                            if (org.apache.camel.util.ObjectHelper.isNotEmpty(param.getDefaultValue())) {
-                                ((Oas30Schema)parameter30.schema).default_ = param.getDefaultValue();
-                            }
-                            // add examples
-                            if (param.getExamples() != null && param.getExamples().size() >= 1) {
-                                // we can only set one example on the parameter
-                                Extension exampleExtension = parameter30.createExtension();
-                                boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
-                                if (emptyKey) {
-                                    exampleExtension.name = "x-example";
-                                    exampleExtension.value = param.getExamples().get(0).getValue();
-                                    parameter30.addExtension("x-example", exampleExtension);
-                                } else {
-                                    Map<String, String> exampleValue = new HashMap<String, String>();
-                                    exampleValue.put(param.getExamples().get(0).getKey(),
-                                                     param.getExamples().get(0).getValue());
-                                    exampleExtension.name = "x-examples";
-                                    exampleExtension.value = exampleValue;
-                                    parameter30.addExtension("x-examples", exampleExtension);
-                                }
-                            }
-                        }
-                    }
-
-                   
-
-                    // set schema on body parameter
-                    if (parameter.in.equals("body")) {
-                        if (parameter instanceof Oas20Parameter) {
-                            Oas20Parameter bp = (Oas20Parameter)parameter;
-
-                            String type = param.getDataType() != null ? param.getDataType() : verb.getType();
-                            if (type != null) {
-                                if (type.endsWith("[]")) {
-                                    type = type.substring(0, type.length() - 2);
-
-                                    OasSchema arrayModel = (Oas20Schema)bp.createSchema();
-                                    arrayModel = modelTypeAsProperty(type, openApi, arrayModel);
-                                    bp.schema = arrayModel;
-
-                                } else {
-                                    String ref = modelTypeAsRef(type, openApi);
-                                    if (ref != null) {
-                                        Oas20Schema refModel = (Oas20Schema)bp.createSchema();
-                                        refModel.$ref = "#/definitions/" + ref;
-                                        bp.schema = refModel;
-                                    } else {
-                                        OasSchema model = (Oas20Schema)bp.createSchema();
-                                        model = modelTypeAsProperty(type, openApi, model);
-
-                                        bp.schema = model;
-
-                                    }
-                                }
-                            }
-                            // add examples
-                            if (param.getExamples() != null) {
-                                Extension exampleExtension = bp.createExtension();
-                                boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
-                                if (emptyKey) {
-                                    exampleExtension.name = "x-example";
-                                    exampleExtension.value = param.getExamples().get(0).getValue();
-                                    bp.addExtension("x-example", exampleExtension);
-                                } else {
-                                    Map<String, String> exampleValue = new HashMap<String, String>();
-                                    exampleValue.put(param.getExamples().get(0).getKey(),
-                                                     param.getExamples().get(0).getValue());
-                                    exampleExtension.name = "x-examples";
-                                    exampleExtension.value = exampleValue;
-                                    bp.addExtension("x-examples", exampleExtension);
-                                }
-                            }
-                        } else if (parameter instanceof Oas30Parameter) {
-                            Oas30Parameter bp = (Oas30Parameter)parameter;
-                            
-
-                            String type = param.getDataType() != null ? param.getDataType() : verb.getType();
-                            if (type != null) {
-                                if (type.endsWith("[]")) {
-                                    type = type.substring(0, type.length() - 2);
-
-                                    OasSchema arrayModel = (Oas30Schema)bp.createSchema();
-                                    arrayModel = modelTypeAsProperty(type, openApi, arrayModel);
-                                    bp.schema = arrayModel;
-                                    
-
-                                } else {
-                                    String ref = modelTypeAsRef(type, openApi);
-                                    if (ref != null) {
-                                        Oas30Schema refModel = (Oas30Schema)bp.createSchema();
-                                        refModel.$ref = "#/components/schemas/" + ref;
-                                        bp.schema = refModel;
-                                    } else {
-                                        OasSchema model = (Oas30Schema)bp.createSchema();
-                                        model = modelTypeAsProperty(type, openApi, model);
-
-                                        bp.schema = model;
-
-                                    }
-                                }
-                            }
-                            Oas30Operation op30 = (Oas30Operation)op;
-                            if (consumes != null) {
-                                String[] parts = consumes.split(",");
-                                if (op30.requestBody == null) {
-                                    op30.requestBody = op30.createRequestBody();
-                                    op30.requestBody.required = param.getRequired();
-                                    op30.requestBody.description = param.getDescription();
-                                }
-                                for (String part : parts) {
-                                    Oas30MediaType mediaType = op30.requestBody.createMediaType(part);
-                                    mediaType.schema = mediaType.createSchema();
-                                    mediaType.schema.$ref = bp.schema.$ref;
-                                    op30.requestBody.addMediaType(part, mediaType);
-                                    
-                                }
-                            }
-                            // add examples
-                            if (param.getExamples() != null) {
-                                Extension exampleExtension = op30.requestBody.createExtension();
-                                boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
-                                if (emptyKey) {
-                                    exampleExtension.name = "x-example";
-                                    exampleExtension.value = param.getExamples().get(0).getValue();
-                                    op30.requestBody.addExtension("x-example", exampleExtension);
-                                } else {
-                                    Map<String, String> exampleValue = new HashMap<String, String>();
-                                    exampleValue.put(param.getExamples().get(0).getKey(),
-                                                     param.getExamples().get(0).getValue());
-                                    exampleExtension.name = "x-examples";
-                                    exampleExtension.value = exampleValue;
-                                    op30.requestBody.addExtension("x-examples", exampleExtension);
-                                }
-                            }
-                            parameter = null;
-                        }
-
-
-                        
-                    }
-                    op.addParameter(parameter);
-                } 
-                
-            }
-                
-            
-
-            // clear parameters if its empty
-            if (op.getParameters() != null && op.getParameters().isEmpty()) {
-                op.parameters.clear();
-            }
-
-            // if we have an out type then set that as response message
-            if (verb.getOutType() != null) {
-                if (op instanceof Oas20Operation) {
-                    if (op.responses == null) {
-                        op.responses = op.createResponses();
-                    }
-                    Oas20Response response = (Oas20Response)op.responses.createResponse("200");
-                    OasSchema model = response.createSchema();
-                    model = modelTypeAsProperty(verb.getOutType(), openApi, model);
-
-                    response.schema = (Oas20Schema)model;
-                    response.description = "Output type";
-                    op.responses.addResponse("200", response);
-                } else if (op instanceof Oas30Operation) {
-                    if (op.responses == null) {
-                        op.responses = op.createResponses();
-                    }
-                    Oas30Response response = (Oas30Response)op.responses.createResponse("200");
-                    String[] parts = null;
-                    if (produces != null) {
-                        parts = produces.split(",");
-                        for (String produce : parts) {
-                            Oas30MediaType contentType = response.createMediaType(produce);
-                            response.addMediaType(produce, contentType);
-                            OasSchema model = contentType.createSchema();
-                            model = modelTypeAsProperty(verb.getOutType(), openApi, model);
-                            contentType.schema = (Oas30Schema)model;
-                            response.description = "Output type";
-                            op.responses.addResponse("200", response);
-                        }
-                    }
-                }
-                    
-                
-            }
-
             // enrich with configured response messages from the rest-dsl
             doParseResponseMessages(openApi, verb, op, produces);
 
             // add path
             openApi.paths.addPathItem(opPath, path);
+
+        }
+    }
+
+    private void doParseVerbOas30(Oas30Document openApi, VerbDefinition verb, Oas30Operation op, String consumes,
+                               String produces) {
+
+        if (verb.getDescriptionText() != null) {
+            op.summary = verb.getDescriptionText();
+        }
+
+        // security
+        for (SecurityDefinition sd : verb.getSecurity()) {
+            List<String> scopes = new ArrayList<>();
+            if (sd.getScopes() != null) {
+                for (String scope : ObjectHelper.createIterable(sd.getScopes())) {
+                    scopes.add(scope);
+                }
+            }
+            SecurityRequirement securityRequirement = op.createSecurityRequirement();
+            securityRequirement.addSecurityRequirementItem(sd.getKey(), scopes);
+            op.addSecurityRequirement(securityRequirement);
+        }
+
+        for (RestOperationParamDefinition param : verb.getParams()) {
+            OasParameter parameter = null;
+            if (param.getType().equals(RestParamType.body)) {
+                parameter = op.createParameter();
+                parameter.in = "body";
+            } else if (param.getType().equals(RestParamType.formData)) {
+                parameter = op.createParameter();
+                parameter.in = "formData";
+            } else if (param.getType().equals(RestParamType.header)) {
+                parameter = op.createParameter();
+                parameter.in = "header";
+            } else if (param.getType().equals(RestParamType.path)) {
+                parameter = op.createParameter();
+                parameter.in = "path";
+            } else if (param.getType().equals(RestParamType.query)) {
+                parameter = op.createParameter();
+                parameter.in = "query";
+            }
+
+            if (parameter != null) {
+                parameter.name = param.getName();
+                if (org.apache.camel.util.ObjectHelper.isNotEmpty(param.getDescription())) {
+                    parameter.description = param.getDescription();
+                }
+                parameter.required = param.getRequired();
+
+                // set type on parameter
+                if (!parameter.in.equals("body")) {
+
+                    Oas30Parameter parameter30 = (Oas30Parameter)parameter;
+                    Oas30Schema oas30Schema = null;
+                    final boolean isArray = param.getDataType().equalsIgnoreCase("array");
+                    final List<String> allowableValues = param.getAllowableValues();
+                    final boolean hasAllowableValues = allowableValues != null && !allowableValues.isEmpty();
+                    if (param.getDataType() != null) {
+                        parameter30.schema = parameter30.createSchema();
+                        oas30Schema = (Oas30Schema)parameter30.schema;
+                        oas30Schema.type = param.getDataType();
+                        if (param.getDataFormat() != null) {
+                            oas30Schema.format = param.getDataFormat();
+                        }
+                        if (isArray) {
+                            if (param.getArrayType() != null) {
+                                if (param.getArrayType().equalsIgnoreCase("string")) {
+                                    defineSchemas(parameter30, allowableValues, String.class);
+                                }
+                                if (param.getArrayType().equalsIgnoreCase("int")
+                                    || param.getArrayType().equalsIgnoreCase("integer")) {
+                                    defineSchemas(parameter30, allowableValues, Integer.class);
+                                }
+                                if (param.getArrayType().equalsIgnoreCase("long")) {
+                                    defineSchemas(parameter30, allowableValues, Long.class);
+                                }
+                                if (param.getArrayType().equalsIgnoreCase("float")) {
+                                    defineSchemas(parameter30, allowableValues, Float.class);
+                                }
+                                if (param.getArrayType().equalsIgnoreCase("double")) {
+                                    defineSchemas(parameter30, allowableValues, Double.class);
+                                }
+                                if (param.getArrayType().equalsIgnoreCase("boolean")) {
+                                    defineSchemas(parameter30, allowableValues, Boolean.class);
+                                }
+                            }
+                        }
+                    }
+                    if (param.getCollectionFormat() != null) {
+                        parameter30.style = param.getCollectionFormat().name();
+                    }
+                    if (hasAllowableValues && !isArray) {
+                        oas30Schema.enum_ = allowableValues;
+                    }
+
+                    // set default value on parameter
+                    if (org.apache.camel.util.ObjectHelper.isNotEmpty(param.getDefaultValue())) {
+                        oas30Schema.default_ = param.getDefaultValue();
+                    }
+                    // add examples
+                    if (param.getExamples() != null && param.getExamples().size() >= 1) {
+                        // we can only set one example on the parameter
+                        Extension exampleExtension = parameter30.createExtension();
+                        boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
+                        if (emptyKey) {
+                            exampleExtension.name = "x-example";
+                            exampleExtension.value = param.getExamples().get(0).getValue();
+                            parameter30.addExtension("x-example", exampleExtension);
+                        } else {
+                            Map<String, String> exampleValue = new HashMap<String, String>();
+                            exampleValue.put(param.getExamples().get(0).getKey(),
+                                             param.getExamples().get(0).getValue());
+                            exampleExtension.name = "x-examples";
+                            exampleExtension.value = exampleValue;
+                            parameter30.addExtension("x-examples", exampleExtension);
+                        }
+                    }
+                }
+
+                // set schema on body parameter
+                if (parameter.in.equals("body")) {
+
+                    Oas30Parameter bp = (Oas30Parameter)parameter;
+
+                    String type = param.getDataType() != null ? param.getDataType() : verb.getType();
+                    if (type != null) {
+                        if (type.endsWith("[]")) {
+                            type = type.substring(0, type.length() - 2);
+
+                            OasSchema arrayModel = (Oas30Schema)bp.createSchema();
+                            arrayModel = modelTypeAsProperty(type, openApi, arrayModel);
+                            bp.schema = arrayModel;
+
+                        } else {
+                            String ref = modelTypeAsRef(type, openApi);
+                            if (ref != null) {
+                                Oas30Schema refModel = (Oas30Schema)bp.createSchema();
+                                refModel.$ref = "#/components/schemas/" + ref;
+                                bp.schema = refModel;
+                            } else {
+                                OasSchema model = (Oas30Schema)bp.createSchema();
+                                model = modelTypeAsProperty(type, openApi, model);
+
+                                bp.schema = model;
+
+                            }
+                        }
+                    }
+                    
+                    if (consumes != null) {
+                        String[] parts = consumes.split(",");
+                        if (op.requestBody == null) {
+                            op.requestBody = op.createRequestBody();
+                            op.requestBody.required = param.getRequired();
+                            op.requestBody.description = param.getDescription();
+                        }
+                        for (String part : parts) {
+                            Oas30MediaType mediaType = op.requestBody.createMediaType(part);
+                            mediaType.schema = mediaType.createSchema();
+                            mediaType.schema.$ref = bp.schema.$ref;
+                            op.requestBody.addMediaType(part, mediaType);
+
+                        }
+                    }
+                    // add examples
+                    if (param.getExamples() != null) {
+                        Extension exampleExtension = op.requestBody.createExtension();
+                        boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
+                        if (emptyKey) {
+                            exampleExtension.name = "x-example";
+                            exampleExtension.value = param.getExamples().get(0).getValue();
+                            op.requestBody.addExtension("x-example", exampleExtension);
+                        } else {
+                            Map<String, String> exampleValue = new HashMap<String, String>();
+                            exampleValue.put(param.getExamples().get(0).getKey(),
+                                             param.getExamples().get(0).getValue());
+                            exampleExtension.name = "x-examples";
+                            exampleExtension.value = exampleValue;
+                            op.requestBody.addExtension("x-examples", exampleExtension);
+                        }
+                    }
+                    parameter = null;
+                }
+
+                op.addParameter(parameter);
+            }
+
+        }
+
+        // clear parameters if its empty
+        if (op.getParameters() != null && op.getParameters().isEmpty()) {
+            op.parameters.clear();
+        }
+
+        // if we have an out type then set that as response message
+        if (verb.getOutType() != null) {
+
+            if (op.responses == null) {
+                op.responses = op.createResponses();
+            }
+            Oas30Response response = (Oas30Response)op.responses.createResponse("200");
+            String[] parts = null;
+            if (produces != null) {
+                parts = produces.split(",");
+                for (String produce : parts) {
+                    Oas30MediaType contentType = response.createMediaType(produce);
+                    response.addMediaType(produce, contentType);
+                    OasSchema model = contentType.createSchema();
+                    model = modelTypeAsProperty(verb.getOutType(), openApi, model);
+                    contentType.schema = (Oas30Schema)model;
+                    response.description = "Output type";
+                    op.responses.addResponse("200", response);
+                }
+            }
+
+        }
+    }
+
+    private void doParseVerbOas20(Oas20Document openApi, VerbDefinition verb, Oas20Operation op, String consumes,
+                               String produces) {
+        if (consumes != null) {
+            String[] parts = consumes.split(",");
+            if (op.consumes == null) {
+                op.consumes = new ArrayList<String>();
+            }
+            for (String part : parts) {
+                op.consumes.add(part);
+            }
+        }
+
+        if (produces != null) {
+            String[] parts = produces.split(",");
+            if (op.produces == null) {
+                op.produces = new ArrayList<String>();
+            }
+            for (String part : parts) {
+                op.produces.add(part);
+            }
+        }
+
+        if (verb.getDescriptionText() != null) {
+            op.summary = verb.getDescriptionText();
+        }
+
+        // security
+        for (SecurityDefinition sd : verb.getSecurity()) {
+            List<String> scopes = new ArrayList<>();
+            if (sd.getScopes() != null) {
+                for (String scope : ObjectHelper.createIterable(sd.getScopes())) {
+                    scopes.add(scope);
+                }
+            }
+            SecurityRequirement securityRequirement = op.createSecurityRequirement();
+            securityRequirement.addSecurityRequirementItem(sd.getKey(), scopes);
+            op.addSecurityRequirement(securityRequirement);
+        }
+
+        for (RestOperationParamDefinition param : verb.getParams()) {
+            OasParameter parameter = null;
+            if (param.getType().equals(RestParamType.body)) {
+                parameter = op.createParameter();
+                parameter.in = "body";
+            } else if (param.getType().equals(RestParamType.formData)) {
+                parameter = op.createParameter();
+                parameter.in = "formData";
+            } else if (param.getType().equals(RestParamType.header)) {
+                parameter = op.createParameter();
+                parameter.in = "header";
+            } else if (param.getType().equals(RestParamType.path)) {
+                parameter = op.createParameter();
+                parameter.in = "path";
+            } else if (param.getType().equals(RestParamType.query)) {
+                parameter = op.createParameter();
+                parameter.in = "query";
+            }
+
+            if (parameter != null) {
+                parameter.name = param.getName();
+                if (org.apache.camel.util.ObjectHelper.isNotEmpty(param.getDescription())) {
+                    parameter.description = param.getDescription();
+                }
+                parameter.required = param.getRequired();
+
+                // set type on parameter
+                if (!parameter.in.equals("body")) {
+
+                    Oas20Parameter serializableParameter = (Oas20Parameter)parameter;
+                    final boolean isArray = param.getDataType().equalsIgnoreCase("array");
+                    final List<String> allowableValues = param.getAllowableValues();
+                    final boolean hasAllowableValues = allowableValues != null && !allowableValues.isEmpty();
+                    if (param.getDataType() != null) {
+                        serializableParameter.type = param.getDataType();
+                        if (param.getDataFormat() != null) {
+                            serializableParameter.format = param.getDataFormat();
+                        }
+                        if (isArray) {
+                            if (param.getArrayType() != null) {
+                                if (param.getArrayType().equalsIgnoreCase("string")) {
+                                    defineItems(serializableParameter, allowableValues, new Oas20Items(),
+                                                String.class);
+                                }
+                                if (param.getArrayType().equalsIgnoreCase("int")
+                                    || param.getArrayType().equalsIgnoreCase("integer")) {
+                                    defineItems(serializableParameter, allowableValues, new Oas20Items(),
+                                                Integer.class);
+                                }
+                                if (param.getArrayType().equalsIgnoreCase("long")) {
+                                    defineItems(serializableParameter, allowableValues, new Oas20Items(),
+                                                Long.class);
+                                }
+                                if (param.getArrayType().equalsIgnoreCase("float")) {
+                                    defineItems(serializableParameter, allowableValues, new Oas20Items(),
+                                                Float.class);
+                                }
+                                if (param.getArrayType().equalsIgnoreCase("double")) {
+                                    defineItems(serializableParameter, allowableValues, new Oas20Items(),
+                                                Double.class);
+                                }
+                                if (param.getArrayType().equalsIgnoreCase("boolean")) {
+                                    defineItems(serializableParameter, allowableValues, new Oas20Items(),
+                                                Boolean.class);
+                                }
+                            }
+                        }
+                    }
+                    if (param.getCollectionFormat() != null) {
+                        serializableParameter.collectionFormat = param.getCollectionFormat().name();
+                    }
+                    if (hasAllowableValues && !isArray) {
+                        serializableParameter.enum_ = allowableValues;
+                    }
+                    // set default value on parameter
+                    if (org.apache.camel.util.ObjectHelper.isNotEmpty(param.getDefaultValue())) {
+                        serializableParameter.default_ = param.getDefaultValue();
+                    }
+                    // add examples
+                    if (param.getExamples() != null && param.getExamples().size() >= 1) {
+                        // we can only set one example on the parameter
+                        Extension exampleExtension = serializableParameter.createExtension();
+                        boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
+                        if (emptyKey) {
+                            exampleExtension.name = "x-example";
+                            exampleExtension.value = param.getExamples().get(0).getValue();
+                            serializableParameter.addExtension("x-example", exampleExtension);
+                        } else {
+                            Map<String, String> exampleValue = new HashMap<String, String>();
+                            exampleValue.put(param.getExamples().get(0).getKey(),
+                                             param.getExamples().get(0).getValue());
+                            exampleExtension.name = "x-examples";
+                            exampleExtension.value = exampleValue;
+                            serializableParameter.addExtension("x-examples", exampleExtension);
+                        }
+                    }
+
+                }
+
+                // set schema on body parameter
+                if (parameter.in.equals("body")) {
+                    Oas20Parameter bp = (Oas20Parameter)parameter;
+
+                    String type = param.getDataType() != null ? param.getDataType() : verb.getType();
+                    if (type != null) {
+                        if (type.endsWith("[]")) {
+                            type = type.substring(0, type.length() - 2);
+                            OasSchema arrayModel = (Oas20Schema)bp.createSchema();
+                            arrayModel = modelTypeAsProperty(type, openApi, arrayModel);
+                            bp.schema = arrayModel;
+                        } else {
+                            String ref = modelTypeAsRef(type, openApi);
+                            if (ref != null) {
+                                Oas20Schema refModel = (Oas20Schema)bp.createSchema();
+                                refModel.$ref = "#/definitions/" + ref;
+                                bp.schema = refModel;
+                            } else {
+                                OasSchema model = (Oas20Schema)bp.createSchema();
+                                model = modelTypeAsProperty(type, openApi, model);
+                                bp.schema = model;
+                            }
+                        }
+                    }
+                    // add examples
+                    if (param.getExamples() != null) {
+                        Extension exampleExtension = bp.createExtension();
+                        boolean emptyKey = param.getExamples().get(0).getKey().length() == 0;
+                        if (emptyKey) {
+                            exampleExtension.name = "x-example";
+                            exampleExtension.value = param.getExamples().get(0).getValue();
+                            bp.addExtension("x-example", exampleExtension);
+                        } else {
+                            Map<String, String> exampleValue = new HashMap<String, String>();
+                            exampleValue.put(param.getExamples().get(0).getKey(),
+                                             param.getExamples().get(0).getValue());
+                            exampleExtension.name = "x-examples";
+                            exampleExtension.value = exampleValue;
+                            bp.addExtension("x-examples", exampleExtension);
+                        }
+                    }
+                }
+                op.addParameter(parameter);
+            }
+
+        }
+
+        // clear parameters if its empty
+        if (op.getParameters() != null && op.getParameters().isEmpty()) {
+            op.parameters.clear();
+        }
+
+        // if we have an out type then set that as response message
+        if (verb.getOutType() != null) {
+
+            if (op.responses == null) {
+                op.responses = op.createResponses();
+            }
+            Oas20Response response = (Oas20Response)op.responses.createResponse("200");
+            OasSchema model = response.createSchema();
+            model = modelTypeAsProperty(verb.getOutType(), openApi, model);
+
+            response.schema = (Oas20Schema)model;
+            response.description = "Output type";
+            op.responses.addResponse("200", response);
 
         }
     }
@@ -875,474 +916,484 @@ public class RestOpenApiReader {
         }
         for (RestOperationResponseMsgDefinition msg : verb.getResponseMsgs()) {
             if (openApi instanceof Oas20Document) {
-                Oas20Response response = null;
-
-                if (op.responses != null && op.responses.getResponses() != null) {
-                    response = (Oas20Response)op.responses.getResponse(msg.getCode());
-                }
-                if (response == null) {
-                    response = (Oas20Response)op.responses.createResponse(msg.getCode());
-                    op.responses.addResponse(msg.getCode(), response);
-                }
-                if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getResponseModel())) {
-                    OasSchema model = response.createSchema();
-                    model = modelTypeAsProperty(msg.getResponseModel(), openApi, model);
-
-                    response.schema = (Oas20Schema)model;
-                }
-                if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getMessage())) {
-                    response.description = msg.getMessage();
-                }
-
-                // add headers
-                if (msg.getHeaders() != null) {
-                    for (RestOperationResponseHeaderDefinition header : msg.getHeaders()) {
-                        String name = header.getName();
-                        String type = header.getDataType();
-                        String format = header.getDataFormat();
-                        if (response.headers == null) {
-                            response.headers = response.createHeaders();
-                        }
-                        if ("string".equals(type)) {
-                            Oas20Header sp = response.headers.createHeader(name);
-                            sp.type = "string";
-                            if (format != null) {
-                                sp.format = format;
-                            }
-                            sp.description = header.getDescription();
-                            if (header.getAllowableValues() != null) {
-                                sp.enum_ = header.getAllowableValues();
-                            }
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = sp.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                sp.getExtensions().add(exampleExtension);
-
-                            }
-                            response.headers.addHeader(name, sp);
-                        } else if ("int".equals(type) || "integer".equals(type)) {
-                            Oas20Header ip = response.headers.createHeader(name);
-                            ip.type = "integer";
-                            if (format != null) {
-                                ip.format = format;
-                            }
-                            ip.description = header.getDescription();
-
-                            List<String> values;
-                            if (!header.getAllowableValues().isEmpty()) {
-                                values = new ArrayList<>();
-                                for (String text : header.getAllowableValues()) {
-                                    values.add(text);
-                                }
-                                ip.enum_ = values;
-                            }
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = ip.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                ip.getExtensions().add(exampleExtension);
-                            }
-                            response.headers.addHeader(name, ip);
-                        } else if ("long".equals(type)) {
-                            Oas20Header lp = response.headers.createHeader(name);
-                            lp.type = type;
-                            if (format != null) {
-                                lp.format = format;
-                            }
-                            lp.description = header.getDescription();
-
-                            List<String> values;
-                            if (!header.getAllowableValues().isEmpty()) {
-                                values = new ArrayList<>();
-                                for (String text : header.getAllowableValues()) {
-                                    values.add(text);
-                                }
-                                lp.enum_ = values;
-                            }
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = lp.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                lp.getExtensions().add(exampleExtension);
-                            }
-
-                            response.headers.addHeader(name, lp);
-                        } else if ("float".equals(type)) {
-                            Oas20Header fp = response.headers.createHeader(name);
-                            fp.type = "float";
-                            if (format != null) {
-                                fp.format = format;
-                            }
-                            fp.description = header.getDescription();
-
-                            List<String> values;
-                            if (!header.getAllowableValues().isEmpty()) {
-                                values = new ArrayList<>();
-                                for (String text : header.getAllowableValues()) {
-                                    values.add(text);
-                                }
-                                fp.enum_ = values;
-                            }
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = fp.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                fp.getExtensions().add(exampleExtension);
-                            }
-                            response.headers.addHeader(name, fp);
-                        } else if ("double".equals(type)) {
-                            Oas20Header dp = response.headers.createHeader(name);
-                            dp.type = "double";
-                            if (format != null) {
-                                dp.format = format;
-                            }
-                            dp.description = header.getDescription();
-
-                            List<String> values;
-                            if (!header.getAllowableValues().isEmpty()) {
-                                values = new ArrayList<>();
-                                for (String text : header.getAllowableValues()) {
-                                    values.add(text);
-                                }
-                                dp.enum_ = values;
-                            }
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = dp.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                dp.getExtensions().add(exampleExtension);
-                            }
-                            response.headers.addHeader(name, dp);
-                        } else if ("boolean".equals(type)) {
-                            Oas20Header bp = response.headers.createHeader(name);
-                            bp.type = "boolean";
-                            if (format != null) {
-                                bp.format = format;
-                            }
-                            bp.description = header.getDescription();
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = bp.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                bp.getExtensions().add(exampleExtension);
-                            }
-                            response.headers.addHeader(name, bp);
-                        } else if ("array".equals(type)) {
-                            Oas20Header ap = response.headers.createHeader(name);
-
-                            if (org.apache.camel.util.ObjectHelper.isNotEmpty(header.getDescription())) {
-                                ap.description = header.getDescription();
-                            }
-                            if (header.getArrayType() != null) {
-                                if (header.getArrayType().equalsIgnoreCase("string")) {
-                                    Oas20Items items = ap.createItems();
-                                    items.type = "string";
-                                    ap.items = items;
-                                }
-                                if (header.getArrayType().equalsIgnoreCase("int")
-                                    || header.getArrayType().equalsIgnoreCase("integer")) {
-                                    Oas20Items items = ap.createItems();
-                                    items.type = "integer";
-                                    ap.items = items;
-                                }
-                                if (header.getArrayType().equalsIgnoreCase("long")) {
-                                    Oas20Items items = ap.createItems();
-                                    items.type = "long";
-                                    ap.items = items;
-                                }
-                                if (header.getArrayType().equalsIgnoreCase("float")) {
-                                    Oas20Items items = ap.createItems();
-                                    items.type = "float";
-                                    ap.items = items;
-                                }
-                                if (header.getArrayType().equalsIgnoreCase("double")) {
-                                    Oas20Items items = ap.createItems();
-                                    items.type = "double";
-                                    ap.items = items;
-                                }
-                                if (header.getArrayType().equalsIgnoreCase("boolean")) {
-                                    Oas20Items items = ap.createItems();
-                                    items.type = "boolean";
-                                    ap.items = items;
-                                }
-                            }
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = ap.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                ap.getExtensions().add(exampleExtension);
-                            }
-                            response.headers.addHeader(name, ap);
-                        }
-                    }
-                }
-
-                // add examples
-                if (msg.getExamples() != null) {
-                    Extension exampleExtension = response.createExtension();
-                    exampleExtension.name = "examples";
-                    Map<String, String> examplesValue = new HashMap<String, String>();
-                    for (RestPropertyDefinition prop : msg.getExamples()) {
-                        examplesValue.put(prop.getKey(), prop.getValue());
-
-                    }
-                    exampleExtension.value = examplesValue;
-                    response.addExtension(exampleExtension.name, exampleExtension);
-                }
+                doParseResponseOas20((Oas20Document)openApi, (Oas20Operation)op, msg);
             } else if (openApi instanceof Oas30Document) {
-                Oas30Response response = null;
-
-                if (op.responses != null && op.responses.getResponses() != null) {
-                    response = (Oas30Response)op.responses.getResponse(msg.getCode());
-                }
-                if (response == null) {
-                    response = (Oas30Response)op.responses.createResponse(msg.getCode());
-                    op.responses.addResponse(msg.getCode(), response);
-                }
-                if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getResponseModel())) {
-                    String[] parts = null;
-                    if (produces != null) {
-                        parts = produces.split(",");
-                        for (String produce : parts) {
-                            Oas30MediaType contentType = response.createMediaType(produce);
-                            response.addMediaType(produce, contentType);
-                            OasSchema model = contentType.createSchema();
-                            model = modelTypeAsProperty(msg.getResponseModel(), openApi, model);
-                            contentType.schema = (Oas30Schema)model;
-                        }
-                    }
-                }
-                if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getMessage())) {
-                    response.description = msg.getMessage();
-                }
-
-                // add headers
-                if (msg.getHeaders() != null) {
-                    for (RestOperationResponseHeaderDefinition header : msg.getHeaders()) {
-                        String name = header.getName();
-                        String type = header.getDataType();
-                        String format = header.getDataFormat();
-                        
-                        if ("string".equals(type)) {
-                            Oas30Header sp = response.createHeader(name);
-                            response.addHeader(name, sp);
-                            Oas30Schema schema = sp.createSchema();
-                            sp.schema = schema;
-                            schema.type = "string";
-                            if (format != null) {
-                                schema.format = format;
-                            }
-                            sp.description = header.getDescription();
-                            if (header.getAllowableValues() != null) {
-                                schema.enum_ = header.getAllowableValues();
-                            }
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = sp.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                sp.getExtensions().add(exampleExtension);
-
-                            }
-                        } else if ("int".equals(type) || "integer".equals(type)) {
-                            Oas30Header ip = response.createHeader(name);
-                            response.addHeader(name, ip);
-                            Oas30Schema schema = ip.createSchema();
-                            ip.schema = schema;
-                            schema.type = "integer";
-                            if (format != null) {
-                                schema.format = format;
-                            }
-                            ip.description = header.getDescription();
-
-                            List<String> values;
-                            if (!header.getAllowableValues().isEmpty()) {
-                                values = new ArrayList<>();
-                                for (String text : header.getAllowableValues()) {
-                                    values.add(text);
-                                }
-                                schema.enum_ = values;
-                            }
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = ip.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                ip.getExtensions().add(exampleExtension);
-                            }
-                        } else if ("long".equals(type)) {
-                            Oas30Header lp = response.createHeader(name);
-                            response.addHeader(name, lp);
-                            Oas30Schema schema = lp.createSchema();
-                            lp.schema = schema;
-                            schema.type = type;
-                            if (format != null) {
-                                schema.format = format;
-                            }
-                            lp.description = header.getDescription();
-
-                            List<String> values;
-                            if (!header.getAllowableValues().isEmpty()) {
-                                values = new ArrayList<>();
-                                for (String text : header.getAllowableValues()) {
-                                    values.add(text);
-                                }
-                                schema.enum_ = values;
-                            }
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = lp.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                lp.getExtensions().add(exampleExtension);
-                            }
-
-                        } else if ("float".equals(type)) {
-                            Oas30Header fp = response.createHeader(name);
-                            response.addHeader(name, fp);
-                            Oas30Schema schema = fp.createSchema();
-                            fp.schema = schema;
-                            schema.type = type;
-                            if (format != null) {
-                                schema.format = format;
-                            }
-                            fp.description = header.getDescription();
-
-                            List<String> values;
-                            if (!header.getAllowableValues().isEmpty()) {
-                                values = new ArrayList<>();
-                                for (String text : header.getAllowableValues()) {
-                                    values.add(text);
-                                }
-                                schema.enum_ = values;
-                            }
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = fp.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                fp.getExtensions().add(exampleExtension);
-                            }
-                        } else if ("double".equals(type)) {
-                            Oas30Header dp = response.createHeader(name);
-                            response.addHeader(name, dp);
-                            Oas30Schema schema = dp.createSchema();
-                            dp.schema = schema;
-                            schema.type = "double";
-                            if (format != null) {
-                                schema.format = format;
-                            }
-                            dp.description = header.getDescription();
-
-                            List<String> values;
-                            if (!header.getAllowableValues().isEmpty()) {
-                                values = new ArrayList<>();
-                                for (String text : header.getAllowableValues()) {
-                                    values.add(text);
-                                }
-                                schema.enum_ = values;
-                            }
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = dp.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                dp.getExtensions().add(exampleExtension);
-                            }
-                        } else if ("boolean".equals(type)) {
-                            Oas30Header bp = response.createHeader(name);
-                            response.addHeader(name, bp);
-                            Oas30Schema schema = bp.createSchema();
-                            bp.schema = schema;
-                            schema.type = "boolean";
-                            if (format != null) {
-                                schema.format = format;
-                            }
-                            bp.description = header.getDescription();
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = bp.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                bp.getExtensions().add(exampleExtension);
-                            }
-                        } else if ("array".equals(type)) {
-                            Oas30Header ap = response.createHeader(name);
-
-                            if (org.apache.camel.util.ObjectHelper.isNotEmpty(header.getDescription())) {
-                                ap.description = header.getDescription();
-                            }
-                            if (header.getArrayType() != null) {
-                                if (header.getArrayType().equalsIgnoreCase("string")) {
-                                    Oas30Schema items = ap.createSchema();
-                                    items.type = "string";
-                                    ap.schema = items;
-                                }
-                                if (header.getArrayType().equalsIgnoreCase("int")
-                                    || header.getArrayType().equalsIgnoreCase("integer")) {
-                                    Oas30Schema items = ap.createSchema();
-                                    items.type = "integer";
-                                    ap.schema = items;
-                                }
-                                if (header.getArrayType().equalsIgnoreCase("long")) {
-                                    Oas30Schema items = ap.createSchema();
-                                    items.type = "long";
-                                    ap.schema = items;
-                                }
-                                if (header.getArrayType().equalsIgnoreCase("float")) {
-                                    Oas30Schema items = ap.createSchema();
-                                    items.type = "float";
-                                    ap.schema = items;
-                                }
-                                if (header.getArrayType().equalsIgnoreCase("double")) {
-                                    Oas30Schema items = ap.createSchema();
-                                    items.type = "double";
-                                    ap.schema = items;
-                                }
-                                if (header.getArrayType().equalsIgnoreCase("boolean")) {
-                                    Oas30Schema items = ap.createSchema();
-                                    items.type = "boolean";
-                                    ap.schema = items;
-                                }
-                            }
-                            // add example
-                            if (header.getExample() != null) {
-                                Extension exampleExtension = ap.createExtension();
-                                exampleExtension.name = "x-example";
-                                exampleExtension.value = header.getExample();
-                                ap.getExtensions().add(exampleExtension);
-                            }
-                            response.addHeader(name, ap);
-                        }
-                    }
-                }
-
-                // add examples
-                if (msg.getExamples() != null) {
-                    Extension exampleExtension = response.createExtension();
-                    exampleExtension.name = "x-examples";
-                    Map<String, String> examplesValue = new HashMap<String, String>();
-                    for (RestPropertyDefinition prop : msg.getExamples()) {
-                        examplesValue.put(prop.getKey(), prop.getValue());
-
-                    }
-                    exampleExtension.value = examplesValue;
-                    response.addExtension(exampleExtension.name, exampleExtension);
-                }
+                doParseResponseOas30((Oas30Document)openApi, (Oas30Operation)op, produces, msg);
             }
         }
 
         // must include an empty noop response if none exists
         if (op.responses == null || op.responses.getResponses().isEmpty()) {
             op.responses.addResponse("200", op.responses.createResponse("200"));
+        }
+    }
+
+    private void doParseResponseOas30(Oas30Document openApi, Oas30Operation op, String produces,
+                                      RestOperationResponseMsgDefinition msg) {
+        Oas30Response response = null;
+
+        if (op.responses != null && op.responses.getResponses() != null) {
+            response = (Oas30Response)op.responses.getResponse(msg.getCode());
+        }
+        if (response == null) {
+            response = (Oas30Response)op.responses.createResponse(msg.getCode());
+            op.responses.addResponse(msg.getCode(), response);
+        }
+        if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getResponseModel())) {
+            String[] parts = null;
+            if (produces != null) {
+                parts = produces.split(",");
+                for (String produce : parts) {
+                    Oas30MediaType contentType = response.createMediaType(produce);
+                    response.addMediaType(produce, contentType);
+                    OasSchema model = contentType.createSchema();
+                    model = modelTypeAsProperty(msg.getResponseModel(), openApi, model);
+                    contentType.schema = (Oas30Schema)model;
+                }
+            }
+        }
+        if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getMessage())) {
+            response.description = msg.getMessage();
+        }
+
+        // add headers
+        if (msg.getHeaders() != null) {
+            for (RestOperationResponseHeaderDefinition header : msg.getHeaders()) {
+                String name = header.getName();
+                String type = header.getDataType();
+                String format = header.getDataFormat();
+                
+                if ("string".equals(type)) {
+                    Oas30Header sp = response.createHeader(name);
+                    response.addHeader(name, sp);
+                    Oas30Schema schema = sp.createSchema();
+                    sp.schema = schema;
+                    schema.type = "string";
+                    if (format != null) {
+                        schema.format = format;
+                    }
+                    sp.description = header.getDescription();
+                    if (header.getAllowableValues() != null) {
+                        schema.enum_ = header.getAllowableValues();
+                    }
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = sp.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        sp.getExtensions().add(exampleExtension);
+
+                    }
+                } else if ("int".equals(type) || "integer".equals(type)) {
+                    Oas30Header ip = response.createHeader(name);
+                    response.addHeader(name, ip);
+                    Oas30Schema schema = ip.createSchema();
+                    ip.schema = schema;
+                    schema.type = "integer";
+                    if (format != null) {
+                        schema.format = format;
+                    }
+                    ip.description = header.getDescription();
+
+                    List<String> values;
+                    if (!header.getAllowableValues().isEmpty()) {
+                        values = new ArrayList<>();
+                        for (String text : header.getAllowableValues()) {
+                            values.add(text);
+                        }
+                        schema.enum_ = values;
+                    }
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = ip.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        ip.getExtensions().add(exampleExtension);
+                    }
+                } else if ("long".equals(type)) {
+                    Oas30Header lp = response.createHeader(name);
+                    response.addHeader(name, lp);
+                    Oas30Schema schema = lp.createSchema();
+                    lp.schema = schema;
+                    schema.type = type;
+                    if (format != null) {
+                        schema.format = format;
+                    }
+                    lp.description = header.getDescription();
+
+                    List<String> values;
+                    if (!header.getAllowableValues().isEmpty()) {
+                        values = new ArrayList<>();
+                        for (String text : header.getAllowableValues()) {
+                            values.add(text);
+                        }
+                        schema.enum_ = values;
+                    }
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = lp.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        lp.getExtensions().add(exampleExtension);
+                    }
+
+                } else if ("float".equals(type)) {
+                    Oas30Header fp = response.createHeader(name);
+                    response.addHeader(name, fp);
+                    Oas30Schema schema = fp.createSchema();
+                    fp.schema = schema;
+                    schema.type = type;
+                    if (format != null) {
+                        schema.format = format;
+                    }
+                    fp.description = header.getDescription();
+
+                    List<String> values;
+                    if (!header.getAllowableValues().isEmpty()) {
+                        values = new ArrayList<>();
+                        for (String text : header.getAllowableValues()) {
+                            values.add(text);
+                        }
+                        schema.enum_ = values;
+                    }
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = fp.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        fp.getExtensions().add(exampleExtension);
+                    }
+                } else if ("double".equals(type)) {
+                    Oas30Header dp = response.createHeader(name);
+                    response.addHeader(name, dp);
+                    Oas30Schema schema = dp.createSchema();
+                    dp.schema = schema;
+                    schema.type = "double";
+                    if (format != null) {
+                        schema.format = format;
+                    }
+                    dp.description = header.getDescription();
+
+                    List<String> values;
+                    if (!header.getAllowableValues().isEmpty()) {
+                        values = new ArrayList<>();
+                        for (String text : header.getAllowableValues()) {
+                            values.add(text);
+                        }
+                        schema.enum_ = values;
+                    }
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = dp.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        dp.getExtensions().add(exampleExtension);
+                    }
+                } else if ("boolean".equals(type)) {
+                    Oas30Header bp = response.createHeader(name);
+                    response.addHeader(name, bp);
+                    Oas30Schema schema = bp.createSchema();
+                    bp.schema = schema;
+                    schema.type = "boolean";
+                    if (format != null) {
+                        schema.format = format;
+                    }
+                    bp.description = header.getDescription();
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = bp.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        bp.getExtensions().add(exampleExtension);
+                    }
+                } else if ("array".equals(type)) {
+                    Oas30Header ap = response.createHeader(name);
+
+                    if (org.apache.camel.util.ObjectHelper.isNotEmpty(header.getDescription())) {
+                        ap.description = header.getDescription();
+                    }
+                    if (header.getArrayType() != null) {
+                        if (header.getArrayType().equalsIgnoreCase("string")) {
+                            Oas30Schema items = ap.createSchema();
+                            items.type = "string";
+                            ap.schema = items;
+                        }
+                        if (header.getArrayType().equalsIgnoreCase("int")
+                            || header.getArrayType().equalsIgnoreCase("integer")) {
+                            Oas30Schema items = ap.createSchema();
+                            items.type = "integer";
+                            ap.schema = items;
+                        }
+                        if (header.getArrayType().equalsIgnoreCase("long")) {
+                            Oas30Schema items = ap.createSchema();
+                            items.type = "long";
+                            ap.schema = items;
+                        }
+                        if (header.getArrayType().equalsIgnoreCase("float")) {
+                            Oas30Schema items = ap.createSchema();
+                            items.type = "float";
+                            ap.schema = items;
+                        }
+                        if (header.getArrayType().equalsIgnoreCase("double")) {
+                            Oas30Schema items = ap.createSchema();
+                            items.type = "double";
+                            ap.schema = items;
+                        }
+                        if (header.getArrayType().equalsIgnoreCase("boolean")) {
+                            Oas30Schema items = ap.createSchema();
+                            items.type = "boolean";
+                            ap.schema = items;
+                        }
+                    }
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = ap.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        ap.getExtensions().add(exampleExtension);
+                    }
+                    response.addHeader(name, ap);
+                }
+            }
+        }
+
+        // add examples
+        if (msg.getExamples() != null) {
+            Extension exampleExtension = response.createExtension();
+            exampleExtension.name = "x-examples";
+            Map<String, String> examplesValue = new HashMap<String, String>();
+            for (RestPropertyDefinition prop : msg.getExamples()) {
+                examplesValue.put(prop.getKey(), prop.getValue());
+
+            }
+            exampleExtension.value = examplesValue;
+            response.addExtension(exampleExtension.name, exampleExtension);
+        }
+    }
+
+    private void doParseResponseOas20(Oas20Document openApi, Oas20Operation op,
+                                      RestOperationResponseMsgDefinition msg) {
+        Oas20Response response = null;
+
+        if (op.responses != null && op.responses.getResponses() != null) {
+            response = (Oas20Response)op.responses.getResponse(msg.getCode());
+        }
+        if (response == null) {
+            response = (Oas20Response)op.responses.createResponse(msg.getCode());
+            op.responses.addResponse(msg.getCode(), response);
+        }
+        if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getResponseModel())) {
+            OasSchema model = response.createSchema();
+            model = modelTypeAsProperty(msg.getResponseModel(), openApi, model);
+
+            response.schema = (Oas20Schema)model;
+        }
+        if (org.apache.camel.util.ObjectHelper.isNotEmpty(msg.getMessage())) {
+            response.description = msg.getMessage();
+        }
+
+        // add headers
+        if (msg.getHeaders() != null) {
+            for (RestOperationResponseHeaderDefinition header : msg.getHeaders()) {
+                String name = header.getName();
+                String type = header.getDataType();
+                String format = header.getDataFormat();
+                if (response.headers == null) {
+                    response.headers = response.createHeaders();
+                }
+                if ("string".equals(type)) {
+                    Oas20Header sp = response.headers.createHeader(name);
+                    sp.type = "string";
+                    if (format != null) {
+                        sp.format = format;
+                    }
+                    sp.description = header.getDescription();
+                    if (header.getAllowableValues() != null) {
+                        sp.enum_ = header.getAllowableValues();
+                    }
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = sp.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        sp.getExtensions().add(exampleExtension);
+
+                    }
+                    response.headers.addHeader(name, sp);
+                } else if ("int".equals(type) || "integer".equals(type)) {
+                    Oas20Header ip = response.headers.createHeader(name);
+                    ip.type = "integer";
+                    if (format != null) {
+                        ip.format = format;
+                    }
+                    ip.description = header.getDescription();
+
+                    List<String> values;
+                    if (!header.getAllowableValues().isEmpty()) {
+                        values = new ArrayList<>();
+                        for (String text : header.getAllowableValues()) {
+                            values.add(text);
+                        }
+                        ip.enum_ = values;
+                    }
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = ip.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        ip.getExtensions().add(exampleExtension);
+                    }
+                    response.headers.addHeader(name, ip);
+                } else if ("long".equals(type)) {
+                    Oas20Header lp = response.headers.createHeader(name);
+                    lp.type = type;
+                    if (format != null) {
+                        lp.format = format;
+                    }
+                    lp.description = header.getDescription();
+
+                    List<String> values;
+                    if (!header.getAllowableValues().isEmpty()) {
+                        values = new ArrayList<>();
+                        for (String text : header.getAllowableValues()) {
+                            values.add(text);
+                        }
+                        lp.enum_ = values;
+                    }
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = lp.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        lp.getExtensions().add(exampleExtension);
+                    }
+
+                    response.headers.addHeader(name, lp);
+                } else if ("float".equals(type)) {
+                    Oas20Header fp = response.headers.createHeader(name);
+                    fp.type = "float";
+                    if (format != null) {
+                        fp.format = format;
+                    }
+                    fp.description = header.getDescription();
+
+                    List<String> values;
+                    if (!header.getAllowableValues().isEmpty()) {
+                        values = new ArrayList<>();
+                        for (String text : header.getAllowableValues()) {
+                            values.add(text);
+                        }
+                        fp.enum_ = values;
+                    }
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = fp.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        fp.getExtensions().add(exampleExtension);
+                    }
+                    response.headers.addHeader(name, fp);
+                } else if ("double".equals(type)) {
+                    Oas20Header dp = response.headers.createHeader(name);
+                    dp.type = "double";
+                    if (format != null) {
+                        dp.format = format;
+                    }
+                    dp.description = header.getDescription();
+
+                    List<String> values;
+                    if (!header.getAllowableValues().isEmpty()) {
+                        values = new ArrayList<>();
+                        for (String text : header.getAllowableValues()) {
+                            values.add(text);
+                        }
+                        dp.enum_ = values;
+                    }
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = dp.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        dp.getExtensions().add(exampleExtension);
+                    }
+                    response.headers.addHeader(name, dp);
+                } else if ("boolean".equals(type)) {
+                    Oas20Header bp = response.headers.createHeader(name);
+                    bp.type = "boolean";
+                    if (format != null) {
+                        bp.format = format;
+                    }
+                    bp.description = header.getDescription();
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = bp.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        bp.getExtensions().add(exampleExtension);
+                    }
+                    response.headers.addHeader(name, bp);
+                } else if ("array".equals(type)) {
+                    Oas20Header ap = response.headers.createHeader(name);
+
+                    if (org.apache.camel.util.ObjectHelper.isNotEmpty(header.getDescription())) {
+                        ap.description = header.getDescription();
+                    }
+                    if (header.getArrayType() != null) {
+                        if (header.getArrayType().equalsIgnoreCase("string")) {
+                            Oas20Items items = ap.createItems();
+                            items.type = "string";
+                            ap.items = items;
+                        }
+                        if (header.getArrayType().equalsIgnoreCase("int")
+                            || header.getArrayType().equalsIgnoreCase("integer")) {
+                            Oas20Items items = ap.createItems();
+                            items.type = "integer";
+                            ap.items = items;
+                        }
+                        if (header.getArrayType().equalsIgnoreCase("long")) {
+                            Oas20Items items = ap.createItems();
+                            items.type = "long";
+                            ap.items = items;
+                        }
+                        if (header.getArrayType().equalsIgnoreCase("float")) {
+                            Oas20Items items = ap.createItems();
+                            items.type = "float";
+                            ap.items = items;
+                        }
+                        if (header.getArrayType().equalsIgnoreCase("double")) {
+                            Oas20Items items = ap.createItems();
+                            items.type = "double";
+                            ap.items = items;
+                        }
+                        if (header.getArrayType().equalsIgnoreCase("boolean")) {
+                            Oas20Items items = ap.createItems();
+                            items.type = "boolean";
+                            ap.items = items;
+                        }
+                    }
+                    // add example
+                    if (header.getExample() != null) {
+                        Extension exampleExtension = ap.createExtension();
+                        exampleExtension.name = "x-example";
+                        exampleExtension.value = header.getExample();
+                        ap.getExtensions().add(exampleExtension);
+                    }
+                    response.headers.addHeader(name, ap);
+                }
+            }
+        }
+
+        // add examples
+        if (msg.getExamples() != null) {
+            Extension exampleExtension = response.createExtension();
+            exampleExtension.name = "examples";
+            Map<String, String> examplesValue = new HashMap<String, String>();
+            for (RestPropertyDefinition prop : msg.getExamples()) {
+                examplesValue.put(prop.getKey(), prop.getValue());
+
+            }
+            exampleExtension.value = examplesValue;
+            response.addExtension(exampleExtension.name, exampleExtension);
         }
     }
 

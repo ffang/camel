@@ -28,7 +28,7 @@ public class RestOpenApiGetUriParamTest extends CamelTestSupport {
     private DummyRestProducerFactory factory = new DummyRestProducerFactory();
 
     @Test
-    public void testSwaggerGet() throws Exception {
+    public void testOpenApiGet() throws Exception {
         getMockEndpoint("mock:result").expectedBodiesReceived("Bye Donald+Duck");
 
         template.sendBodyAndHeader("direct:start", null, "name", "Donald Duck");

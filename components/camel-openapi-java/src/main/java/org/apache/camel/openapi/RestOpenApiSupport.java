@@ -85,7 +85,7 @@ public class RestOpenApiSupport {
     private RestOpenApiReader reader = new RestOpenApiReader();
     private boolean cors;
 
-    public void initSwagger(BeanConfig openApiConfig, Map<String, Object> config) {
+    public void initOpenApi(BeanConfig openApiConfig, Map<String, Object> config) {
         // configure openApi options
         String s = (String)config.get("openapi.version");
         if (s != null) {
@@ -462,6 +462,8 @@ public class RestOpenApiSupport {
     }
 
     static void setupXForwardedHeaders(OasDocument openApi, Map<String, Object> headers) {
+        
+        String basePath = getBasePathFromOasDocument(openApi);
 
         if (openApi instanceof Oas20Document) {
             String host = (String)headers.get(HEADER_HOST);
@@ -471,7 +473,7 @@ public class RestOpenApiSupport {
 
             String forwardedPrefix = (String)headers.get(HEADER_X_FORWARDED_PREFIX);
             if (ObjectHelper.isNotEmpty(forwardedPrefix)) {
-                ((Oas20Document)openApi).basePath = URISupport.joinPaths(forwardedPrefix, ((Oas20Document)openApi).basePath);
+                ((Oas20Document)openApi).basePath = URISupport.joinPaths(forwardedPrefix, basePath);
             }
 
             String forwardedHost = (String)headers.get(HEADER_X_FORWARDED_HOST);
@@ -498,24 +500,7 @@ public class RestOpenApiSupport {
             
 
             String forwardedPrefix = (String)headers.get(HEADER_X_FORWARDED_PREFIX);
-            String basePath = null;
-            if (((Oas30Document)openApi).getServers() != null 
-                && ((Oas30Document)openApi).getServers().get(0) != null) {
-                try {
-                    URL serverUrl = new URL(((Oas30Document)openApi).getServers().get(0).url);
-                    basePath = serverUrl.getPath();
-                    if (basePath.indexOf("//") == 0) {
-                        //strip off the first "/" if double "/" exists
-                        basePath = basePath.substring(1);
-                    }
-                    if ("/".equals(basePath)) {
-                        basePath = "";
-                    }
-                } catch (MalformedURLException e) {
-                    LOG.info("error when parsing OpenApi 3.0 doc server url", e);
-                }
-            }
-                
+                            
             if (ObjectHelper.isNotEmpty(forwardedPrefix)) {
                 basePath = URISupport.joinPaths(forwardedPrefix, basePath);
             }
@@ -543,5 +528,55 @@ public class RestOpenApiSupport {
             
         }
     }
-
+    
+    public static String getHostFromOasDocument(final OasDocument openapi) {
+        String host = null;
+        if (openapi instanceof Oas20Document) {
+            host = ((Oas20Document)openapi).host;
+        } else if (openapi instanceof Oas30Document) {
+            if (((Oas30Document)openapi).getServers() != null 
+                && ((Oas30Document)openapi).getServers().get(0) != null) {
+                try {
+                    URL serverUrl = new URL(((Oas30Document)openapi).getServers().get(0).url);
+                    host = serverUrl.getHost();
+                
+                } catch (MalformedURLException e) {
+                    LOG.info("error when parsing OpenApi 3.0 doc server url", e);
+                }
+            }
+        }
+        return host;
+        
+    }
+    
+    public static String getBasePathFromOasDocument(final OasDocument openapi) {
+        String basePath = null;
+        if (openapi instanceof Oas20Document) {
+            basePath = ((Oas20Document)openapi).basePath;
+        } else if (openapi instanceof Oas30Document) {
+            if (((Oas30Document)openapi).getServers() != null 
+                && ((Oas30Document)openapi).getServers().get(0) != null) {
+                try {
+                    URL serverUrl = new URL(((Oas30Document)openapi).getServers().get(0).url);
+                    basePath = serverUrl.getPath();
+                    if (basePath.indexOf("//") == 0) {
+                        //strip off the first "/" if double "/" exists
+                        basePath = basePath.substring(1);
+                    }
+                    if ("/".equals(basePath)) {
+                        basePath = "";
+                    }
+                                    
+                } catch (MalformedURLException e) {
+                    //not a valid whole url, just the basePath
+                    basePath = ((Oas30Document)openapi).getServers().get(0).url;
+                }
+            }
+            
+        }
+        return basePath;
+        
+    }
 }
+
+

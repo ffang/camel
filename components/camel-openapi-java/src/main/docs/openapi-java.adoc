@@ -1,10 +1,10 @@
-= Swagger Java Component
+= OpenApi Java Component
 
-*Available as of Camel 2.16*
+*Available as of Camel 3.1.0*
 
 The  Rest DSL can be integrated with
-the `camel-swagger-java` module which is used for exposing the REST
-services and their APIs using http://swagger.io/[Swagger].
+the `camel-openapi-java` module which is used for exposing the REST
+services and their APIs using https://www.openapis.org/[OpenApi].
 
 Maven users will need to add the following dependency to
 their `pom.xml` for this component:
@@ -13,18 +13,18 @@ their `pom.xml` for this component:
 ----
 <dependency>
     <groupId>org.apache.camel</groupId>
-    <artifactId>camel-swagger-java</artifactId>
+    <artifactId>camel-openapi-java</artifactId>
     <version>x.x.x</version>
     <!-- use the same version as your Camel core version -->
 </dependency>
 ----
 
-The camel-swagger-java module can be used from
+The camel-openapi-java module can be used from
 the REST components (without the need for servlet)
 
-== Using Swagger in rest-dsl
+== Using OpenApi in rest-dsl
 
-You can enable the swagger api from the rest-dsl by configuring the
+You can enable the OpenApi api from the rest-dsl by configuring the
 `apiContextPath` dsl as shown below:
 
 [source,java]
@@ -39,7 +39,7 @@ public class UserRouteBuilder extends RouteBuilder {
             .dataFormatProperty("prettyPrint", "true")
             // setup context path and port number that netty will use
             .contextPath("/").port(8080)
-            // add swagger api-doc out of the box
+            // add OpenApi api-doc out of the box
             .apiContextPath("/api-doc")
                 .apiProperty("api.title", "User API").apiProperty("api.version", "1.2.3")
                 // and enable CORS
@@ -63,7 +63,7 @@ public class UserRouteBuilder extends RouteBuilder {
 
 == Options
 
-The swagger module can be configured using the following options. To
+The OpenApi module can be configured using the following options. To
 configure using a servlet you use the init-param as shown above. When
 configuring directly in the rest-dsl, you use the appropriate method,
 such as `enableCORS`, `host,contextPath`, dsl. The options
@@ -77,9 +77,9 @@ with `api.xxx` is configured using `apiProperty` dsl.
 browser, and not the actual access to the REST services. Is default
 false.
 
-|swagger.version |String |Swagger spec version. Is default 2.0.
+|openapi.version |String |OpenApi spec version. Is default 3.0.
 
-|host |String |To setup the hostname. If not configured camel-swagger-java will
+|host |String |To setup the hostname. If not configured camel-openapi-java will
 calculate the name as localhost based.
 
 |schemes |String |The protocol schemes to use. Multiple values can be
@@ -87,11 +87,11 @@ separated by comma such as "http,https". The default value is "http".
 
 |base.path |String |*Required*: To setup the base path where the REST services is available.
 The path is relative (eg do not start with http/https) and
-camel-swagger-java will calculate the absolute base path at runtime,
+camel-openapi-java will calculate the absolute base path at runtime,
 which will be `protocol://host:port/context-path/base.path`
 
 |api.path |String |To setup the path where the API is available (eg /api-docs). The path is
-relative (eg do not start with http/https) and camel-swagger-java will
+relative (eg do not start with http/https) and camel-openapi-java will
 calculate the absolute base path at runtime, which will be `protocol://host:port/context-path/api.path`
 So using relative paths is much easier. See above for an example.
 
@@ -127,9 +127,9 @@ Intercept
 
 == Adding Security Definitions in API doc
 
-*Available as of Camel 2.22.0*
+*Available as of Camel 3.1.0*
 
-The Rest DSL now supports declaring Swagger `securityDefinitions` in the generated API document.
+The Rest DSL now supports declaring OpenApi `securityDefinitions` in the generated API document.
 For example as shown below:
 
 [source,java]
@@ -172,17 +172,17 @@ is using OAuth security with permitted scopes of read and write pets.
 When contextIdListing is enabled then its detecting all the running
 CamelContexts in the same JVM. These contexts are listed in the root
 path, eg `/api-docs` as a simple list of names in json format. To access
-the swagger documentation then the context-path must be appended with
+the OpenApi documentation then the context-path must be appended with
 the Camel context id, such as `api-docs/myCamel`. The
 option apiContextIdPattern can be used to filter the names in this list.
 
 == JSon or Yaml
 
-*Available as of Camel 2.17*
+*Available as of Camel 3.1.0
 
-The camel-swagger-java module supports both JSon and Yaml out of the
+The camel-openapi-java module supports both JSon and Yaml out of the
 box. You can specify in the request url what you want returned by using
-/swagger.json or /swagger.yaml for either one. If none is specified then
+/openapi.json or /openapi.yaml for either one. If none is specified then
 the HTTP Accept header is used to detect if json or yaml can be
 accepted. If either both is accepted or none was set as accepted then
 json is returned as the default format.
@@ -190,5 +190,5 @@ json is returned as the default format.
 == Examples
 
 In the Apache Camel distribution we ship
-the `camel-example-swagger-cdi` and `camel-example-swagger-java` which
-demonstrates using this Swagger component.
+the `camel-example-openapi-cdi` and `camel-example-openapi-java` which
+demonstrates using this OpenApi component.

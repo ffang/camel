@@ -207,7 +207,7 @@ public class BeanConfig {
             openApi.info = info;
             ((Oas20Document)openApi).host = host;
             ((Oas20Document)openApi).basePath = basePath;
-        } else {
+        } else if (openApi instanceof Oas30Document) {
             openApi.info = info;
             Oas30Document openApi3 = (Oas30Document)openApi;
             Server server = openApi3.createServer();

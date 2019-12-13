@@ -49,7 +49,7 @@ public class RestOpenApiProcessor implements Processor {
         if (parameters == null) {
             parameters = Collections.EMPTY_MAP;
         }
-        support.initSwagger(openApiConfig, parameters);
+        support.initOpenApi(openApiConfig, parameters);
     }
 
     @Override
@@ -121,7 +121,7 @@ public class RestOpenApiProcessor implements Processor {
                 }
             }
         } catch (Exception e) {
-            LOG.warn("Error rendering Swagger API due " + e.getMessage(), e);
+            LOG.warn("Error rendering OpenApi API due " + e.getMessage(), e);
         }
     }
 
