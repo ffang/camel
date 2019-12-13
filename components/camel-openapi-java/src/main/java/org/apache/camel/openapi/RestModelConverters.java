@@ -37,46 +37,54 @@ public class RestModelConverters {
 
     public List<? extends OasSchema> readClass(OasDocument oasDocument, Class<?> clazz) {
         if (oasDocument instanceof Oas20Document) {
-            String name = clazz.getName();
-            if (!name.contains(".")) {
-                return null;
-            }
-            if (((Oas20Document)oasDocument).definitions == null) {
-                ((Oas20Document)oasDocument).definitions = ((Oas20Document)oasDocument).createDefinitions();
-            }
-            Oas20Definitions resolved = ((Oas20Document)oasDocument).definitions;
-            Oas20SchemaDefinition model = resolved.createSchemaDefinition(clazz.getSimpleName());
-            resolved.addDefinition(clazz.getSimpleName(), model);
-            model.type = clazz.getSimpleName();
-            Extension extension = model.createExtension();
-            extension.name = "x-className";
-            Map<String, String> value = new HashMap<String, String>();
-            value.put("type", "string");
-            value.put("format", name);
-            extension.value = value;
-            model.addExtension("x-className", extension);
-            return resolved.getDefinitions();
+            return readClassOas20((Oas20Document)oasDocument, clazz);
         } else if (oasDocument instanceof Oas30Document){
-            String name = clazz.getName();
-            if (!name.contains(".")) {
-                return null;
-            }
-            if (((Oas30Document)oasDocument).components == null) {
-                ((Oas30Document)oasDocument).components = ((Oas30Document)oasDocument).createComponents();
-            }
-            Oas30SchemaDefinition model = ((Oas30Document)oasDocument).components.createSchemaDefinition(clazz.getSimpleName());
-            ((Oas30Document)oasDocument).components.addSchemaDefinition(clazz.getSimpleName(), model);
-            model.type = clazz.getSimpleName();
-            Extension extension = model.createExtension();
-            extension.name = "x-className";
-            Map<String, String> value = new HashMap<String, String>();
-            value.put("type", "string");
-            value.put("format", name);
-            extension.value = value;
-            model.addExtension("x-className", extension);
-            return ((Oas30Document)oasDocument).components.getSchemaDefinitions();
+            return readClassOas30((Oas30Document)oasDocument, clazz);
         } else {
             return null;
         }
+    }
+
+    private List<? extends OasSchema> readClassOas30(Oas30Document oasDocument, Class<?> clazz) {
+        String name = clazz.getName();
+        if (!name.contains(".")) {
+            return null;
+        }
+        if (oasDocument.components == null) {
+            oasDocument.components = oasDocument.createComponents();
+        }
+        Oas30SchemaDefinition model = oasDocument.components.createSchemaDefinition(clazz.getSimpleName());
+        oasDocument.components.addSchemaDefinition(clazz.getSimpleName(), model);
+        model.type = clazz.getSimpleName();
+        Extension extension = model.createExtension();
+        extension.name = "x-className";
+        Map<String, String> value = new HashMap<String, String>();
+        value.put("type", "string");
+        value.put("format", name);
+        extension.value = value;
+        model.addExtension("x-className", extension);
+        return oasDocument.components.getSchemaDefinitions();
+    }
+
+    private List<? extends OasSchema> readClassOas20(Oas20Document oasDocument, Class<?> clazz) {
+        String name = clazz.getName();
+        if (!name.contains(".")) {
+            return null;
+        }
+        if (oasDocument.definitions == null) {
+            oasDocument.definitions = oasDocument.createDefinitions();
+        }
+        Oas20Definitions resolved = oasDocument.definitions;
+        Oas20SchemaDefinition model = resolved.createSchemaDefinition(clazz.getSimpleName());
+        resolved.addDefinition(clazz.getSimpleName(), model);
+        model.type = clazz.getSimpleName();
+        Extension extension = model.createExtension();
+        extension.name = "x-className";
+        Map<String, String> value = new HashMap<String, String>();
+        value.put("type", "string");
+        value.put("format", name);
+        extension.value = value;
+        model.addExtension("x-className", extension);
+        return resolved.getDefinitions();
     }
 }

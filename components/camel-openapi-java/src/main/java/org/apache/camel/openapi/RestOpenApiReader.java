@@ -963,149 +963,11 @@ public class RestOpenApiReader {
                 String type = header.getDataType();
                 String format = header.getDataFormat();
                 
-                if ("string".equals(type)) {
-                    Oas30Header sp = response.createHeader(name);
-                    response.addHeader(name, sp);
-                    Oas30Schema schema = sp.createSchema();
-                    sp.schema = schema;
-                    schema.type = "string";
-                    if (format != null) {
-                        schema.format = format;
-                    }
-                    sp.description = header.getDescription();
-                    if (header.getAllowableValues() != null) {
-                        schema.enum_ = header.getAllowableValues();
-                    }
-                    // add example
-                    if (header.getExample() != null) {
-                        Extension exampleExtension = sp.createExtension();
-                        exampleExtension.name = "x-example";
-                        exampleExtension.value = header.getExample();
-                        sp.getExtensions().add(exampleExtension);
-
-                    }
+                if ("string".equals(type) || "long".equals(type) || "float".equals(type)
+                    || "double".equals(type) || "boolean".equals(type)) {
+                    setResponseHeaderOas30(response, header, name, format, type);
                 } else if ("int".equals(type) || "integer".equals(type)) {
-                    Oas30Header ip = response.createHeader(name);
-                    response.addHeader(name, ip);
-                    Oas30Schema schema = ip.createSchema();
-                    ip.schema = schema;
-                    schema.type = "integer";
-                    if (format != null) {
-                        schema.format = format;
-                    }
-                    ip.description = header.getDescription();
-
-                    List<String> values;
-                    if (!header.getAllowableValues().isEmpty()) {
-                        values = new ArrayList<>();
-                        for (String text : header.getAllowableValues()) {
-                            values.add(text);
-                        }
-                        schema.enum_ = values;
-                    }
-                    // add example
-                    if (header.getExample() != null) {
-                        Extension exampleExtension = ip.createExtension();
-                        exampleExtension.name = "x-example";
-                        exampleExtension.value = header.getExample();
-                        ip.getExtensions().add(exampleExtension);
-                    }
-                } else if ("long".equals(type)) {
-                    Oas30Header lp = response.createHeader(name);
-                    response.addHeader(name, lp);
-                    Oas30Schema schema = lp.createSchema();
-                    lp.schema = schema;
-                    schema.type = type;
-                    if (format != null) {
-                        schema.format = format;
-                    }
-                    lp.description = header.getDescription();
-
-                    List<String> values;
-                    if (!header.getAllowableValues().isEmpty()) {
-                        values = new ArrayList<>();
-                        for (String text : header.getAllowableValues()) {
-                            values.add(text);
-                        }
-                        schema.enum_ = values;
-                    }
-                    // add example
-                    if (header.getExample() != null) {
-                        Extension exampleExtension = lp.createExtension();
-                        exampleExtension.name = "x-example";
-                        exampleExtension.value = header.getExample();
-                        lp.getExtensions().add(exampleExtension);
-                    }
-
-                } else if ("float".equals(type)) {
-                    Oas30Header fp = response.createHeader(name);
-                    response.addHeader(name, fp);
-                    Oas30Schema schema = fp.createSchema();
-                    fp.schema = schema;
-                    schema.type = type;
-                    if (format != null) {
-                        schema.format = format;
-                    }
-                    fp.description = header.getDescription();
-
-                    List<String> values;
-                    if (!header.getAllowableValues().isEmpty()) {
-                        values = new ArrayList<>();
-                        for (String text : header.getAllowableValues()) {
-                            values.add(text);
-                        }
-                        schema.enum_ = values;
-                    }
-                    // add example
-                    if (header.getExample() != null) {
-                        Extension exampleExtension = fp.createExtension();
-                        exampleExtension.name = "x-example";
-                        exampleExtension.value = header.getExample();
-                        fp.getExtensions().add(exampleExtension);
-                    }
-                } else if ("double".equals(type)) {
-                    Oas30Header dp = response.createHeader(name);
-                    response.addHeader(name, dp);
-                    Oas30Schema schema = dp.createSchema();
-                    dp.schema = schema;
-                    schema.type = "double";
-                    if (format != null) {
-                        schema.format = format;
-                    }
-                    dp.description = header.getDescription();
-
-                    List<String> values;
-                    if (!header.getAllowableValues().isEmpty()) {
-                        values = new ArrayList<>();
-                        for (String text : header.getAllowableValues()) {
-                            values.add(text);
-                        }
-                        schema.enum_ = values;
-                    }
-                    // add example
-                    if (header.getExample() != null) {
-                        Extension exampleExtension = dp.createExtension();
-                        exampleExtension.name = "x-example";
-                        exampleExtension.value = header.getExample();
-                        dp.getExtensions().add(exampleExtension);
-                    }
-                } else if ("boolean".equals(type)) {
-                    Oas30Header bp = response.createHeader(name);
-                    response.addHeader(name, bp);
-                    Oas30Schema schema = bp.createSchema();
-                    bp.schema = schema;
-                    schema.type = "boolean";
-                    if (format != null) {
-                        schema.format = format;
-                    }
-                    bp.description = header.getDescription();
-                    // add example
-                    if (header.getExample() != null) {
-                        Extension exampleExtension = bp.createExtension();
-                        exampleExtension.name = "x-example";
-                        exampleExtension.value = header.getExample();
-                        bp.getExtensions().add(exampleExtension);
-                    }
+                    setResponseHeaderOas30(response, header, name, format, "integer");
                 } else if ("array".equals(type)) {
                     Oas30Header ap = response.createHeader(name);
 
@@ -1113,37 +975,18 @@ public class RestOpenApiReader {
                         ap.description = header.getDescription();
                     }
                     if (header.getArrayType() != null) {
-                        if (header.getArrayType().equalsIgnoreCase("string")) {
-                            Oas30Schema items = ap.createSchema();
-                            items.type = "string";
-                            ap.schema = items;
-                        }
-                        if (header.getArrayType().equalsIgnoreCase("int")
+                        String arrayType = header.getArrayType();
+                        if (arrayType.equalsIgnoreCase("string")
+                            || arrayType.equalsIgnoreCase("long")
+                            || arrayType.equalsIgnoreCase("float")
+                            || arrayType.equalsIgnoreCase("double")
+                            || arrayType.equalsIgnoreCase("boolean")) {
+                            setHeaderSchemaOas30(ap, arrayType);
+                        } else if (header.getArrayType().equalsIgnoreCase("int")
                             || header.getArrayType().equalsIgnoreCase("integer")) {
-                            Oas30Schema items = ap.createSchema();
-                            items.type = "integer";
-                            ap.schema = items;
+                            setHeaderSchemaOas30(ap, "integer");
                         }
-                        if (header.getArrayType().equalsIgnoreCase("long")) {
-                            Oas30Schema items = ap.createSchema();
-                            items.type = "long";
-                            ap.schema = items;
-                        }
-                        if (header.getArrayType().equalsIgnoreCase("float")) {
-                            Oas30Schema items = ap.createSchema();
-                            items.type = "float";
-                            ap.schema = items;
-                        }
-                        if (header.getArrayType().equalsIgnoreCase("double")) {
-                            Oas30Schema items = ap.createSchema();
-                            items.type = "double";
-                            ap.schema = items;
-                        }
-                        if (header.getArrayType().equalsIgnoreCase("boolean")) {
-                            Oas30Schema items = ap.createSchema();
-                            items.type = "boolean";
-                            ap.schema = items;
-                        }
+                        
                     }
                     // add example
                     if (header.getExample() != null) {
@@ -1168,6 +1011,41 @@ public class RestOpenApiReader {
             }
             exampleExtension.value = examplesValue;
             response.addExtension(exampleExtension.name, exampleExtension);
+        }
+    }
+
+    private void setHeaderSchemaOas30(Oas30Header ap, String arrayType) {
+        Oas30Schema items = ap.createSchema();
+        items.type = arrayType;
+        ap.schema = items;
+    }
+
+    private void setResponseHeaderOas30(Oas30Response response, RestOperationResponseHeaderDefinition header,
+                                        String name, String format, String type) {
+        Oas30Header ip = response.createHeader(name);
+        response.addHeader(name, ip);
+        Oas30Schema schema = ip.createSchema();
+        ip.schema = schema;
+        schema.type = type;
+        if (format != null) {
+            schema.format = format;
+        }
+        ip.description = header.getDescription();
+
+        List<String> values;
+        if (!header.getAllowableValues().isEmpty()) {
+            values = new ArrayList<>();
+            for (String text : header.getAllowableValues()) {
+                values.add(text);
+            }
+            schema.enum_ = values;
+        }
+        // add example
+        if (header.getExample() != null) {
+            Extension exampleExtension = ip.createExtension();
+            exampleExtension.name = "x-example";
+            exampleExtension.value = header.getExample();
+            ip.getExtensions().add(exampleExtension);
         }
     }
 
@@ -1201,137 +1079,11 @@ public class RestOpenApiReader {
                 if (response.headers == null) {
                     response.headers = response.createHeaders();
                 }
-                if ("string".equals(type)) {
-                    Oas20Header sp = response.headers.createHeader(name);
-                    sp.type = "string";
-                    if (format != null) {
-                        sp.format = format;
-                    }
-                    sp.description = header.getDescription();
-                    if (header.getAllowableValues() != null) {
-                        sp.enum_ = header.getAllowableValues();
-                    }
-                    // add example
-                    if (header.getExample() != null) {
-                        Extension exampleExtension = sp.createExtension();
-                        exampleExtension.name = "x-example";
-                        exampleExtension.value = header.getExample();
-                        sp.getExtensions().add(exampleExtension);
-
-                    }
-                    response.headers.addHeader(name, sp);
+                if ("string".equals(type) || "long".equals(type) || "float".equals(type)
+                    || "double".equals(type) || "boolean".equals(type)) {
+                    setResponseHeaderOas20(response, header, name, format, type);
                 } else if ("int".equals(type) || "integer".equals(type)) {
-                    Oas20Header ip = response.headers.createHeader(name);
-                    ip.type = "integer";
-                    if (format != null) {
-                        ip.format = format;
-                    }
-                    ip.description = header.getDescription();
-
-                    List<String> values;
-                    if (!header.getAllowableValues().isEmpty()) {
-                        values = new ArrayList<>();
-                        for (String text : header.getAllowableValues()) {
-                            values.add(text);
-                        }
-                        ip.enum_ = values;
-                    }
-                    // add example
-                    if (header.getExample() != null) {
-                        Extension exampleExtension = ip.createExtension();
-                        exampleExtension.name = "x-example";
-                        exampleExtension.value = header.getExample();
-                        ip.getExtensions().add(exampleExtension);
-                    }
-                    response.headers.addHeader(name, ip);
-                } else if ("long".equals(type)) {
-                    Oas20Header lp = response.headers.createHeader(name);
-                    lp.type = type;
-                    if (format != null) {
-                        lp.format = format;
-                    }
-                    lp.description = header.getDescription();
-
-                    List<String> values;
-                    if (!header.getAllowableValues().isEmpty()) {
-                        values = new ArrayList<>();
-                        for (String text : header.getAllowableValues()) {
-                            values.add(text);
-                        }
-                        lp.enum_ = values;
-                    }
-                    // add example
-                    if (header.getExample() != null) {
-                        Extension exampleExtension = lp.createExtension();
-                        exampleExtension.name = "x-example";
-                        exampleExtension.value = header.getExample();
-                        lp.getExtensions().add(exampleExtension);
-                    }
-
-                    response.headers.addHeader(name, lp);
-                } else if ("float".equals(type)) {
-                    Oas20Header fp = response.headers.createHeader(name);
-                    fp.type = "float";
-                    if (format != null) {
-                        fp.format = format;
-                    }
-                    fp.description = header.getDescription();
-
-                    List<String> values;
-                    if (!header.getAllowableValues().isEmpty()) {
-                        values = new ArrayList<>();
-                        for (String text : header.getAllowableValues()) {
-                            values.add(text);
-                        }
-                        fp.enum_ = values;
-                    }
-                    // add example
-                    if (header.getExample() != null) {
-                        Extension exampleExtension = fp.createExtension();
-                        exampleExtension.name = "x-example";
-                        exampleExtension.value = header.getExample();
-                        fp.getExtensions().add(exampleExtension);
-                    }
-                    response.headers.addHeader(name, fp);
-                } else if ("double".equals(type)) {
-                    Oas20Header dp = response.headers.createHeader(name);
-                    dp.type = "double";
-                    if (format != null) {
-                        dp.format = format;
-                    }
-                    dp.description = header.getDescription();
-
-                    List<String> values;
-                    if (!header.getAllowableValues().isEmpty()) {
-                        values = new ArrayList<>();
-                        for (String text : header.getAllowableValues()) {
-                            values.add(text);
-                        }
-                        dp.enum_ = values;
-                    }
-                    // add example
-                    if (header.getExample() != null) {
-                        Extension exampleExtension = dp.createExtension();
-                        exampleExtension.name = "x-example";
-                        exampleExtension.value = header.getExample();
-                        dp.getExtensions().add(exampleExtension);
-                    }
-                    response.headers.addHeader(name, dp);
-                } else if ("boolean".equals(type)) {
-                    Oas20Header bp = response.headers.createHeader(name);
-                    bp.type = "boolean";
-                    if (format != null) {
-                        bp.format = format;
-                    }
-                    bp.description = header.getDescription();
-                    // add example
-                    if (header.getExample() != null) {
-                        Extension exampleExtension = bp.createExtension();
-                        exampleExtension.name = "x-example";
-                        exampleExtension.value = header.getExample();
-                        bp.getExtensions().add(exampleExtension);
-                    }
-                    response.headers.addHeader(name, bp);
+                    setResponseHeaderOas20(response, header, name, format, "integer");
                 } else if ("array".equals(type)) {
                     Oas20Header ap = response.headers.createHeader(name);
 
@@ -1339,37 +1091,18 @@ public class RestOpenApiReader {
                         ap.description = header.getDescription();
                     }
                     if (header.getArrayType() != null) {
-                        if (header.getArrayType().equalsIgnoreCase("string")) {
-                            Oas20Items items = ap.createItems();
-                            items.type = "string";
-                            ap.items = items;
-                        }
-                        if (header.getArrayType().equalsIgnoreCase("int")
+                        String arrayType = header.getArrayType();
+                        if (arrayType.equalsIgnoreCase("string")
+                            || arrayType.equalsIgnoreCase("long")
+                            || arrayType.equalsIgnoreCase("float")
+                            || arrayType.equalsIgnoreCase("double")
+                            || arrayType.equalsIgnoreCase("boolean")) {
+                            setHeaderSchemaOas20(ap, arrayType);
+                        } else if (header.getArrayType().equalsIgnoreCase("int")
                             || header.getArrayType().equalsIgnoreCase("integer")) {
-                            Oas20Items items = ap.createItems();
-                            items.type = "integer";
-                            ap.items = items;
+                            setHeaderSchemaOas20(ap, "integer");
                         }
-                        if (header.getArrayType().equalsIgnoreCase("long")) {
-                            Oas20Items items = ap.createItems();
-                            items.type = "long";
-                            ap.items = items;
-                        }
-                        if (header.getArrayType().equalsIgnoreCase("float")) {
-                            Oas20Items items = ap.createItems();
-                            items.type = "float";
-                            ap.items = items;
-                        }
-                        if (header.getArrayType().equalsIgnoreCase("double")) {
-                            Oas20Items items = ap.createItems();
-                            items.type = "double";
-                            ap.items = items;
-                        }
-                        if (header.getArrayType().equalsIgnoreCase("boolean")) {
-                            Oas20Items items = ap.createItems();
-                            items.type = "boolean";
-                            ap.items = items;
-                        }
+                        
                     }
                     // add example
                     if (header.getExample() != null) {
@@ -1395,6 +1128,39 @@ public class RestOpenApiReader {
             exampleExtension.value = examplesValue;
             response.addExtension(exampleExtension.name, exampleExtension);
         }
+    }
+
+    private void setHeaderSchemaOas20(Oas20Header ap, String arrayType) {
+        Oas20Items items = ap.createItems();
+        items.type = arrayType;
+        ap.items = items;
+    }
+
+    private void setResponseHeaderOas20(Oas20Response response, RestOperationResponseHeaderDefinition header,
+                                        String name, String format, String type) {
+        Oas20Header ip = response.headers.createHeader(name);
+        ip.type = type;
+        if (format != null) {
+            ip.format = format;
+        }
+        ip.description = header.getDescription();
+
+        List<String> values;
+        if (!header.getAllowableValues().isEmpty()) {
+            values = new ArrayList<>();
+            for (String text : header.getAllowableValues()) {
+                values.add(text);
+            }
+            ip.enum_ = values;
+        }
+        // add example
+        if (header.getExample() != null) {
+            Extension exampleExtension = ip.createExtension();
+            exampleExtension.name = "x-example";
+            exampleExtension.value = header.getExample();
+            ip.getExtensions().add(exampleExtension);
+        }
+        response.headers.addHeader(name, ip);
     }
 
     private OasSchema asModel(String typeName, OasDocument openApi) {

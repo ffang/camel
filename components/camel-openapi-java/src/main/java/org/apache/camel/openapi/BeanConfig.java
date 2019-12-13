@@ -196,26 +196,33 @@ public class BeanConfig {
     
     public OasDocument configure(OasDocument openApi) {
         if (openApi instanceof Oas20Document) {
-            if (schemes != null) {
-                if (((Oas20Document)openApi).schemes == null) {
-                    ((Oas20Document)openApi).schemes = new ArrayList<String>();
-                }
-                for (String scheme : schemes) {
-                    ((Oas20Document)openApi).schemes.add(scheme);
-                }
-            }
-            openApi.info = info;
-            ((Oas20Document)openApi).host = host;
-            ((Oas20Document)openApi).basePath = basePath;
+            configureOas20((Oas20Document)openApi);
         } else if (openApi instanceof Oas30Document) {
-            openApi.info = info;
-            Oas30Document openApi3 = (Oas30Document)openApi;
-            Server server = openApi3.createServer();
-            String serverUrl = new StringBuilder().append(this.schemes[0]).append("://").append(this.host).append(this.basePath).toString();
-            server.url = serverUrl;
-            openApi3.addServer(server);
+            configureOas30((Oas30Document)openApi);
         }
         return openApi;
+    }
+
+    private void configureOas30(Oas30Document openApi) {
+        openApi.info = info;
+        Server server = openApi.createServer();
+        String serverUrl = new StringBuilder().append(this.schemes[0]).append("://").append(this.host).append(this.basePath).toString();
+        server.url = serverUrl;
+        openApi.addServer(server);
+    }
+
+    private void configureOas20(Oas20Document openApi) {
+        if (schemes != null) {
+            if (openApi.schemes == null) {
+                openApi.schemes = new ArrayList<String>();
+            }
+            for (String scheme : schemes) {
+                openApi.schemes.add(scheme);
+            }
+        }
+        openApi.info = info;
+        openApi.host = host;
+        openApi.basePath = basePath;
     }
     
     public boolean isOpenApi3() {

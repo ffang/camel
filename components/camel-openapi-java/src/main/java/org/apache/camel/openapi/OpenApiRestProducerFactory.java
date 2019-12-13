@@ -113,10 +113,7 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
 
     private OasOperation getOpenApiOperation(OasDocument openApi, String verb, String path) {
         // path may include base path so skip that
-        String basePath = null;
-        if (openApi instanceof Oas20Document) {
-            basePath = ((Oas20Document)openApi).basePath;
-        }
+        String basePath = RestOpenApiSupport.getBasePathFromOasDocument(openApi);
         if (basePath != null && path.startsWith(basePath)) {
             path = path.substring(basePath.length());
         }
@@ -216,12 +213,12 @@ public class OpenApiRestProducerFactory implements RestProducerFactory {
             String basePath = null;
             String uriTemplate = null;
             if (host == null) {
-                if (openApi instanceof Oas20Document) {
-                    //if no explicit host has been configured then use host and base path from the openApi api-doc
-                    host = ((Oas20Document)openApi).host;
-                    basePath = ((Oas20Document)openApi).basePath;
-                    uriTemplate = path;
-                }
+                    
+                //if no explicit host has been configured then use host and base path from the openApi api-doc
+                host = RestOpenApiSupport.getHostFromOasDocument(openApi);
+                basePath = RestOpenApiSupport.getBasePathFromOasDocument(openApi);
+                uriTemplate = path;
+                
             } else {
                 // path includes also uri template
                 basePath = path;
