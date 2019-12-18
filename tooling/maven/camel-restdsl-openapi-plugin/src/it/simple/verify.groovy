@@ -15,6 +15,6 @@
  * limitations under the License.
  */
 
-def File restdsl = new File(basedir, "target/generated-sources/restdsl-swagger/io/swagger/petstore/SwaggerPetstore.java")
+def File restdsl = new File(basedir, "target/generated-sources/restdsl-openapi/io/swagger/petstore/SwaggerPetstore.java")
 
 assert restdsl.exists()

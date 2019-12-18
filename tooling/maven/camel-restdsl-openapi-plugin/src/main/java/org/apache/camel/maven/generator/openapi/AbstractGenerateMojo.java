@@ -77,7 +77,7 @@ abstract class AbstractGenerateMojo extends AbstractMojo {
     @Parameter
     String modelNameSuffix;
 
-    @Parameter(defaultValue = "${project.build.directory}/generated-sources/swagger")
+    @Parameter(defaultValue = "${project.build.directory}/generated-sources/openapi")
     String modelOutput;
 
     @Parameter
@@ -95,7 +95,7 @@ abstract class AbstractGenerateMojo extends AbstractMojo {
     @Parameter(defaultValue = "false")
     boolean skip;
 
-    @Parameter(defaultValue = "${project.basedir}/src/spec/swagger.json", required = true)
+    @Parameter(defaultValue = "${project.basedir}/src/spec/openapi.json", required = true)
     String specificationUri;
 
     @Parameter(defaultValue = "3.0.14")

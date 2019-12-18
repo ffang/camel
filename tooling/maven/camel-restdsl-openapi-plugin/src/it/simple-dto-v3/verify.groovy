@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-def File restdsl = new File(basedir, "target/generated-sources/restdsl-swagger/io/swagger/petstore/SwaggerPetstore.java")
+def File restdsl = new File(basedir, "target/generated-sources/restdsl-openapi/io/swagger/petstore/SwaggerPetstore.java")
 
 assert restdsl.exists()
 
@@ -23,6 +23,6 @@ def String data = restdsl.text
 
 assert data.contains('restConfiguration().component("servlet");')
 
-def File restdto = new File(basedir, "target/generated-sources/swagger/src/main/java/com/foo/Order.java")
+def File restdto = new File(basedir, "target/generated-sources/openapi/src/main/java/com/foo/Order.java")
 
 assert restdto.exists()

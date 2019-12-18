@@ -43,7 +43,7 @@ public class GenerateXmlMojo extends AbstractGenerateMojo {
     @Parameter(defaultValue = "camel-rest.xml", required = true)
     private String fileName;
 
-    @Parameter(defaultValue = "${project.build.directory}/generated-sources/restdsl-swagger", required = true)
+    @Parameter(defaultValue = "${project.build.directory}/generated-sources/restdsl-openapi", required = true)
     private String outputDirectory;
 
     @Override

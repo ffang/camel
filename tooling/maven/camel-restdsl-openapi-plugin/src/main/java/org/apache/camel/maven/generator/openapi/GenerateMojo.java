@@ -44,7 +44,7 @@ public class GenerateMojo extends AbstractGenerateMojo {
     @Parameter
     private String indent;
 
-    @Parameter(defaultValue = "${project.build.directory}/generated-sources/restdsl-swagger", required = true)
+    @Parameter(defaultValue = "${project.build.directory}/generated-sources/restdsl-openapi", required = true)
     private String outputDirectory;
 
     @Parameter

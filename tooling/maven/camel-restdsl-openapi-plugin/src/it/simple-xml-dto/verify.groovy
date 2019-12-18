@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-def File restdsl = new File(basedir, "target/generated-sources/restdsl-swagger/camel-rest.xml")
+def File restdsl = new File(basedir, "target/generated-sources/restdsl-openapi/camel-rest.xml")
 
 assert restdsl.exists()
 
@@ -23,6 +23,6 @@ def String data = restdsl.text
 
 assert data.contains('<restConfiguration component="jetty"/>')
 
-def File restdto = new File(basedir, "target/generated-sources/swagger/src/main/java/io/swagger/client/model/Order.java")
+def File restdto = new File(basedir, "target/generated-sources/openapi/src/main/java/io/swagger/client/model/Order.java")
 
 assert restdto.exists()
