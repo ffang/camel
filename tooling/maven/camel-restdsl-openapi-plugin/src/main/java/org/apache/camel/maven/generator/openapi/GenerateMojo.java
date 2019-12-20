@@ -64,7 +64,7 @@ public class GenerateMojo extends AbstractGenerateMojo {
         }
 
         if (openapi == null) {
-            throw new MojoExecutionException("Unable to generate REST DSL Swagger sources from specification: "
+            throw new MojoExecutionException("Unable to generate REST DSL OpenApi sources from specification: "
                 + specificationUri + ", make sure that the specification is available at the given URI");
         }
 
@@ -160,7 +160,7 @@ public class GenerateMojo extends AbstractGenerateMojo {
             generator.generate(outputPath);
         } catch (final IOException e) {
             throw new MojoExecutionException(
-                "Unable to generate REST DSL Swagger sources from specification: " + specificationUri, e);
+                "Unable to generate REST DSL OpenApi sources from specification: " + specificationUri, e);
         }
     }
     

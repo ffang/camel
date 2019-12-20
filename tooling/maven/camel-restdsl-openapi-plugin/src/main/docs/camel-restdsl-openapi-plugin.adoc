@@ -85,7 +85,7 @@ from the OpenApi specification.
 
 This plugin has been scoped and limited to only support a good effort set of defaults for
 using the swagger-codegen-maven-plugin to generate the model DTOs. If you need more power
-and flexibility then use the https://github.com/swagger-api/swagger-codegen/tree/master/modules/swagger-codegen-maven-plugin[Swagger Codegen Maven Plugin]
+and flexibility then use the https://github.com/swagger-api/swagger-codegen/tree/3.0.0/modules/swagger-codegen-maven-plugin[Swagger Codegen Maven Plugin]
 directly to generate the DTO and not this plugin.
 
 The DTO classes may require additional dependencies such as:

@@ -153,10 +153,10 @@ abstract class AbstractGenerateMojo extends AbstractMojo {
 
     void generateDto(final String language) throws MojoExecutionException {
         getLog().info(
-            "Generating DTO classes using io.swagger:swagger-codegen-maven-plugin:" + swaggerCodegenMavenPluginVersion);
+            "Generating DTO classes using io.swagger.codegen.v3:swagger-codegen-maven-plugin:" + swaggerCodegenMavenPluginVersion);
 
         // swagger-codegen-maven-plugin documentation and its supported options
-        // https://github.com/swagger-api/swagger-codegen/tree/master/modules/swagger-codegen-maven-plugin
+        // https://github.com/swagger-api/swagger-codegen/tree/3.0.0/modules/swagger-codegen-maven-plugin
 
         final List<MojoExecutor.Element> elements = new ArrayList<>();
         elements.add(new MojoExecutor.Element("inputSpec", specificationUri));
